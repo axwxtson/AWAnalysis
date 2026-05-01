@@ -1,0 +1,22 @@
+# AW Analysis — Cursor rules
+
+## Project
+Cross-asset market intelligence agent. Python 3.11+, src/ layout, package name `aw_analysis`.
+
+## Code style
+- British English in comments and docstrings.
+- Type hints required on public functions.
+- `from __future__ import annotations` at the top of every module.
+- Imports: stdlib, third-party, local — separated by blank lines.
+
+## Architecture
+- `client/` wraps the Anthropic SDK. Agent code never imports `anthropic` directly.
+- `data_sources/` are plain HTTP clients. They know nothing about the agent.
+- `tools/` wrap data sources with Anthropic-facing schemas and descriptions.
+- `agent/` orchestrates the message loop and tool dispatch.
+- `prompts/` hold system prompts as Python constants.
+
+## When editing
+- Tool descriptions are load-bearing. Be specific about when to use a tool.
+- Errors inside tools should be returned as strings, not raised, so the agent loop survives.
+- New tools get registered in `cli/main.py`'s `_build_registry`.
