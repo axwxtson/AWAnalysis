@@ -3,9 +3,9 @@
 This is a *plain HTTP client*, not a tool. Tools wrap this with
 agent-facing schemas and descriptions.
 """
-
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import httpx
@@ -24,9 +24,15 @@ TICKER_TO_ID = {
     "AVAX": "avalanche-2",
     "LINK": "chainlink",
     "DOT": "polkadot",
-    "MATIC": "matic-network",
+    "POL": "polygon-ecosystem-token",
+    "MATIC": "polygon-ecosystem-token",
 }
 
+# Strip HTML tags and clean whitespace from CoinGecko description text.
+# CoinGecko's descriptions contain inline links (<a href="...">) and
+# basic HTML formatting that we don't want in the agent's context.
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_WHITESPACE_RE = re.compile(r"\s+")
 
 class CoinGeckoError(Exception):
     """Raised when CoinGecko returns an error or unexpected response."""
@@ -63,10 +69,11 @@ class CoinGeckoClient:
         ticker = ticker.upper()
         coin_id = TICKER_TO_ID.get(ticker)
         if coin_id is None:
-            raise CoinGeckoError(
-                f"Unknown ticker '{ticker}'. "
-                f"Known: {', '.join(sorted(TICKER_TO_ID))}"
-            )
+            # Not in the curated map — try CoinGecko's search to resolve
+            # the ticker. _resolve_coin_id raises CoinGeckoError if no
+            # match is found, which the tool dispatch surfaces as a tool
+            # failure the model can adapt to.
+            coin_id = self._resolve_coin_id(ticker)
 
         params = {
             "ids": coin_id,
@@ -95,5 +102,87 @@ class CoinGeckoClient:
             "volume_24h": data.get(f"{vs_currency}_24h_vol"),
         }
 
+    def get_description(self, query: str) -> dict[str, Any]:
+        """Look up an asset by ticker or name and return its description.
+
+        Unlike get_price, this does not require the ticker to be in our
+        curated TICKER_TO_ID map — it uses CoinGecko's `/search` endpoint
+        to resolve the query to a coin id, then fetches that coin's
+        description from `/coins/{id}`.
+
+        Returns:
+            {
+                "id": "quant-network",
+                "name": "Quant",
+                "symbol": "QNT",
+                "description": "Quant is a blockchain interoperability...",
+                "categories": ["Smart Contract Platform", ...],
+            }
+        """
+        # Resolve query → coin id via search endpoint
+        coin_id = self._resolve_coin_id(query)
+
+        try:
+            resp = self._client.get(
+                f"/coins/{coin_id}",
+                params={
+                    "localization": "false",
+                    "tickers": "false",
+                    "market_data": "false",
+                    "community_data": "false",
+                    "developer_data": "false",
+                },
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise CoinGeckoError(f"CoinGecko coin fetch failed: {exc}") from exc
+
+        data = resp.json()
+        description_html = data.get("description", {}).get("en", "")
+        description = _clean_description(description_html)
+
+        if not description:
+            raise CoinGeckoError(
+                f"CoinGecko has no English description for {coin_id}"
+            )
+
+        return {
+            "id": coin_id,
+            "name": data.get("name", ""),
+            "symbol": (data.get("symbol") or "").upper(),
+            "description": description,
+            "categories": [c for c in data.get("categories", []) if c],
+        }
+
+    def _resolve_coin_id(self, query: str) -> str:
+        """Resolve a freeform query to a CoinGecko coin id."""
+        query = query.strip()
+
+        # Fast path: if it's a ticker we already know, skip the search.
+        upper = query.upper()
+        if upper in TICKER_TO_ID:
+            return TICKER_TO_ID[upper]
+
+        try:
+            resp = self._client.get("/search", params={"query": query})
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise CoinGeckoError(f"CoinGecko search failed: {exc}") from exc
+
+        coins = resp.json().get("coins", [])
+        if not coins:
+            raise CoinGeckoError(f"No CoinGecko match for '{query}'")
+
+        # CoinGecko ranks search results by market cap rank — top hit is
+        # almost always the right one. We trust the ranking.
+        return coins[0]["id"]
+
     def close(self) -> None:
         self._client.close()
+
+
+def _clean_description(html: str) -> str:
+    """Strip HTML tags and collapse whitespace from CoinGecko descriptions."""
+    text = _HTML_TAG_RE.sub("", html)
+    text = _WHITESPACE_RE.sub(" ", text)
+    return text.strip()

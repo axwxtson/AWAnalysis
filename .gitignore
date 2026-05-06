@@ -37,3 +37,6 @@ Thumbs.db
 logs/
 *.log
 data/cache/
+
+# RAG store — regenerable from corpus
+data/chroma/

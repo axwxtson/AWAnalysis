@@ -14,7 +14,7 @@ from rich.markdown import Markdown
 
 from aw_analysis.agent import Conversation, TurnBudgetExceeded
 from aw_analysis.client import AnthropicClient
-from aw_analysis.tools import CryptoPriceTool, ToolRegistry
+from aw_analysis.tools import AssetProfileTool, CryptoPriceTool, ToolRegistry
 
 console = Console()
 
@@ -22,6 +22,7 @@ console = Console()
 def _build_registry() -> ToolRegistry:
     registry = ToolRegistry()
     registry.register(CryptoPriceTool())
+    registry.register(AssetProfileTool())
     return registry
 
 

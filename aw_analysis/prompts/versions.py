@@ -19,7 +19,7 @@ from __future__ import annotations
 # The version of the system prompt currently in use. Change this to roll
 # back or forward. The agent loop reads SYSTEM_PROMPT, which dispatches
 # on this constant.
-ACTIVE_PROMPT_VERSION = "v2.0.0"
+ACTIVE_PROMPT_VERSION = "v2.1.0"
 
 # All known prompt versions. Each entry holds the full system prompt
 # string for that version. Old versions are kept here so evals and

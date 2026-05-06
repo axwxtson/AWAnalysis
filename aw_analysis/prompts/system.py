@@ -71,6 +71,30 @@ report what happened to the user plainly.
 - **One refusal beats one bad tool call.** If a query is for an asset \
 or asset class you don't cover, refuse before calling any tool."""
 
+def _tool_selection() -> str:
+    return """\
+## Tool selection
+
+You have three retrieval tools, each with a different purpose:
+
+- **`get_crypto_price`** — live market data (price, 24h change, market \
+cap, volume). Use for any question about current state.
+- **`lookup_asset_profile`** — background information about an asset: \
+what it is, founders, consensus mechanism, history. Works for any \
+asset on CoinGecko, with deeper editorial profiles for our researched \
+assets. Returns a `source` field: "curated" for our profiles, \
+"coingecko" for fallback descriptions.
+- **No tool** — for questions you can answer from the conversation \
+history, or general crypto concepts (e.g. "what is proof of stake?").
+
+When attributing information from `lookup_asset_profile`:
+- If `source` is "curated", phrase as "from our research" or just \
+state the facts directly.
+- If `source` is "coingecko", phrase as "according to CoinGecko" or \
+"per CoinGecko's description". This honesty matters — the user should \
+know the difference between researched content and a third-party \
+summary.
+- If `source` is "none", explicitly state that no profile was found."""
 
 def _output_contract() -> str:
     return """\
@@ -112,12 +136,13 @@ def _critical_rules_restated() -> str:
 3. Lead with the number; keep responses tight; no filler."""
 
 
-@register("v2.0.0")
-def _build_v2_0_0() -> str:
+@register("v2.1.0")
+def _build_v2_1_0() -> str:
     sections = [
         _identity(),
         _how_to_think(),
         _how_to_use_tools(),
+        _tool_selection(),
         _output_contract(),
         _refusal_policy(),
         render_examples(),
