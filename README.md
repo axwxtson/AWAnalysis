@@ -42,16 +42,16 @@ provenance accordingly — "from our research" vs. "according to CoinGecko"
 
 ```mermaid
 flowchart TD
-    User --> CLI[CLIbin/aw]
-    CLI --> Conv[Conversationstate, traces, turn budget]
+    User --> CLI[CLI bin/aw]
+    CLI --> Conv[Conversation: state, traces, turn budget]
     Conv --> Client[AnthropicClient]
     Client --> Tools[Tools]
     Tools --> Price[get_crypto_price]
     Tools --> Profile[lookup_asset_profile]
-    Price --> CG1[CoinGecko/simple/price]
-    Profile --> Curated{Curated tierRAG / ChromaDB}
-    Curated -->|score ≥ 0.70| Profile
-    Curated -->|score < 0.70| CG2[CoinGecko/coins/{id} description]
+    Price --> CG1[CoinGecko /simple/price]
+    Profile --> Curated{Curated tier: RAG / ChromaDB}
+    Curated -->|score >= 0.70| Profile
+    Curated -->|score < 0.70| CG2[CoinGecko /coins description]
     CG2 --> Profile
 ```
 
