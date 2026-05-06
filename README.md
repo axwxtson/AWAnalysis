@@ -39,49 +39,21 @@ provenance accordingly — "from our research" vs. "according to CoinGecko"
 — rather than presenting all sources as equivalent.
 
 ## Architecture
-┌─────────────────────────────────────────────────────────────┐
-│  User                                                       │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│  CLI (bin/aw → python -m aw_analysis.cli.main)              │
-│    - Single-shot or interactive REPL                        │
-│    - REPL threads context across turns                      │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│  Conversation (aw_analysis/agent/)                          │
-│    - Holds message history, tool registry, turn budget      │
-│    - send() returns a TurnTrace with full call detail       │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│  AnthropicClient (aw_analysis/client/)                      │
-│    - Thin wrapper around the Anthropic SDK                  │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│  Tools (aw_analysis/tools/)                                 │
-│    get_crypto_price          lookup_asset_profile           │
-│           │                          │                      │
-│           ▼                          ▼                      │
-│  ┌───────────────────┐    ┌───────────────────────────┐     │
-│  │ data_sources/     │    │ rag/ (curated tier)       │     │
-│  │   coingecko.py    │    │   chunker → embedder →    │     │
-│  └───────────────────┘    │   ChromaDB → retriever    │     │
-│           │               └───────────────────────────┘     │
-│           │                          │                      │
-│           │                          │ (if score < 0.70)    │
-│           │                          ▼                      │
-│           │               ┌───────────────────────────┐     │
-│           └──────────────►│ data_sources/coingecko.py │     │
-│                           │   get_description()       │     │
-│                           └───────────────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
+
+```mermaid
+flowchart TD
+    User --> CLI[CLIbin/aw]
+    CLI --> Conv[Conversationstate, traces, turn budget]
+    Conv --> Client[AnthropicClient]
+    Client --> Tools[Tools]
+    Tools --> Price[get_crypto_price]
+    Tools --> Profile[lookup_asset_profile]
+    Price --> CG1[CoinGecko/simple/price]
+    Profile --> Curated{Curated tierRAG / ChromaDB}
+    Curated -->|score ≥ 0.70| Profile
+    Curated -->|score < 0.70| CG2[CoinGecko/coins/{id} description]
+    CG2 --> Profile
+```
 
 ## Components
 
