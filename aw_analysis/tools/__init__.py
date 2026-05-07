@@ -1,6 +1,7 @@
 from aw_analysis.tools.asset_profile import AssetProfileTool
 from aw_analysis.tools.base import Tool, ToolRegistry, ToolResult
 from aw_analysis.tools.crypto_price import CryptoPriceTool
+from aw_analysis.tools.market_news import MarketNewsTool
 
 __all__ = [
     "Tool",
@@ -8,4 +9,5 @@ __all__ = [
     "ToolResult",
     "CryptoPriceTool",
     "AssetProfileTool",
+    "MarketNewsTool",
 ]
