@@ -20,3 +20,11 @@ Cross-asset market intelligence agent. Python 3.11+, src/ layout, package name `
 - Tool descriptions are load-bearing. Be specific about when to use a tool.
 - Errors inside tools should be returned as strings, not raised, so the agent loop survives.
 - New tools get registered in `cli/main.py`'s `_build_registry`.
+
+## Stage 5 conventions:
+- Every model call goes through AnthropicClient.create with an explicit
+  ModelConfig. Never pass model/temperature/max_tokens as bare kwargs.
+- Use TaskType enum values, not magic strings.
+- Token counts come from client.count_tokens(), never from len(text)/4.
+- New per-task settings go in MODEL_CONFIG_REGISTRY in
+  aw_analysis/config/model_config.py with a populated rationale field.

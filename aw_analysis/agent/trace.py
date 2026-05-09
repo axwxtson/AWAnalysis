@@ -1,52 +1,78 @@
-"""Structured records of what happens during an agent turn.
+# aw_analysis/agent/trace.py
+"""Per-turn execution trace.
 
-A `TurnTrace` captures one user→assistant exchange in full detail:
-- The user's message
-- Every tool call the model made and what came back
-- The final assistant reply
-- Token usage and stop reason
-
-This is the substrate for evals (Stage 6) and observability (Stage 8).
-The eval harness can assert on traces; observability can stream them
-to Langfuse.
+Stage 5 additions:
+  - IterationUsage: per-iteration record of which ModelConfig was
+    used, the input/output token counts, and the post-hoc
+    classification (was this iteration actually a refusal?).
+  - TurnTrace gains `iterations` and a `was_refusal` summary.
+British English throughout.
 """
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 
-@dataclass
+@dataclass(frozen=True)
 class ToolCall:
-    """One tool invocation within a turn."""
+    """One tool invocation inside a turn.
+
+    Unchanged from Stage 3; included here for context.
+    """
 
     name: str
-    input: dict[str, Any]
-    result: str
-    success: bool
     duration_ms: float
+    success: bool
     error: str | None = None
+
+
+@dataclass(frozen=True)
+class IterationUsage:
+    """One iteration of the agent loop's call to the model.
+
+    A single send() can produce multiple iterations: one for tool
+    selection, one or more for tool-result-handling and synthesis.
+    Each gets one of these.
+    """
+
+    task_type: str  # TaskType.value
+    model: str
+    temperature: float
+    max_tokens: int
+    input_tokens: int
+    output_tokens: int
+    stop_reason: str
+    rationale: str  # Carried from ModelConfig for trace readability.
 
 
 @dataclass
 class TurnTrace:
-    """A complete record of one user→assistant turn."""
+    """Complete record of a single send() call.
+
+    Mutable because the loop appends iterations and tool calls as it
+    progresses. Stage 5 extensions are additive — every Stage 3
+    field is preserved.
+    """
 
     user_message: str
-    final_text: str
+    final_text: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
+    iterations: list[IterationUsage] = field(default_factory=list)
     stop_reason: str | None = None
-    input_tokens: int = 0
-    output_tokens: int = 0
-    iterations: int = 0
-    truncated: bool = False  # True if we hit the turn budget
+    iteration_count: int = 0
+    truncated: bool = False
+    was_refusal: bool = False  # Set post-hoc by the loop.
+    context_summarised: bool = False  # True if the soft budget guard fired.
 
-    def total_tokens(self) -> int:
-        return self.input_tokens + self.output_tokens
+    @property
+    def total_input_tokens(self) -> int:
+        return sum(it.input_tokens for it in self.iterations)
 
-    def tool_count(self) -> int:
-        return len(self.tool_calls)
+    @property
+    def total_output_tokens(self) -> int:
+        return sum(it.output_tokens for it in self.iterations)
 
-    def error_count(self) -> int:
-        return sum(1 for tc in self.tool_calls if not tc.success)
+    @property
+    def model_configs_used(self) -> list[str]:
+        """Ordered list of task_type values, useful for the CLI summary."""
+        return [it.task_type for it in self.iterations]

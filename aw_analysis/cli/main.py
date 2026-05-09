@@ -13,8 +13,15 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from aw_analysis.agent import Conversation, TurnBudgetExceeded
+from aw_analysis.agent.trace import TurnTrace
 from aw_analysis.client import AnthropicClient
-from aw_analysis.tools import AssetProfileTool, CryptoPriceTool, MarketNewsTool, ToolRegistry
+from aw_analysis.tools import (
+    AssetProfileTool,
+    CryptoPriceTool,
+    MarketNewsTool,
+    ToolRegistry,
+)
+from aw_analysis.prompts.system import SYSTEM_PROMPT
 
 console = Console()
 
@@ -27,15 +34,39 @@ def _build_registry() -> ToolRegistry:
     return registry
 
 
-def _print_trace_summary(trace) -> None:
-    """Print a one-line summary of a turn's tool activity."""
-    if not trace.tool_calls:
-        return
-    parts = []
-    for tc in trace.tool_calls:
-        marker = "✓" if tc.success else "✗"
-        parts.append(f"{marker} {tc.name} ({tc.duration_ms:.0f}ms)")
-    console.print(f"[dim]tools: {' · '.join(parts)}[/dim]")
+def _render_tool_activity(trace: TurnTrace) -> str:
+    """One-line summary under each response.
+
+    Stage 5 additions:
+      - Token totals (in/out across all iterations)
+      - Config sequence (e.g. tool_selection→final_synthesis)
+      - * suffix if context summarisation fired
+    """
+    if not trace.tool_calls and not trace.iterations:
+        return ""
+
+    parts: list[str] = []
+
+    if trace.tool_calls:
+        tool_bits = []
+        for call in trace.tool_calls:
+            tick = "✓" if call.success else "✗"
+            tool_bits.append(f"{tick} {call.name} ({call.duration_ms:.0f}ms)")
+        parts.append("tools: " + ", ".join(tool_bits))
+
+    if trace.iterations:
+        cfg_seq = "→".join(trace.model_configs_used)
+        token_bit = (
+            f"tokens: in={trace.total_input_tokens} "
+            f"out={trace.total_output_tokens}"
+        )
+        cfg_bit = f"cfg={cfg_seq}"
+        if trace.context_summarised:
+            cfg_bit += "*"
+        parts.append(token_bit)
+        parts.append(cfg_bit)
+
+    return " | ".join(parts)
 
 
 def _handle(user_message: str, conversation: Conversation) -> None:
@@ -47,7 +78,9 @@ def _handle(user_message: str, conversation: Conversation) -> None:
         console.print(f"[yellow]Turn budget exceeded:[/yellow] {exc}")
         return
 
-    _print_trace_summary(trace)
+    line = _render_tool_activity(trace)
+    if line:
+        console.print(f"[dim]{line}[/dim]")
     console.print(Markdown(trace.final_text))
     console.print()
 
@@ -55,7 +88,7 @@ def _handle(user_message: str, conversation: Conversation) -> None:
 def main() -> None:
     client = AnthropicClient()
     tools = _build_registry()
-    conversation = Conversation(client=client, tools=tools)
+    conversation = Conversation(client=client, tools=tools, system_prompt=SYSTEM_PROMPT)
 
     # Single-shot mode
     if len(sys.argv) > 1:
