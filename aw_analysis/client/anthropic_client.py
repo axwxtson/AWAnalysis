@@ -1,45 +1,80 @@
+# aw_analysis/client/anthropic_client.py
 """Thin wrapper around the Anthropic SDK.
 
-Why wrap it? Three reasons:
-1. We can swap the SDK or add retries/logging without touching agent code.
-2. We centralise model defaults and the system prompt injection point.
-3. It gives Stage 7 (multi-model orchestration) a single place to add routing.
+Stage 5 changes:
+  - create() now accepts a ModelConfig instead of bare model/temperature/
+    max_tokens kwargs. Callers must pass a config; this is the
+    single point where Module 5's per-task tuning lands at the SDK.
+  - count_tokens() exposes the official endpoint, which is the only
+    correct way to estimate token cost for Claude (see Module 5
+    Exercise 5.1: the 4:1 rule under-counts by ~20%).
 """
-
 from __future__ import annotations
 
 from typing import Any
 
-from anthropic import Anthropic
-from anthropic.types import Message, MessageParam, ToolParam
+import anthropic
 
-from aw_analysis.config import SETTINGS
+from aw_analysis.config import SETTINGS, ModelConfig
 
 
 class AnthropicClient:
-    """Wrapper exposing a minimal surface we actually use."""
+    """Synchronous wrapper around anthropic.Anthropic.
 
-    def __init__(self, model: str | None = None) -> None:
-        self._client = Anthropic(api_key=SETTINGS.anthropic_api_key)
-        self.model = model or SETTINGS.default_model
+    All model calls in the agent go through this class. Keeping the
+    SDK behind one wrapper means Stage 7 can add provider abstraction
+    in one file rather than dozens.
+    """
 
-    def create_message(
+    def __init__(self) -> None:
+        self._sdk = anthropic.Anthropic(api_key=SETTINGS.anthropic_api_key)
+
+    def create(
         self,
-        messages: list[MessageParam],
-        system: str,
-        tools: list[ToolParam] | None = None,
-        max_tokens: int = 2048,
-        temperature: float = 1.0,
-    ) -> Message:
-        """Send a message to the model and return the full response."""
+        *,
+        config: ModelConfig,
+        system: str | list[dict[str, Any]],
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+    ) -> Any:
+        """Create a single message with the given ModelConfig.
+
+        Note that we pass the SDK named arguments only; positional
+        is brittle across SDK versions.
+        """
         kwargs: dict[str, Any] = {
-            "model": self.model,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
+            "model": config.model,
+            "max_tokens": config.max_tokens,
+            "temperature": config.temperature,
             "system": system,
             "messages": messages,
         }
-        if tools:
+        if tools is not None:
             kwargs["tools"] = tools
+        return self._sdk.messages.create(**kwargs)
 
-        return self._client.messages.create(**kwargs)
+    def count_tokens(
+        self,
+        *,
+        model: str,
+        system: str | list[dict[str, Any]],
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+    ) -> int:
+        """Return the input-token count for the given message set.
+
+        Uses Anthropic's count_tokens endpoint — the ground truth.
+        Used by the Conversation soft-budget guard. Do not estimate
+        with character heuristics; Module 5 Ex 5.1 showed the 4:1
+        rule undercounts by ~20% and dense numerical content makes
+        it worse.
+        """
+        kwargs: dict[str, Any] = {
+            "model": model,
+            "system": system,
+            "messages": messages,
+        }
+        if tools is not None:
+            kwargs["tools"] = tools
+        response = self._sdk.messages.count_tokens(**kwargs)
+        return int(response.input_tokens)
