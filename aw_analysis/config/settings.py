@@ -9,11 +9,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env from the repo root if present
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 @dataclass(frozen=True)
 class Settings:
