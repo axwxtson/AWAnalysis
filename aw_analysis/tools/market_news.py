@@ -26,7 +26,7 @@ from aw_analysis.tools.base import Tool
 
 
 class MarketNewsTool(Tool):
-    name = "search_market_news"
+    name = "web_search"
     description = (
         "Search the web for recent news, events, or analysis about "
         "cryptocurrency markets and assets. Use this when the user asks "
@@ -68,5 +68,5 @@ class MarketNewsTool(Tool):
     def to_anthropic_param(self) -> dict[str, Any]:
         return {
             "type": "web_search_20250305",
-            "name": "web_search",
+            "name": self.name,
         }
