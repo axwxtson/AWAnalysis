@@ -15,23 +15,11 @@ from rich.markdown import Markdown
 from aw_analysis.agent import Conversation, TurnBudgetExceeded
 from aw_analysis.agent.trace import TurnTrace
 from aw_analysis.client import AnthropicClient
-from aw_analysis.tools import (
-    AssetProfileTool,
-    CryptoPriceTool,
-    MarketNewsTool,
-    ToolRegistry,
-)
+from aw_analysis.tools import ToolRegistry, default_registry
+
 from aw_analysis.prompts.system import SYSTEM_PROMPT
 
 console = Console()
-
-
-def _build_registry() -> ToolRegistry:
-    registry = ToolRegistry()
-    registry.register(CryptoPriceTool())
-    registry.register(AssetProfileTool())
-    registry.register(MarketNewsTool())
-    return registry
 
 
 def _render_tool_activity(trace: TurnTrace) -> str:
@@ -87,7 +75,7 @@ def _handle(user_message: str, conversation: Conversation) -> None:
 
 def main() -> None:
     client = AnthropicClient()
-    tools = _build_registry()
+    tools = default_registry()
     conversation = Conversation(client=client, tools=tools, system_prompt=SYSTEM_PROMPT)
 
     # Single-shot mode
