@@ -24,6 +24,8 @@ class ToolCall:
     duration_ms: float
     success: bool
     error: str | None = None
+    result: str = ""
+
 
 
 @dataclass(frozen=True)

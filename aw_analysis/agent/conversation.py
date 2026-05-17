@@ -37,11 +37,28 @@ from aw_analysis.tools.base import ToolRegistry, ToolResult
 # (the trace just says it wasn't a refusal); false positives would
 # be misleading, so the patterns are deliberately narrow.
 _REFUSAL_PATTERNS = (
+    # Speculation refusals (existing).
     re.compile(r"\bI can(?:'t| not)\s+predict\b", re.IGNORECASE),
     re.compile(r"\bI can(?:'t| not)\s+speculate\b", re.IGNORECASE),
     re.compile(r"\bthat'?s speculation\b", re.IGNORECASE),
     re.compile(r"\bI don'?t make (?:price )?predictions\b", re.IGNORECASE),
     re.compile(r"\bI can only analyse\b", re.IGNORECASE),
+    # Stage 6: widened after the first eval surfaced false negatives.
+    # Module 6 Ex 6.1 finding applied — pattern matching was missing
+    # actual refusals because the prompt's idioms had drifted from
+    # the original pattern set. The widened set is intent-shaped
+    # rather than string-shaped.
+    # Advice/recommendation refusals.
+    re.compile(
+        r"\bI can(?:'t| not)\s+(?:make|provide|give)\s+"
+        r"(?:[\w\s-]{0,40})\s*(?:recommendations|advice)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bspeculative advice\b", re.IGNORECASE),
+    # Scope refusals (asset class out of remit).
+    re.compile(r"\bI (?:don'?t|do not) cover\s+\w+\b", re.IGNORECASE),
+    re.compile(r"\bonly cryptocurrencies\b", re.IGNORECASE),
+    re.compile(r"\bcrypto-only\b", re.IGNORECASE),
 )
 
 
@@ -116,6 +133,7 @@ class Conversation:
             # Soft context budget check. Side-effect: may mutate
             # self._messages by summarising old ones.
             self._enforce_context_budget(config, trace)
+            
 
             # The actual call.
             response = self.client.create(
@@ -145,6 +163,10 @@ class Conversation:
             self._messages.append(
                 {"role": "assistant", "content": response.content}
             )
+            # Stage 6: capture server-tool calls from the response.
+            self._capture_server_tool_calls(response.content, trace)
+            self._capture_citations(response.content, trace)
+
 
             # Terminal stop reasons end the loop with the final text.
             if response.stop_reason in ("end_turn", "stop_sequence"):
@@ -301,6 +323,7 @@ class Conversation:
                     duration_ms=duration_ms,
                     success=tool_result.success,
                     error=tool_result.error,
+                    result=tool_result.content,
                 )
             )
             results.append(
@@ -312,6 +335,158 @@ class Conversation:
                 }
             )
         return results
+
+    def _capture_server_tool_calls(
+        self, content: list[Any], trace: TurnTrace
+    ) -> None:
+        """Record server-side tool calls onto the trace.
+
+        Server tools (web_search, code_execution, etc.) execute on
+        Anthropic's infrastructure, not in our agent loop. They appear in
+        the response as pairs of content blocks: a `server_tool_use` block
+        (what the model asked for) followed by a `web_search_tool_result`
+        block (what came back). We don't dispatch them — they've already
+        run — but the eval harness asserts against `trace.tool_calls`, so
+        they need to be recorded there alongside client-tool calls.
+
+        Stage 6: added when the eval harness surfaced that news cases
+        appeared to make no tool calls. The model was calling web_search
+        correctly; the trace just wasn't capturing it.
+        """
+        pending_server_use: Any | None = None
+        for block in content:
+            block_type = getattr(block, "type", None)
+            if block_type == "server_tool_use":
+                pending_server_use = block
+            elif block_type == "web_search_tool_result" and pending_server_use is not None:
+                # The pairing: this result corresponds to the most recent
+                # server_tool_use we saw. Anthropic emits them in pairs
+                # adjacent in the content array.
+                result_payload = self._render_server_tool_result(block)
+                trace.tool_calls.append(
+                    ToolCall(
+                        name=getattr(pending_server_use, "name", "web_search"),
+                        duration_ms=0.0,  # server-executed; we don't measure latency here
+                        success=True,
+                        error=None,
+                        result=result_payload,
+                    )
+                )
+                pending_server_use = None
+
+
+    def _capture_citations(
+        self, content: list[Any], trace: TurnTrace
+    ) -> None:
+        """Record citation snippets attached to assistant text blocks.
+
+        When server tools (web_search) run, the model surfaces evidence
+        for each claim as `citation` objects on each text block, each
+        carrying a `cited_text` snippet. These snippets are the closest
+        thing user-side code gets to the underlying search content; the
+        raw search results themselves return only titles, URLs, and
+        encrypted blobs.
+
+        Stage 6 finding: the eval's faithfulness judge needs grounding
+        text to grade against. Web search results are encrypted server-
+        side; citations are the visible substitute.
+
+        We collect every unique (cited_text, url) pair across all text
+        blocks and attach the rendered list to the most recent web_search
+        ToolCall on the trace. This makes the citations available to the
+        judge via the same `result` field the judge already reads.
+        """
+        seen: set[tuple[str, str]] = set()
+        snippets: list[tuple[str, str, str]] = []  # (cited_text, title, url)
+        for block in content:
+            if getattr(block, "type", None) != "text":
+                continue
+            citations = getattr(block, "citations", None) or []
+            for cit in citations:
+                cited = (getattr(cit, "cited_text", "") or "").strip()
+                url = getattr(cit, "url", "") or ""
+                title = getattr(cit, "title", "") or ""
+                if not cited or (cited, url) in seen:
+                    continue
+                seen.add((cited, url))
+                snippets.append((cited, title, url))
+
+        if not snippets:
+            return
+
+        # Find the most recent web_search ToolCall on the trace and extend
+        # its result with the citation list. If there isn't one (e.g. the
+        # model chose to answer without searching), do nothing — there's
+        # no tool result to ground citations against.
+        for tc in reversed(trace.tool_calls):
+            if tc.name == "web_search":
+                citation_block = self._render_citations(snippets)
+                # ToolCall is frozen; replace it with an updated copy.
+                updated = ToolCall(
+                    name=tc.name,
+                    duration_ms=tc.duration_ms,
+                    success=tc.success,
+                    error=tc.error,
+                    result=f"{tc.result}\n\n--- Cited snippets ---\n{citation_block}",
+                )
+                idx = trace.tool_calls.index(tc)
+                trace.tool_calls[idx] = updated
+                return
+
+    @staticmethod
+    def _render_citations(
+        snippets: list[tuple[str, str, str]]
+    ) -> str:
+        """Render the citation list as readable grounding context."""
+        lines: list[str] = []
+        for cited, title, url in snippets:
+            source = f"{title} ({url})" if title else url
+            lines.append(f"[{source}] {cited}")
+        return "\n".join(lines)            
+
+    @staticmethod
+    def _render_server_tool_result(block: Any) -> str:
+        """Compact rendering of a web_search_tool_result block for the trace.
+
+        Each result item has title, url, and a content text excerpt. The
+        judge's faithfulness rubric grades against this string as the
+        tool's grounding context — so capture the excerpts, not just the
+        URLs. URLs alone make every factual claim look ungrounded.
+
+        Stage 6 finding: the first version of this rendering only captured
+        title + url. That was insufficient grounding context; the judge
+        correctly marked news answers down for claims that were actually
+        supported by the search excerpts but invisible to the trace.
+
+        On any unexpected shape, fall back to repr(block) so the trace is
+        never empty.
+        """
+        try:
+            items = getattr(block, "content", None) or []
+            lines: list[str] = []
+            for item in items:
+                title = getattr(item, "title", "") or ""
+                url = getattr(item, "url", "") or ""
+                # The text excerpt the API returns. Field name varies by
+                # SDK version: try `encrypted_content` first (newer SDKs
+                # return cipher-wrapped excerpts), then `content` for the
+                # plain-text variant. Fall back to empty string.
+                excerpt = (
+                    getattr(item, "encrypted_content", None)
+                    or getattr(item, "content", None)
+                    or ""
+                )
+                # If content is a list of blocks (newer SDKs), join their
+                # text. If it's a string, use as-is.
+                if isinstance(excerpt, list):
+                    excerpt = " ".join(
+                        getattr(b, "text", str(b)) for b in excerpt
+                    )
+                header = f"{title} ({url})" if title else url
+                lines.append(f"{header}: {excerpt}" if excerpt else header)
+            return "\n".join(lines) if lines else repr(block)
+        except Exception:
+            return repr(block)
 
     @staticmethod
     def _extract_text(content: list[Any]) -> str:
