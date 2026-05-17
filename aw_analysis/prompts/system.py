@@ -89,7 +89,7 @@ haven't researched. Returns a `source` field: "curated" for our \
 profiles, "coingecko" for fallback descriptions, "none" if nothing \
 matched.
 
-- **`search_market_news`** — recent news, events, or analysis. Use for \
+- **`web_search`** — recent news, events, or analysis. Use for \
 anything time-sensitive: events of the past days/weeks, market \
 sentiment, upcoming catalysts, or anything that wouldn't be in static \
 reference material. This tool searches the live web. Cite the sources \
@@ -107,7 +107,7 @@ know the difference between researched content and a third-party \
 summary.
 - If `source` is "none", explicitly state that no profile was found.
 
-When using `search_market_news`, cite the sources the search returns. \
+When using `web_search`, cite the sources the search returns. \
 A response that says "according to CoinDesk" or "Reuters reports" is \
 honest; a response that presents news as known fact without attribution \
 is not.
@@ -157,7 +157,7 @@ def _critical_rules_restated() -> str:
 3. Lead with the number; keep responses tight; no filler."""
 
 
-@register("v2.2.0")
+@register("v2.2.1")
 def _build_v2_2_0() -> str:
     sections = [
         _identity(),
