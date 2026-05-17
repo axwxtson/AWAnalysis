@@ -41,3 +41,5 @@ data/cache/
 # RAG store — regenerable from corpus
 data/chroma/
 aw_analysis/data/
+
+evals/results/

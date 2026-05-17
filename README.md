@@ -9,7 +9,7 @@ Engineering programme (see [axwxtson/ai-systems-engineering](https://github.com/
 
 ## Status
 
-**Stage 4 of 8 — RAG with multi-source retrieval (Phase 1 of 2).** Each stage
+**Stage 6 of 8 — Evaluation & Testing.** Each stage
 layers in patterns from one study module:
 
 | Stage | Module | What it adds |
@@ -17,8 +17,10 @@ layers in patterns from one study module:
 | 1 | LLM API Engineering | Anthropic SDK wrapper, tool definitions, agent loop |
 | 2 | Prompt Engineering | Structured system prompt with versioning, few-shot examples |
 | 3 | Agent Architectures | Stateful Conversation with cross-turn memory, structured traces |
-| 4 | RAG Systems | Embedding pipeline, vector store, tiered retrieval (current) |
-| 5–8 | Coming | Model config, evals, multi-model orchestration, observability |
+| 4 | RAG Systems | Embedding pipeline, vector store, tiered retrieval |
+| 5 | LLM Fundamentals | Per-task ModelConfig, token accounting, soft context budget |
+| 6 | Evaluation & Testing | Two-layer eval harness with calibrated LLM judge (current) |
+| 7–8 | Coming | Multi-model orchestration, observability |
 
 ## What it does today
 
@@ -38,21 +40,60 @@ The asset profile tool returns a `source` field in its results
 provenance accordingly — "from our research" vs. "according to CoinGecko"
 — rather than presenting all sources as equivalent.
 
+## How we know it works
+
+The agent ships with an automated eval harness in `evals/`. Two layers
+grade every case in parallel:
+
+- **Deterministic** — assertions against the per-iteration trace fields
+  the agent emits (`was_refusal`, `tool_calls`, iteration count, token
+  usage). Fast, reproducible, brittle to paraphrase by design.
+- **LLM-as-judge** — faithfulness and relevance scoring of the final
+  answer against the tool results captured in the trace. Calibrated
+  against a 12-pair human-graded reference set; bias-tested for
+  position and length effects.
+
+The judge is calibrated before any eval run gates on its scores. The
+calibration pass measures exact agreement, ±1 agreement, direction
+agreement, position consistency, and length bias against five
+explicit thresholds.
+
+Golden dataset: 24 cases across six query classes (price, profile via
+curated retrieval, profile via CoinGecko fallback, news, refusal,
+combined-tools). Every case has an explicit rationale.
+
+```bash
+# Calibrate the judge (required once per rubric version)
+PYTHONPATH=$(pwd) python -m evals.cli calibrate
+
+# Run the full harness against the active prompt
+PYTHONPATH=$(pwd) python -m evals.cli run
+
+# Compare two runs (baseline vs candidate)
+PYTHONPATH=$(pwd) python -m evals.cli compare \
+  evals/results/2.2.0_<run_id>.json \
+  evals/results/2.3.0-broken_<run_id>.json
+```
+
 ## Architecture
 
 ```mermaid
 flowchart TD
     User --> CLI[CLI bin/aw]
     CLI --> Conv[Conversation: state, traces, turn budget]
-    Conv --> Client[AnthropicClient]
+    Conv --> Client[AnthropicClient with per-task ModelConfig]
     Client --> Tools[Tools]
     Tools --> Price[get_crypto_price]
     Tools --> Profile[lookup_asset_profile]
+    Tools --> News[search_market_news]
     Price --> CG1[CoinGecko /simple/price]
-    Profile --> Curated{Curated tier: RAG / ChromaDB}
+    Profile --> Curated{Curated tier: ChromaDB + Voyage}
     Curated -->|score >= 0.70| Profile
     Curated -->|score < 0.70| CG2[CoinGecko /coins description]
-    CG2 --> Profile
+    News --> WS[Anthropic web search]
+    Conv -.trace.-> Evals[evals/ harness]
+    Evals --> Det[Deterministic layer]
+    Evals --> Judge[LLM-as-judge layer]
 ```
 
 ## Components
@@ -60,8 +101,10 @@ flowchart TD
 - **`aw_analysis/agent/`** — `Conversation` (stateful), `TurnTrace`,
   `ToolCall`, agent loop, error types
 - **`aw_analysis/client/`** — Anthropic SDK wrapper
-- **`aw_analysis/tools/`** — agent-facing tool implementations with
-  schemas, descriptions, and structured `ToolResult` returns
+- **`aw_analysis/tools/`** — three tools (`get_crypto_price`,
+  `lookup_asset_profile`, `search_market_news`) with schemas, descriptions,
+  and structured `ToolResult` returns; `default_registry()` constructs
+  the standard registry used by both the CLI and the eval harness
 - **`aw_analysis/data_sources/`** — plain HTTP clients (CoinGecko)
 - **`aw_analysis/rag/`** — chunker (per-section markdown), embedder
   (Voyage AI, asymmetric query/document), vector store (ChromaDB,
@@ -72,6 +115,10 @@ flowchart TD
   (one per researched asset)
 - **`data/chroma/`** — generated vector store (gitignored)
 - **`bin/aw`** — shell wrapper invoking `python -m aw_analysis.cli.main`
+- **`aw_analysis/config/`** — runtime settings, per-task `ModelConfig`
+  with measured temperature/max-token defaults, `TaskType` enum
+- **`evals/`** — automated eval harness (golden dataset, two-layer
+  grader, judge calibration, A/B regression)
 
 ## Setup
 
@@ -154,6 +201,22 @@ hard for the agent loop to distinguish success from failure. The
 `error` category alongside the content. This pays off in the upcoming
 evals stage (assertions on traces) and observability stage (Langfuse
 tagging by error type).
+
+**Why two grader layers instead of one?** Substring matching is cheap
+and reproducible but misses paraphrases ("can't provide personalised
+advice" vs "cannot give financial advice"). LLM-as-judge is semantically
+robust but noisy and expensive. We report both and treat disagreement
+as a signal worth investigating — that pattern catches more genuine
+issues than either layer alone, especially on refusal grading where
+the surface form varies.
+
+**Why calibrate the judge?** Because LLM judges have biases — position
+bias when comparing pairs, length bias when scoring single answers,
+self-preference when grading their own family. The calibration pass
+measures all three against a small human-graded reference set and
+refuses to gate downstream eval results until the judge agrees with
+human grades within ±1 at least 80% of the time. Skipping this step
+is trusting a random number generator.
 
 ## License
 

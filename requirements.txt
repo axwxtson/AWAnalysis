@@ -5,3 +5,4 @@ pydantic>=2.6.0
 rich>=13.7.0
 voyageai>=0.2.4
 chromadb>=0.5.0
+pydantic>=2.0

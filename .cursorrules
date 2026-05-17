@@ -28,3 +28,24 @@ Cross-asset market intelligence agent. Python 3.11+, src/ layout, package name `
 - Token counts come from client.count_tokens(), never from len(text)/4.
 - New per-task settings go in MODEL_CONFIG_REGISTRY in
   aw_analysis/config/model_config.py with a populated rationale field.
+
+
+## Stage 6 conventions (Evaluation & Testing)
+
+- The eval harness lives in `evals/`, a sibling of `aw_analysis/`.
+  `evals/` imports from `aw_analysis`. `aw_analysis/` MUST NEVER import
+  from `evals/`. Production code does not depend on the eval harness.
+- Every Assertion has an explicit AssertionKind. Adding a new kind
+  requires (a) a new enum value, (b) a new handler in
+  evals/grader/deterministic.py, (c) a new entry in _HANDLERS.
+- The judge uses TaskType.JUDGE via get_model_config. Never instantiate
+  a model call inside evals/grader/judge.py with a different config.
+- The judge's rubric is versioned as a constant (JUDGE_RUBRIC_VERSION).
+  Changing rubric wording requires bumping the version and re-running
+  calibration. Stale calibration reports are not reused.
+- Every EvalCase has a `rationale` field that is at least one sentence.
+  A case without a rationale is a vibe; refuse to write one.
+- When proposing changes to the eval runner's _adjudicate function, do
+  not collapse the deterministic and judge layers into one score. They
+  must remain reportable independently. Disagreement is signal.
+- British English in comments, docstrings, and prose throughout.
