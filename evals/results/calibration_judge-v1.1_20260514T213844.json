@@ -1,0 +1,70 @@
+{
+  "rubric_version": "judge-v1.1",
+  "passes_gate": true,
+  "gate_failures": [],
+  "agreement": {
+    "exact": 0.83,
+    "within_one": 1.0,
+    "direction": 0.92,
+    "mean_signed_bias": 0.0,
+    "per_dimension": {
+      "faithfulness": {
+        "exact": 1.0,
+        "within_one": 1.0,
+        "n": 4
+      },
+      "relevance": {
+        "exact": 0.75,
+        "within_one": 1.0,
+        "n": 4
+      },
+      "refusal_correctness": {
+        "exact": 0.75,
+        "within_one": 1.0,
+        "n": 4
+      }
+    }
+  },
+  "disagreements": [],
+  "position_bias": {
+    "consistency_rate": 1.0,
+    "rows": [
+      {
+        "id": "pos_01",
+        "ordering_a_winner": 1,
+        "ordering_b_winner": 2,
+        "consistent": true
+      },
+      {
+        "id": "pos_02",
+        "ordering_a_winner": 1,
+        "ordering_b_winner": 2,
+        "consistent": true
+      },
+      {
+        "id": "pos_03",
+        "ordering_a_winner": 1,
+        "ordering_b_winner": 2,
+        "consistent": true
+      }
+    ]
+  },
+  "length_bias": {
+    "mean_signed_gap": 0.0,
+    "abs_gap": 0.0,
+    "rows": [
+      {
+        "id": "len_01",
+        "short_score": 1,
+        "long_score": 1,
+        "gap_long_minus_short": 0
+      },
+      {
+        "id": "len_02",
+        "short_score": 5,
+        "long_score": 5,
+        "gap_long_minus_short": 0
+      }
+    ]
+  }
+}
