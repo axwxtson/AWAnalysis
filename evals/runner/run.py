@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import json
 import time
+import anthropic
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
+
 
 from aw_analysis.agent.conversation import Conversation
 from aw_analysis.client import AnthropicClient
@@ -94,6 +96,19 @@ def run_eval(
         result = _run_one(case, client, system_prompt)
         report.cases.append(result)
         print("PASS" if result.overall_passed else "FAIL")
+        # Stage 6 operational fix: pace requests to avoid rolling-minute
+        # rate limits on Tier 1 (30K input tokens/min). The news class
+        # produces large web_search results that compound the per-case
+        # input-token cost when run back-to-back. A 1.5s pause between
+        # cases keeps the rolling window healthy. Adds ~36s to a 24-case
+        # run; trivial compared to the call latency.
+        last_case_tokens = result.total_input_tokens + result.total_output_tokens
+        if last_case_tokens > 5000:
+            time.sleep(12.0)   # heavy case; let the rolling window meaningfully drain
+        elif last_case_tokens > 2000:
+            time.sleep(3.0)
+        else:
+            time.sleep(0.5)
 
     output_path = results_dir / f"{prompt_version}_{run_id}.json"
     output_path.write_text(json.dumps(report_to_dict(report), indent=2))
@@ -112,37 +127,94 @@ def _run_one(
     data' reapplied at the eval layer).
     """
     started = time.perf_counter()
-    try:
-        conversation = Conversation(
-            client=client,
-            tools=default_registry(),
-            system_prompt=system_prompt,
-        )
-        trace = conversation.send(case.query)
-        final_text = trace.final_text or ""
-    except Exception as exc:  # broad on purpose - eval layer must not crash
+    conversation = Conversation(
+        client=client,
+        tools=default_registry(),
+        system_prompt=system_prompt,
+    )
+
+    # Stage 6 operational fix: rate-limit retry. Tier 1's 30K input
+    # tokens/min budget can be tripped by news cases running in close
+    # sequence (the trace grows large from web_search results, the
+    # judge call sends the full trace, three of them in a 60s window
+    # exceeds the budget). A single retry after 30s clears the rolling
+    # window enough to proceed.
+    max_rate_limit_retries = 2
+    trace = None
+    final_text = ""
+    for attempt in range(max_rate_limit_retries + 1):
+        try:
+            trace = conversation.send(case.query)
+            final_text = trace.final_text or ""
+            break
+        except anthropic.RateLimitError:
+            if attempt == max_rate_limit_retries:
+                # Final attempt failed — fall through to broad handler.
+                # No bare-except equivalent here; re-raise so the
+                # outer try captures and records the failure.
+                raise
+            # Reset the conversation state (the failed send may have
+            # left partial messages) and back off.
+            conversation = Conversation(
+                client=client,
+                tools=default_registry(),
+                system_prompt=system_prompt,
+            )
+            time.sleep(30.0)
+        except Exception as exc:  # broad on purpose - eval layer must not crash
+            elapsed = (time.perf_counter() - started) * 1000.0
+            return _failure_eval_result(case, repr(exc), elapsed)
+
+    if trace is None:
+        # Shouldn't be reachable — either the loop broke after success or
+        # raised after exhausting retries. Defensive fallback.
         elapsed = (time.perf_counter() - started) * 1000.0
-        return _failure_eval_result(case, repr(exc), elapsed)
+        return _failure_eval_result(
+            case, "rate-limit retries exhausted with no recorded trace", elapsed
+        )
 
     deterministic = grade_deterministic(case.assertions, trace, final_text)
 
-    try:
-        judge = grade_judge(
-            case_query=case.query,
-            final_text=final_text,
-            trace=trace,
-            query_class=case.query_class,
-            client=client,
-        )
-    except Exception as exc:
-        judge = JudgeScores(
-            faithfulness=1,
-            relevance=1,
-            refusal_correctness=None,
-            faithfulness_reason=f"<judge error: {exc!r}>",
-            relevance_reason=f"<judge error: {exc!r}>",
-            refusal_correctness_reason=None,
-        )
+    judge = None
+    for attempt in range(max_rate_limit_retries + 1):
+        try:
+            judge = grade_judge(
+                case_query=case.query,
+                final_text=final_text,
+                trace=trace,
+                query_class=case.query_class,
+                client=client,
+            )
+            break
+        except anthropic.RateLimitError:
+            if attempt == max_rate_limit_retries:
+                # Final attempt failed — record a sentinel judge so
+                # the case shows up as failed-with-context rather than
+                # silently passing.
+                judge = JudgeScores(
+                    faithfulness=1,
+                    relevance=1,
+                    refusal_correctness=None,
+                    faithfulness_reason=(
+                        "<judge rate-limited after retries; case not graded>"
+                    ),
+                    relevance_reason=(
+                        "<judge rate-limited after retries; case not graded>"
+                    ),
+                    refusal_correctness_reason=None,
+                )
+                break
+            time.sleep(30.0)
+        except Exception as exc:
+            judge = JudgeScores(
+                faithfulness=1,
+                relevance=1,
+                refusal_correctness=None,
+                faithfulness_reason=f"<judge error: {exc!r}>",
+                relevance_reason=f"<judge error: {exc!r}>",
+                refusal_correctness_reason=None,
+            )
+            break
 
     elapsed = (time.perf_counter() - started) * 1000.0
     overall_passed, summary = _adjudicate(case, deterministic, judge)

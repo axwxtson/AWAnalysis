@@ -31,6 +31,12 @@ from aw_analysis.agent.errors import TurnBudgetExceeded
 from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace
 from aw_analysis.tools.base import ToolRegistry, ToolResult
 
+from aw_analysis.agent.recency import (
+    SAFETY_NET_MESSAGE,
+    has_recency_cue,
+    looks_like_news_fabrication,
+)
+
 
 # Refusal-pattern detection. We don't try to be smart here; we look
 # for the lead-in phrases the prompt uses. False negatives are fine
@@ -100,7 +106,9 @@ class Conversation:
         self._traces.append(trace)
 
         try:
-            self._run_loop(trace)
+            # Stage 6 v2.2.2 follow-up: pass the query through so the loop
+              # can apply recency-cue enforcement and post-hoc safety check.
+            self._run_loop(trace, user_query=user_message)
         except TurnBudgetExceeded:
             # Trace already has its iterations recorded; mark
             # truncated and re-raise so callers can decide what to do.
@@ -121,8 +129,33 @@ class Conversation:
 
     # ---- Internals ----------------------------------------------------
 
-    def _run_loop(self, trace: TurnTrace) -> None:
+    def _run_loop(self, trace: TurnTrace, user_query: str = "") -> None:
         """The core agent loop. Threads iterations onto the trace."""
+        # Stage 6 v2.2.2 follow-up: programmatic recency-cue enforcement.
+        # Three layers of prompt engineering failed to make the model
+        # reliably call web_search on compound queries. The model treats
+        # profile data as "enough" and short-circuits the news call,
+        # fabricating confident news content from training data. The fix
+        # is a per-turn reminder injected as a system-side message — the
+        # model finds it much harder to ignore than a system-prompt rule
+        # set at session start.
+        if user_query and has_recency_cue(user_query):
+            self._messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "[SYSTEM REMINDER, NOT FROM USER] This query contains "
+                        "a recency cue (news / latest / today / recent / "
+                        "current / what happened / breaking / this week). "
+                        "You MUST call web_search before completing this "
+                        "turn. Do not synthesise news content from training "
+                        "data — your training cutoff means you don't know "
+                        "what's happened recently. If you cannot call "
+                        "web_search for any reason, say so explicitly "
+                        "rather than inventing news content."
+                    ),
+                }
+            )
         for iteration_index in range(self.turn_budget):
             trace.iteration_count = iteration_index + 1
 
@@ -168,7 +201,6 @@ class Conversation:
             self._capture_citations(response.content, trace)
 
 
-            # Terminal stop reasons end the loop with the final text.
             if response.stop_reason in ("end_turn", "stop_sequence"):
                 trace.final_text = self._extract_text(response.content)
                 trace.stop_reason = str(response.stop_reason)
@@ -178,6 +210,22 @@ class Conversation:
                     trace.final_text
                 ):
                     trace.was_refusal = True
+
+                # Stage 6 v2.2.2 follow-up: safety net for the recency-cue
+                # short-circuit. If the query needed web_search AND web_search
+                # didn't fire AND the synthesis output looks news-shaped, the
+                # model has fabricated. Replace the answer with an honest refusal
+                # rather than ship invented news.
+                if user_query and has_recency_cue(user_query):
+                    web_search_fired = any(
+                        tc.name == "web_search" for tc in trace.tool_calls
+                    )
+                    if not web_search_fired and looks_like_news_fabrication(
+                        trace.final_text
+                    ):
+                        trace.final_text = SAFETY_NET_MESSAGE
+                        trace.stop_reason = "safety_net_fabrication"
+
                 return
 
             # Otherwise we expect tool_use blocks; dispatch them.
