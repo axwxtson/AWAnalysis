@@ -17,6 +17,7 @@ from typing import Iterable
 
 
 from aw_analysis.agent.conversation import Conversation
+from aw_analysis.agent.orchestration import OrchestratedConversation
 from aw_analysis.client import AnthropicClient
 from aw_analysis.prompts.versions import PROMPT_VERSIONS, ACTIVE_PROMPT_VERSION
 from aw_analysis.tools import default_registry  # see CLI for current factory
@@ -116,10 +117,61 @@ def run_eval(
     return report
 
 
+def _serialise_plan(plan):
+    """Serialise a QueryPlan into a JSON-friendly dict.
+
+    Returns None when the decomposer didn't run (i.e. the fallback
+    path was taken, or there was no plan to begin with).
+    """
+    if plan is None:
+        return None
+    return {
+        "original_query": plan.original_query,
+        "is_single_intent": plan.is_single_intent,
+        "sub_queries": [
+            {"intent": sq.intent.value, "text": sq.text}
+            for sq in plan.sub_queries
+        ],
+    }
+
+
+def _serialise_trace(turn_trace):
+    """Serialise one sub-trace (a TurnTrace) into a JSON-friendly dict.
+
+    Mirrors the shape used for top-level case records so sub-traces are
+    inspectable in the same way as the parent case in the eval JSON.
+    """
+    return {
+        "final_text": turn_trace.final_text,
+        "tool_calls": [tc.name for tc in turn_trace.tool_calls],
+        "was_refusal": turn_trace.was_refusal,
+        "stop_reason": turn_trace.stop_reason,
+        "total_input_tokens": turn_trace.total_input_tokens,
+        "total_output_tokens": turn_trace.total_output_tokens,
+        "iterations": [
+            {
+                "task_type": i.task_type,
+                "model": i.model,
+                "input_tokens": i.input_tokens,
+                "output_tokens": i.output_tokens,
+                "cost_usd": i.cost_usd,
+                "duration_ms": i.duration_ms,
+            }
+            for i in turn_trace.iterations
+        ],
+    }
+
 def _run_one(
     case: EvalCase, client: AnthropicClient, system_prompt: str
 ) -> EvalResult:
     """Execute the agent against one case and grade the result.
+
+    Stage 7: the system under test is now OrchestratedConversation,
+    which decomposes the user query into single-intent sub-queries
+    before dispatching to the wrapped Conversation. The returned
+    OrchestratedTurnTrace exposes flattened tool_calls,
+    was_refusal, and total_cost_usd properties so existing
+    deterministic assertions keep working unchanged.
 
     Wraps both agent execution and grading in a try/except so a single
     upstream failure produces a recorded EvalResult rather than aborting
@@ -127,10 +179,15 @@ def _run_one(
     data' reapplied at the eval layer).
     """
     started = time.perf_counter()
-    conversation = Conversation(
+
+    inner_conversation = Conversation(
         client=client,
         tools=default_registry(),
         system_prompt=system_prompt,
+    )
+    conversation = OrchestratedConversation(
+        client=client,
+        conversation=inner_conversation,
     )
 
     # Stage 6 operational fix: rate-limit retry. Tier 1's 30K input
@@ -147,6 +204,7 @@ def _run_one(
             trace = conversation.send(case.query)
             final_text = trace.final_text or ""
             break
+        
         except anthropic.RateLimitError:
             if attempt == max_rate_limit_retries:
                 # Final attempt failed — fall through to broad handler.
@@ -154,12 +212,21 @@ def _run_one(
                 # outer try captures and records the failure.
                 raise
             # Reset the conversation state (the failed send may have
-            # left partial messages) and back off.
-            conversation = Conversation(
+            # left partial messages) and back off. Stage 7: rebuild the
+            # OrchestratedConversation, not the bare Conversation —
+            # otherwise the next send() returns a TurnTrace instead of
+            # an OrchestratedTurnTrace and downstream code crashes.
+            inner_conversation = Conversation(
                 client=client,
                 tools=default_registry(),
                 system_prompt=system_prompt,
             )
+            conversation = OrchestratedConversation(
+                client=client,
+                conversation=inner_conversation,
+            )
+            time.sleep(30.0)
+            
             time.sleep(30.0)
         except Exception as exc:  # broad on purpose - eval layer must not crash
             elapsed = (time.perf_counter() - started) * 1000.0
@@ -227,10 +294,15 @@ def _run_one(
         final_text=final_text,
         total_input_tokens=trace.total_input_tokens,
         total_output_tokens=trace.total_output_tokens,
+        total_cost_usd=trace.total_cost_usd,
         iteration_count=len(trace.iterations),
         duration_ms=elapsed,
         overall_passed=overall_passed,
         failure_summary=summary,
+        safety_net_fired=trace.safety_net_fired,
+        decomposition=_serialise_plan(trace.decomposition_plan),
+        decomposition_fallback_reason=trace.decomposition_fallback_reason,
+        sub_traces=[_serialise_trace(t) for t in trace.sub_traces],
     )
 
 
@@ -353,12 +425,16 @@ def _failure_eval_result(case: EvalCase, error_repr: str, elapsed_ms: float) -> 
         final_text="",
         total_input_tokens=0,
         total_output_tokens=0,
+        total_cost_usd=0.0,
         iteration_count=0,
         duration_ms=elapsed_ms,
         overall_passed=False,
-        failure_summary=f"agent crashed: {error_repr}",
+        failure_summary=f"upstream error: {error_repr}",
+        safety_net_fired=False,
+        decomposition=None,
+        decomposition_fallback_reason=f"agent_error: {error_repr}",
+        sub_traces=[],
     )
-
 
 def report_to_dict(report: RunReport) -> dict:
     """Hand-rolled serialiser - we want stable JSON shape for diffing."""
@@ -413,7 +489,12 @@ def report_to_dict(report: RunReport) -> dict:
                     "output_tokens": r.total_output_tokens,
                     "iterations": r.iteration_count,
                     "duration_ms": round(r.duration_ms, 1),
+                    "total_cost_usd": round(r.total_cost_usd, 6),
                 },
+                "decomposition": r.decomposition,
+                "decomposition_fallback_reason": r.decomposition_fallback_reason,
+                "safety_net_fired": r.safety_net_fired,
+                "sub_traces": r.sub_traces,
                 "final_text": r.final_text,
             }
             for r in report.cases

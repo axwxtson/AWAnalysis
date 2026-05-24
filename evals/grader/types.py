@@ -117,7 +117,13 @@ class EvalResult(BaseModel):
     final_text: str
     total_input_tokens: int
     total_output_tokens: int
+    total_cost_usd: float = 0.0
     iteration_count: int
     duration_ms: float
     overall_passed: bool  # all P0 deterministic + judge thresholds + agreement
     failure_summary: str  # empty if passed; else short explanation
+    # Stage 7 additions — orchestration layer visibility.
+    safety_net_fired: bool = False
+    decomposition: dict | None = None
+    decomposition_fallback_reason: str | None = None
+    sub_traces: list[dict] = Field(default_factory=list)
