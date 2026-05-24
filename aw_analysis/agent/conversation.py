@@ -30,6 +30,7 @@ from aw_analysis.config import (
 from aw_analysis.agent.errors import TurnBudgetExceeded
 from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace
 from aw_analysis.tools.base import ToolRegistry, ToolResult
+from aw_analysis.config import cost_for
 
 from aw_analysis.agent.recency import (
     SAFETY_NET_MESSAGE,
@@ -169,12 +170,15 @@ class Conversation:
             
 
             # The actual call.
+            t0 = time.perf_counter()
             response = self.client.create(
                 config=config,
                 system=self.system_prompt,
                 messages=self._messages,
                 tools=self.tools.to_anthropic_params(),
             )
+            elapsed_ms = int((time.perf_counter() - t0) * 1000)
+
 
             # Record iteration usage on the trace before doing
             # anything else, so even if subsequent code raises we
@@ -185,10 +189,16 @@ class Conversation:
                     model=config.model,
                     temperature=config.temperature,
                     max_tokens=config.max_tokens,
-                    input_tokens=int(response.usage.input_tokens),
-                    output_tokens=int(response.usage.output_tokens),
-                    stop_reason=str(response.stop_reason),
+                    input_tokens=response.usage.input_tokens,
+                    output_tokens=response.usage.output_tokens,
+                    stop_reason=response.stop_reason,
                     rationale=config.rationale,
+                    duration_ms=elapsed_ms,
+                    cost_usd=cost_for(
+                        config.model,
+                        response.usage.input_tokens,
+                        response.usage.output_tokens,
+                    ),
                 )
             )
 
@@ -323,6 +333,7 @@ class Conversation:
         config = get_model_config(TaskType.CONTEXT_SUMMARISATION)
         # We don't pass the agent's tools or system prompt to the
         # summariser — its job is purely condensation.
+        t0 = time.perf_counter()
         response = self.client.create(
             config=config,
             system=(
@@ -332,6 +343,8 @@ class Conversation:
             ),
             messages=messages_to_summarise,
         )
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+
         text = self._extract_text(response.content)
 
         trace.iterations.append(
@@ -344,6 +357,12 @@ class Conversation:
                 output_tokens=int(response.usage.output_tokens),
                 stop_reason=str(response.stop_reason),
                 rationale=config.rationale,
+                duration_ms=elapsed_ms,
+                cost_usd=cost_for(
+                    config.model,
+                    int(response.usage.input_tokens),
+                    int(response.usage.output_tokens),
+                ),
             )
         )
         return text

@@ -45,6 +45,8 @@ class IterationUsage:
     output_tokens: int
     stop_reason: str
     rationale: str  # Carried from ModelConfig for trace readability.
+    duration_ms: int = 0  # Wall-clock time of the model call, populated by Conversation.
+    cost_usd: float = 0.0 # Populated by Conversation, summed by TurnTrace
 
 
 @dataclass
@@ -78,3 +80,8 @@ class TurnTrace:
     def model_configs_used(self) -> list[str]:
         """Ordered list of task_type values, useful for the CLI summary."""
         return [it.task_type for it in self.iterations]
+
+    @property
+    def total_cost_usd(self) -> float:
+        """Stage-7: sum cost across iterations."""
+        return sum(i.cost_usd for i in self.iterations)
