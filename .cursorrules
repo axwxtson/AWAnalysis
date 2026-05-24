@@ -31,7 +31,6 @@ Cross-asset market intelligence agent. Python 3.11+, src/ layout, package name `
 
 
 ## Stage 6 conventions (Evaluation & Testing)
-
 - The eval harness lives in `evals/`, a sibling of `aw_analysis/`.
   `evals/` imports from `aw_analysis`. `aw_analysis/` MUST NEVER import
   from `evals/`. Production code does not depend on the eval harness.

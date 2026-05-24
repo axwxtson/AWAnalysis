@@ -1,25 +1,36 @@
-# aw_analysis/config/__init__.py
-"""Configuration package.
+"""Config package.
 
-Re-exports the runtime Settings (previously in aw_analysis/config.py)
-and exposes ModelConfig / TaskType for per-task LLM configuration
-introduced in Stage 5.
+Re-exports the runtime SETTINGS plus the ModelConfig registry so call
+sites elsewhere can import from aw_analysis.config without knowing the
+internal module layout.
 """
+
 from __future__ import annotations
 
-from aw_analysis.config.settings import Settings, SETTINGS
 from aw_analysis.config.model_config import (
+    MODEL_CONFIG_REGISTRY,
     ModelConfig,
     TaskType,
-    MODEL_CONFIG_REGISTRY,
     get_model_config,
 )
+from aw_analysis.config.model_pricing import (
+    HAIKU_MODEL,
+    PRICING,
+    SONNET_MODEL,
+    ModelPricing,
+    cost_for,
+)
+from aw_analysis.config.settings import SETTINGS
 
 __all__ = [
-    "Settings",
     "SETTINGS",
+    "MODEL_CONFIG_REGISTRY",
     "ModelConfig",
     "TaskType",
-    "MODEL_CONFIG_REGISTRY",
     "get_model_config",
+    "ModelPricing",
+    "PRICING",
+    "SONNET_MODEL",
+    "HAIKU_MODEL",
+    "cost_for",
 ]

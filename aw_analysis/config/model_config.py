@@ -1,11 +1,15 @@
-"""
-Per-task model configuration for the agent loop.
+"""Per-task ModelConfig registry.
 
-Stage 5 introduced this module: every model call in the codebase routes
-through MODEL_CONFIG_REGISTRY[task_type], with measured defaults backed
-by Module 5 findings. Stage 6 adds TaskType.JUDGE for the eval harness.
-The eval grader is a model call; it goes through the same seam every
-other call goes through. No exceptions.
+Stage 5 established this seam: every model call routes through
+get_model_config(task_type). Stage 7 extends it with one new task type
+(INTENT_CLASSIFICATION) and one Haiku-backed config. Call sites stay
+unchanged.
+
+The router in agent/orchestration.py picks WHICH config to use per
+sub-query intent for the TOOL_SELECTION task type. That's the small
+new bit Stage 7 adds — task-type routing was already here; query-class
+routing is implemented at the orchestration layer rather than in this
+registry, so the registry stays a one-key lookup.
 """
 
 from __future__ import annotations
@@ -13,29 +17,27 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from aw_analysis.config import SETTINGS
+from aw_analysis.config.model_pricing import HAIKU_MODEL, SONNET_MODEL
+from aw_analysis.config.settings import SETTINGS
 
 
 class TaskType(str, Enum):
-    """The shape of work an iteration of the agent loop is doing.
+    """Categories of model call the agent makes."""
 
-    Stage 7 will replace MODEL_CONFIG_REGISTRY's lookup with a router
-    that picks model by query class as well; the enum stays.
-    """
-
+    INTENT_CLASSIFICATION = "intent_classification"
     TOOL_SELECTION = "tool_selection"
     FINAL_SYNTHESIS = "final_synthesis"
     REFUSAL = "refusal"
     CONTEXT_SUMMARISATION = "context_summarisation"
-    JUDGE = "judge"  # Stage 6: LLM-as-judge in eval harness
+    JUDGE = "judge"
 
 
 @dataclass(frozen=True)
 class ModelConfig:
-    """Frozen per-task model configuration.
+    """Bundle of model, temperature, and budget for one task type.
 
-    The `rationale` field is preserved into IterationUsage records so a
-    future reader sees both what was used and why.
+    rationale travels with the config so traces show WHY a setting was
+    chosen, not just what.
     """
 
     model: str
@@ -44,63 +46,62 @@ class ModelConfig:
     rationale: str
 
 
+# The Stage-7 default model assignment. Sonnet-backed entries are the
+# Stage-5 defaults; the new INTENT_CLASSIFICATION entry is Haiku.
+#
+# The TOOL_SELECTION default stays on Sonnet — the orchestration layer
+# overrides per sub-query intent (price-only → Haiku) by looking up
+# task-type-specific configs through this same registry; see
+# orchestration.ROUTING_OVERRIDES.
 MODEL_CONFIG_REGISTRY: dict[TaskType, ModelConfig] = {
+    TaskType.INTENT_CLASSIFICATION: ModelConfig(
+        model=HAIKU_MODEL,
+        temperature=0.0,
+        max_tokens=512,
+        rationale=(
+            "Structured JSON classification; small intent space; "
+            "Haiku at temp 0 is sufficient and ~3x cheaper than Sonnet"
+        ),
+    ),
     TaskType.TOOL_SELECTION: ModelConfig(
         model=SETTINGS.default_model,
         temperature=0.2,
         max_tokens=1024,
-        rationale=(
-            "Tool selection wants predictable structure. Module 5 Ex 5.2 "
-            "showed 0.0-0.3 produce identical output 10/10 runs; 0.2 has "
-            "theoretical headroom while staying on the deterministic side."
-        ),
+        rationale="Module 5 Ex 5.2: predictable structure with theoretical headroom",
     ),
     TaskType.FINAL_SYNTHESIS: ModelConfig(
         model=SETTINGS.default_model,
         temperature=0.7,
         max_tokens=2048,
-        rationale=(
-            "Synthesis wants natural prose. Real diversity kicks in 0.4-0.7. "
-            "max_tokens=2048 is ~2.5x the observed peak on the hardest "
-            "existing query (combined tools, Solana)."
-        ),
+        rationale="Natural prose; 2.5x peak observed output on hardest existing query",
     ),
     TaskType.REFUSAL: ModelConfig(
         model=SETTINGS.default_model,
         temperature=0.0,
         max_tokens=512,
-        rationale=(
-            "Refusal language is a contract, not a creative property. "
-            "Greedy decoding makes the contract reproducible."
-        ),
+        rationale="Refusal wording is contract-shaped, not creative",
     ),
     TaskType.CONTEXT_SUMMARISATION: ModelConfig(
         model=SETTINGS.default_model,
         temperature=0.0,
         max_tokens=1024,
-        rationale=(
-            "Summarisation is condensation. No room for creativity; greedy."
-        ),
+        rationale="Greedy condensation; deterministic structure",
     ),
     TaskType.JUDGE: ModelConfig(
         model=SETTINGS.default_model,
         temperature=0.0,
-        max_tokens=600,
-        rationale=(
-            "LLM-as-judge grading is a deterministic-grading contract. "
-            "Module 6 Ex 6.2 pattern: temperature 0, calibrated rubric, "
-            "JSON output. Sonnet rather than Haiku because calibration "
-            "(Stage 6) verifies self-preference bias is small at this scale; "
-            "if calibration fails, swap to Haiku and recalibrate."
-        ),
+        max_tokens=1024,
+        rationale="Stage 6 calibrated judge; non-determinism flagged as eval-side concern",
     ),
 }
 
 
 def get_model_config(task_type: TaskType) -> ModelConfig:
-    """The seam Stage 7 will replace.
+    """Look up the ModelConfig for a given task type.
 
-    Currently a static lookup; Stage 7 makes it a function of (task_type,
-    query_class). Call sites stay unchanged.
+    This is the seam: orchestration.py may call this with a derived
+    task type (e.g. TOOL_SELECTION) and then apply a query-class
+    override on top of it. Call sites inside Conversation continue to
+    use this directly with no awareness of routing.
     """
     return MODEL_CONFIG_REGISTRY[task_type]
