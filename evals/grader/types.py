@@ -127,3 +127,5 @@ class EvalResult(BaseModel):
     decomposition: dict | None = None
     decomposition_fallback_reason: str | None = None
     sub_traces: list[dict] = Field(default_factory=list)
+     # Stage 8 addition — link to the Langfuse trace for this case.
+    langfuse_trace_id: str | None = None

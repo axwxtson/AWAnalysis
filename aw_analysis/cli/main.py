@@ -17,6 +17,9 @@ from aw_analysis.agent.trace import TurnTrace
 from aw_analysis.client import AnthropicClient
 from aw_analysis.tools import ToolRegistry, default_registry
 from aw_analysis.agent.orchestration import OrchestratedConversation
+# Importing aw_analysis.obs at startup registers the atexit flush hook, ensuring traces are flushed when the CLI exits.
+import aw_analysis.obs  # noqa: F401 — import for side effects
+
 
 
 from aw_analysis.prompts.system import SYSTEM_PROMPT
@@ -96,7 +99,6 @@ def _handle(user_message: str, conversation: Conversation) -> None:
 
 def main() -> None:
     client = AnthropicClient()
-    tools = default_registry()
     inner_conversation = Conversation(
         client=client,
         tools=default_registry(),
@@ -105,6 +107,7 @@ def main() -> None:
     conversation = OrchestratedConversation(
         client=client,
         conversation=inner_conversation,
+        interface="cli",
     )
     # Single-shot mode
     if len(sys.argv) > 1:

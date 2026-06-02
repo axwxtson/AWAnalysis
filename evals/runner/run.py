@@ -14,6 +14,10 @@ import anthropic
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
+import uuid
+from datetime import datetime
+from aw_analysis.obs import emitter as obs
+
 
 
 from aw_analysis.agent.conversation import Conversation
@@ -49,6 +53,9 @@ class RunReport:
     prompt_version: str
     judge_rubric_version: str
     cases: list[EvalResult] = field(default_factory=list)
+    # Stage 8: optional Langfuse project URL for clickable links in
+    # the serialised JSON.  Set from LANGFUSE_PROJECT_URL env var.
+    langfuse_project_url: str | None = None
 
     @property
     def passed_count(self) -> int:
@@ -86,10 +93,12 @@ def run_eval(
     client = AnthropicClient()
     system_prompt = PROMPT_VERSIONS[prompt_version]
 
+    import os
     report = RunReport(
         run_id=run_id,
         prompt_version=prompt_version,
         judge_rubric_version=JUDGE_RUBRIC_VERSION,
+        langfuse_project_url=os.environ.get("LANGFUSE_PROJECT_URL"),
     )
 
     for i, case in enumerate(cases, start=1):
@@ -188,6 +197,8 @@ def _run_one(
     conversation = OrchestratedConversation(
         client=client,
         conversation=inner_conversation,
+        interface="eval",
+        conversation_id=f"eval-{case.id}",
     )
 
     # Stage 6 operational fix: rate-limit retry. Tier 1's 30K input
@@ -224,6 +235,8 @@ def _run_one(
             conversation = OrchestratedConversation(
                 client=client,
                 conversation=inner_conversation,
+                interface="eval",
+                conversation_id=f"eval-{case.id}",
             )
             time.sleep(30.0)
             
@@ -283,27 +296,42 @@ def _run_one(
             )
             break
 
-    elapsed = (time.perf_counter() - started) * 1000.0
-    overall_passed, summary = _adjudicate(case, deterministic, judge)
+        elapsed = (time.perf_counter() - started) * 1000.0
+        overall_passed, summary = _adjudicate(case, deterministic, judge)
 
-    return EvalResult(
-        case_id=case.id,
-        query_class=case.query_class,
-        deterministic=deterministic,
-        judge=judge,
-        final_text=final_text,
-        total_input_tokens=trace.total_input_tokens,
-        total_output_tokens=trace.total_output_tokens,
-        total_cost_usd=trace.total_cost_usd,
-        iteration_count=len(trace.iterations),
-        duration_ms=elapsed,
-        overall_passed=overall_passed,
-        failure_summary=summary,
-        safety_net_fired=trace.safety_net_fired,
-        decomposition=_serialise_plan(trace.decomposition_plan),
-        decomposition_fallback_reason=trace.decomposition_fallback_reason,
-        sub_traces=[_serialise_trace(t) for t in trace.sub_traces],
-    )
+        # Stage 8: attach deterministic + judge scores to the Langfuse
+        # trace that this case ran on.  The trace_id was captured on the
+        # OrchestratedTurnTrace by orchestration.py while the obs.turn
+        # context was still active; we use it here to score the trace
+        # by ID, which works even though the obs.turn context has exited.
+        langfuse_trace_id = getattr(trace, "langfuse_trace_id", None)
+        _attach_eval_scores(
+            trace_id=langfuse_trace_id,
+            case=case,
+            deterministic=deterministic,
+            judge=judge,
+            overall_passed=overall_passed,
+        )
+
+        return EvalResult(
+            case_id=case.id,
+            query_class=case.query_class,
+            deterministic=deterministic,
+            judge=judge,
+            final_text=final_text,
+            total_input_tokens=trace.total_input_tokens,
+            total_output_tokens=trace.total_output_tokens,
+            total_cost_usd=trace.total_cost_usd,
+            iteration_count=len(trace.iterations),
+            duration_ms=elapsed,
+            overall_passed=overall_passed,
+            failure_summary=summary,
+            safety_net_fired=trace.safety_net_fired,
+            decomposition=_serialise_plan(trace.decomposition_plan),
+            decomposition_fallback_reason=trace.decomposition_fallback_reason,
+            sub_traces=[_serialise_trace(t) for t in trace.sub_traces],
+            langfuse_trace_id=langfuse_trace_id,
+        )
 
 
 def _adjudicate(
@@ -434,7 +462,85 @@ def _failure_eval_result(case: EvalCase, error_repr: str, elapsed_ms: float) -> 
         decomposition=None,
         decomposition_fallback_reason=f"agent_error: {error_repr}",
         sub_traces=[],
+        langfuse_trace_id=None,  # Stage 8
     )
+
+def _attach_eval_scores(
+    *,
+    trace_id: str | None,
+    case: EvalCase,
+    deterministic: list[AssertionResult],
+    judge: JudgeScores,
+    overall_passed: bool,
+) -> None:
+    """Attach per-case scores to the Langfuse trace by ID.
+
+    Called after the obs.turn(...) context has closed, so we score
+    the trace directly by ID rather than via the current-context
+    helper.  If observability is disabled the trace_id is None and
+    this function returns immediately.
+
+    Score naming convention:
+      - assertion.<kind>.<target>  = 1.0 / 0.0 per deterministic check
+      - judge.faithfulness          = 1-5
+      - judge.relevance             = 1-5
+      - judge.refusal_correctness   = 1-5 (refusal cases only)
+      - case.passed                 = 1.0 / 0.0
+    """
+    if trace_id is None:
+        return
+    # Lazy import — observability is optional.
+    from aw_analysis.obs.client import get_langfuse_client
+    client = get_langfuse_client()
+    if client is None:
+        return
+    try:
+        # Deterministic assertions: one score per assertion, named
+        # with both kind and target so the dashboard can slice on
+        # specific assertions (e.g. "which cases failed
+        # assertion.tool_called.web_search").
+        for ar in deterministic:
+            score_name = f"assertion.{ar.assertion.kind.value}.{ar.assertion.target}"
+            # Langfuse score names have length limits; truncate
+            # defensively.
+            score_name = score_name[:100]
+            client.create_score(
+                trace_id=trace_id,
+                name=score_name,
+                value=1.0 if ar.passed else 0.0,
+            )
+        # Judge dimensions.
+        client.create_score(
+            trace_id=trace_id,
+            name="judge.faithfulness",
+            value=float(judge.faithfulness),
+            comment=judge.faithfulness_reason,
+        )
+        client.create_score(
+            trace_id=trace_id,
+            name="judge.relevance",
+            value=float(judge.relevance),
+            comment=judge.relevance_reason,
+        )
+        if judge.refusal_correctness is not None:
+            client.create_score(
+                trace_id=trace_id,
+                name="judge.refusal_correctness",
+                value=float(judge.refusal_correctness),
+                comment=judge.refusal_correctness_reason,
+            )
+        # Overall pass / fail.
+        client.create_score(
+            trace_id=trace_id,
+            name="case.passed",
+            value=1.0 if overall_passed else 0.0,
+        )
+    except Exception as exc:  # noqa: BLE001
+        # Eval grading must not fail because Langfuse refused a score.
+        import sys
+        sys.stderr.write(
+            f"WARN obs: failed to attach scores for {case.id}: {exc}\n"
+        )
 
 def report_to_dict(report: RunReport) -> dict:
     """Hand-rolled serialiser - we want stable JSON shape for diffing."""
@@ -442,6 +548,7 @@ def report_to_dict(report: RunReport) -> dict:
         "run_id": report.run_id,
         "prompt_version": report.prompt_version,
         "judge_rubric_version": report.judge_rubric_version,
+        "langfuse_project_url": report.langfuse_project_url,  # Stage 8
         "summary": {
             "total": report.total_count,
             "passed": report.passed_count,
@@ -496,6 +603,13 @@ def report_to_dict(report: RunReport) -> dict:
                 "safety_net_fired": r.safety_net_fired,
                 "sub_traces": r.sub_traces,
                 "final_text": r.final_text,
+                # Stage 8: direct link to the Langfuse trace.
+                "langfuse_trace_id": r.langfuse_trace_id,
+                "langfuse_trace_url": (
+                    f"{report.langfuse_project_url}/traces/{r.langfuse_trace_id}"
+                    if (report.langfuse_project_url and r.langfuse_trace_id)
+                    else None
+                ),
             }
             for r in report.cases
         ],

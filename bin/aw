@@ -1,2 +1,2 @@
-#!/bin/bash
-exec python -m aw_analysis.cli.main "$@"
+#!/usr/bin/env bash
+exec env PYTHONPATH="$(pwd)" python3 -m aw_analysis.cli.main "$@"

@@ -48,3 +48,36 @@ Cross-asset market intelligence agent. Python 3.11+, src/ layout, package name `
   not collapse the deterministic and judge layers into one score. They
   must remain reportable independently. Disagreement is signal.
 - British English in comments, docstrings, and prose throughout.
+
+## Stage 8 conventions (observability)
+
+- Every model call's trace data is also a Langfuse observation.
+  The emit layer lives in `aw_analysis/obs/`; every call site
+  goes through `aw_analysis.obs.emitter`.  No other module
+  imports `langfuse` directly.
+
+- Observability is soft-required.  If `LANGFUSE_PUBLIC_KEY` is
+  unset, the emitter is a no-op AND prints exactly one warning
+  to stderr on first call.  Silent no-op is forbidden.
+
+- Attribute names are constants in `aw_analysis/obs/attributes.py`.
+  Do not introduce ad-hoc string keys for metadata.  When a new
+  attribute is needed, add it to attributes.py first, then
+  reference the constant at the emit site.
+
+- Emit functions MUST NEVER raise.  Wrap any failure in a broad
+  except and silently absorb (the Langfuse SDK has its own debug
+  logging).  An observability bug must never bring down the agent.
+
+- Generation observations are for LLM calls only.  Tool calls are
+  spans.  The classifier call is a generation inside a span named
+  `decomposer.classify`.  Do not collapse these.
+
+- Tags are for top-level UI filtering: `prompt:<version>`,
+  `interface:cli|eval`, `run:<run_id>`.  Per-observation slicing
+  goes in metadata, not tags.
+
+- The framework adoption stance: Langfuse is the ONE adopted
+  framework.  Do not propose LangChain, LangGraph, Pydantic AI,
+  or LiteLLM refactors.  If a problem cannot be solved without
+  one of those, raise it in chat before writing code.

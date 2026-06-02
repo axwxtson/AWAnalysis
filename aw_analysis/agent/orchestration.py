@@ -39,6 +39,9 @@ from aw_analysis.agent.decomposer import (
 from aw_analysis.agent.trace import IterationUsage, TurnTrace
 from aw_analysis.client.anthropic_client import AnthropicClient
 from aw_analysis.config import TaskType, cost_for, get_model_config
+from aw_analysis.obs import emitter as obs
+import uuid
+from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
 
 
 # Per-intent routing override for the TOOL_SELECTION model. The
@@ -108,6 +111,26 @@ Maintain inline citations from the news sub-query verbatim. British
 English.
 """
 
+def _current_trace_id() -> str | None:
+    """Return the current Langfuse trace ID, or None if disabled.
+
+    Module-level helper.  Called from inside OrchestratedConversation.send
+    while the obs.turn() context is still active.  Outside that context
+    the OTEL stack has popped and this returns either None or the
+    previous turn's id, so placement of the call matters.
+    """
+    from aw_analysis.obs.client import get_langfuse_client
+    client = get_langfuse_client()
+    if client is None:
+        return None
+    try:
+        return client.get_current_trace_id()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+class OrchestratedConversation:
+    ...
 
 @dataclass
 class OrchestratedTurnTrace:
@@ -125,6 +148,7 @@ class OrchestratedTurnTrace:
     synthesis_iteration: IterationUsage | None = None
     classifier_iteration: IterationUsage | None = None
     decomposition_fallback_reason: str | None = None
+    langfuse_trace_id: str | None = None  # Stage 8
 
     @property
     def tool_calls(self) -> list[Any]:
@@ -162,6 +186,11 @@ class OrchestratedTurnTrace:
         return sum(i.cost_usd for i in self.iterations)
 
     @property
+    def total_duration_ms(self) -> int:
+        """Sum of duration_ms across classifier + sub-traces + synthesis."""
+        return sum(i.duration_ms or 0 for i in self.iterations)
+
+    @property
     def was_refusal(self) -> bool:
         """A user-facing turn is a refusal if any sub-trace refused."""
         return any(t.was_refusal for t in self.sub_traces)
@@ -191,66 +220,164 @@ class OrchestratedConversation:
         client: AnthropicClient,
         conversation: Conversation,
         decomposer: Decomposer | None = None,
+        *,
+        interface: str = "cli",
+        conversation_id: str | None = None,
     ) -> None:
         self._client = client
         self._conversation = conversation
         self._decomposer = decomposer or Decomposer(client)
         self._traces: list[OrchestratedTurnTrace] = []
+        self._interface_label = interface
+        self._conversation_id = conversation_id or f"conv-{uuid.uuid4().hex[:12]}"
 
     # ---- public surface mirroring Conversation -------------------------
 
     def send(self, user_message: str) -> OrchestratedTurnTrace:
-        """Decompose, route per sub-query, synthesise, record."""
-        # 1. Classify. Fall back on any failure.
-        plan: QueryPlan | None = None
-        classifier_iteration: IterationUsage | None = None
-        fallback_reason: str | None = None
-        try:
-            t0 = time.perf_counter()
-            plan = self._decomposer.classify(user_message)
-            elapsed_ms = int((time.perf_counter() - t0) * 1000)
-            classifier_iteration = self._classifier_iteration_record(
-                plan, elapsed_ms
+        """Decompose, route per sub-query, synthesise, record.
+
+        Stage 8: emits the full trace hierarchy to Langfuse via
+        `aw_analysis.obs`.  Behaviour is otherwise identical to Stage 7.
+        """
+        with obs.turn(
+            user_message=user_message,
+            interface=self._interface_label,
+            prompt_version=ACTIVE_PROMPT_VERSION,
+            conversation_id=self._conversation_id,
+        ) as _obs_turn:
+
+            # 1. Classify.  Fall back on any failure.
+            plan: QueryPlan | None = None
+            classifier_iteration: IterationUsage | None = None
+            fallback_reason: str | None = None
+            try:
+                t0 = time.perf_counter()
+                plan = self._decomposer.classify(user_message)
+                elapsed_ms = int((time.perf_counter() - t0) * 1000)
+                classifier_iteration = self._classifier_iteration_record(
+                    plan, elapsed_ms
+                )
+            except DecomposerError as exc:
+                fallback_reason = f"decomposer_error: {exc}"
+
+            # Emit the classifier span only when classification succeeded.
+            # The fallback branch deliberately has no classifier observation —
+            # the trace's decomposition_fallback_reason metadata is the signal.
+            if plan is not None and classifier_iteration is not None:
+                obs.classifier(
+                    _obs_turn,
+                    plan_intents=[sq.intent.value for sq in plan.sub_queries],
+                    plan_texts=[sq.text for sq in plan.sub_queries],
+                    usage=classifier_iteration,
+                )
+
+            # 2. Fallback path: no plan, run the original query through the
+            #    full agent and return.  `_run_fallback` already builds the
+            #    otrace and appends to self._traces; we emit iterations and
+            #    tool calls directly under the turn (no sub_query span,
+            #    because there was no decomposition).
+            if plan is None:
+                otrace = self._run_fallback(user_message, fallback_reason)
+                if otrace.sub_traces:
+                    inner = otrace.sub_traces[0]
+                    for it in inner.iterations:
+                        obs.iteration(_obs_turn, usage=it)
+                    for tc in inner.tool_calls:
+                        obs.tool_call(_obs_turn, tool_call_obj=tc)
+                obs.finalise(
+                    _obs_turn,
+                    final_text=otrace.final_text,
+                    total_cost_usd=otrace.total_cost_usd,
+                    total_duration_ms=sum(i.duration_ms or 0 for i in otrace.iterations),
+                    safety_net_fired=getattr(otrace, "safety_net_fired", False),
+                    decomposition_fallback_reason=fallback_reason,
+                )
+                otrace.langfuse_trace_id = _current_trace_id()
+                return otrace
+
+            # 3. Single-intent fast path: one sub-query, no synthesis.
+            if plan.is_single_intent:
+                sq_obj = plan.sub_queries[0]
+                with obs.sub_query(
+                    _obs_turn,
+                    intent=sq_obj.intent.value,
+                    text=sq_obj.text,
+                    index=0,
+                ) as _obs_sq:
+                    sub_trace = self._run_sub_query(sq_obj)
+                    for it in sub_trace.iterations:
+                        obs.iteration(_obs_sq, usage=it)
+                    for tc in sub_trace.tool_calls:
+                        obs.tool_call(_obs_sq, tool_call_obj=tc)
+
+                otrace = OrchestratedTurnTrace(
+                    user_message=user_message,
+                    final_text=sub_trace.final_text,
+                    decomposition_plan=plan,
+                    sub_traces=[sub_trace],
+                    classifier_iteration=classifier_iteration,
+                    synthesis_iteration=None,
+                    decomposition_fallback_reason=None,
+                )
+                obs.finalise(
+                    _obs_turn,
+                    final_text=otrace.final_text,
+                    total_cost_usd=otrace.total_cost_usd,
+                    total_duration_ms=sum(i.duration_ms or 0 for i in otrace.iterations),
+                    safety_net_fired=getattr(otrace, "safety_net_fired", False),
+                    decomposition_fallback_reason=None,
+                )
+                otrace.langfuse_trace_id = _current_trace_id()
+                self._traces.append(otrace)
+                return otrace
+
+            # 4. Multi-intent: run each sub-query, then synthesise.
+            sub_traces: list[TurnTrace] = []
+            for index, sq_obj in enumerate(plan.sub_queries):
+                with obs.sub_query(
+                    _obs_turn,
+                    intent=sq_obj.intent.value,
+                    text=sq_obj.text,
+                    index=index,
+                ) as _obs_sq:
+                    st = self._run_sub_query(sq_obj)
+                    for it in st.iterations:
+                        obs.iteration(_obs_sq, usage=it)
+                    for tc in st.tool_calls:
+                        obs.tool_call(_obs_sq, tool_call_obj=tc)
+                    sub_traces.append(st)
+
+            final_text, synthesis_iteration = self._synthesise(
+                user_message, plan.sub_queries, sub_traces
             )
-        except DecomposerError as exc:
-            fallback_reason = f"decomposer_error: {exc}"
+            obs.synthesis(
+                _obs_turn,
+                usage=synthesis_iteration,
+                text_in=user_message,
+                text_out=final_text,
+            )
 
-        # 2. Fallback path: no plan, run the original query through the
-        #    full agent and return.
-        if plan is None:
-            return self._run_fallback(user_message, fallback_reason)
-
-        # 3. Single-intent fast path: one sub-query, no synthesis.
-        if plan.is_single_intent:
-            sub_trace = self._run_sub_query(plan.sub_queries[0])
             otrace = OrchestratedTurnTrace(
                 user_message=user_message,
-                final_text=sub_trace.final_text,
+                final_text=final_text,
                 decomposition_plan=plan,
-                sub_traces=[sub_trace],
+                sub_traces=sub_traces,
                 classifier_iteration=classifier_iteration,
-                synthesis_iteration=None,
+                synthesis_iteration=synthesis_iteration,
                 decomposition_fallback_reason=None,
             )
+            obs.finalise(
+                _obs_turn,
+                final_text=otrace.final_text,
+                total_cost_usd=otrace.total_cost_usd,
+                total_duration_ms=sum(i.duration_ms or 0 for i in otrace.iterations),
+                safety_net_fired=getattr(otrace, "safety_net_fired", False),
+                decomposition_fallback_reason=None,
+            )
+            otrace.langfuse_trace_id = _current_trace_id()
             self._traces.append(otrace)
             return otrace
 
-        # 4. Multi-intent: run each sub-query, then synthesise.
-        sub_traces = [self._run_sub_query(sq) for sq in plan.sub_queries]
-        final_text, synthesis_iteration = self._synthesise(
-            user_message, plan.sub_queries, sub_traces
-        )
-        otrace = OrchestratedTurnTrace(
-            user_message=user_message,
-            final_text=final_text,
-            decomposition_plan=plan,
-            sub_traces=sub_traces,
-            classifier_iteration=classifier_iteration,
-            synthesis_iteration=synthesis_iteration,
-            decomposition_fallback_reason=None,
-        )
-        self._traces.append(otrace)
-        return otrace
 
     def history(self) -> list[dict[str, Any]]:
         return self._conversation.history()
@@ -395,3 +522,5 @@ class OrchestratedConversation:
         )
         self._traces.append(otrace)
         return otrace
+
+ 
