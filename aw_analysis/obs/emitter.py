@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import contextlib
 import uuid
+import sys
 from dataclasses import dataclass
 from typing import Any, Iterator
 
@@ -99,7 +100,17 @@ def turn(
 
     Yields a `Turn` handle to be passed into nested emit calls.
     The root span is closed on exit; on exception, the exception
-    is recorded and re-raised.
+    is recorded on the span via a finally block and then propagates
+    naturally through the context manager protocol.
+
+    Note on the finally pattern: an earlier version used
+    `try: yield ... except Exception: _safe_update(...); raise`.
+    That broke under Langfuse v4 because the inner
+    `start_as_current_observation` is itself a generator-based
+    context manager, and re-raising inside our generator caused
+    the v4 wrapper to report "generator didn't stop after
+    throw()".  Using `try/finally` lets Python propagate the
+    exception through both layers in the normal way.
 
     `interface` is "cli" for interactive runs, "eval" for harness
     runs.  `conversation_id` becomes the Langfuse session ID so
@@ -133,8 +144,7 @@ def turn(
 
     # `start_as_current_observation` puts the span into OTEL
     # context, so nested generations created via `start_generation`
-    # automatically attach to it.  See Langfuse v3 docs:
-    # https://langfuse.com/docs/observability/sdk/instrumentation
+    # automatically attach to it.
     with client.start_as_current_observation(
         as_type="span",
         name="aw_analysis.turn",
@@ -154,16 +164,31 @@ def turn(
 
         handle = Turn(span=root_span, conversation_id=cid,
                       prompt_version=prompt_version)
+
+        # Track whether an exception occurred so we can record it
+        # before the inner context manager closes the span.  We
+        # use sys.exc_info() inside the finally rather than the
+        # older try/except/raise pattern because the latter
+        # interacts badly with Langfuse v4's generator-based
+        # inner context manager (it raises "generator didn't
+        # stop after throw()" when both layers receive the same
+        # exception).
         try:
             yield handle
-        except Exception as exc:  # propagate after recording
-            _safe_update(
-                root_span,
-                output={"error": f"{type(exc).__name__}: {exc}"},
-                level="ERROR",
-                status_message=str(exc),
-            )
-            raise
+        finally:
+            exc_info = sys.exc_info()
+            if exc_info[0] is not None:
+                # An exception is currently propagating.  Record
+                # it on the span; the inner context manager's
+                # __exit__ will then close the span and re-raise
+                # naturally without any explicit raise from us.
+                exc_type, exc_value, _ = exc_info
+                _safe_update(
+                    root_span,
+                    output={"error": f"{exc_type.__name__}: {exc_value}"},
+                    level="ERROR",
+                    status_message=str(exc_value),
+                )
 
 
 def finalise(
