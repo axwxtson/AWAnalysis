@@ -118,6 +118,18 @@ Rules:
    price/news), emit one sub-query with the original text and the
    "profile" intent. The downstream assistant will refuse correctly.
    Do NOT try to refuse from inside this classifier.
+5. PHRASING PROFILE SUB-QUERIES (overrides rule 1 for this shape).
+   This rule governs PHRASING ONLY. It applies after intent
+   classification and never changes or adds an intent. If a query is
+   "news" (recent events, latest developments, "what happened",
+   "most recent X") it stays a single "news" sub-query — rule 5 does
+   not touch it, and you must NOT add a "profile" sub-query alongside
+   it. Apply rule 5 only to a sub-query you have already classified
+   "profile": lead it with a bare background request ("What is
+   <asset>?" / "Tell me about <asset>"), and if the user asked about
+   history, origins, founders, or "most significant event", append
+   that ask as a trailing clause rather than leading with it. Preserve
+   the asset name/ticker verbatim (rule 3).
 
 Output schema (JSON, no prose, no markdown fences):
 {
@@ -144,7 +156,13 @@ User: "Give me the full picture on Ethereum: price, what it does, and any recent
 Output: {"sub_queries": [{"intent": "profile", "text": "What is Ethereum and what does it do?"}, {"intent": "price", "text": "What is the current price of Ethereum?"}, {"intent": "news", "text": "What is the latest news on Ethereum?"}]}
 
 User: "What's BTC trading at and what was the most significant event in its history?"
-Output: {"sub_queries": [{"intent": "price", "text": "What is the current price of BTC?"}, {"intent": "profile", "text": "What was the most significant event in BTC's history?"}]}
+Output: {"sub_queries": [{"intent": "price", "text": "What is the current price of BTC?"}, {"intent": "profile", "text": "What is BTC? Include the most significant events in its history."}]}
+
+User: "What was the most significant event in Bitcoin's history?"
+Output: {"sub_queries": [{"intent": "profile", "text": "What is Bitcoin? Include the most significant events in its history."}]}
+
+User: "What happened at the most recent Bitcoin halving?"
+Output: {"sub_queries": [{"intent": "news", "text": "What happened at the most recent Bitcoin halving?"}]}
 
 User: "Compare BTC and ETH prices"
 Output: {"sub_queries": [{"intent": "price", "text": "Compare BTC and ETH prices"}]}

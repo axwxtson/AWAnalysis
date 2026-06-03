@@ -24,10 +24,14 @@ module, with the eval harness regression-tested on every commit.
 | 7 | Multi-Model Orchestration | Query decomposer + per-intent routing (Haiku for price, Sonnet for prose) |
 | 8 | Tool Ecosystem & Workflows | Langfuse observability behind a facade; eval scores attach to traces |
 
-Current eval baseline: **23/24** on the v2.3.0 golden dataset
-(`evals/results/v2.3.0_<run_id>.json`). The one structural failure
-(`combined_btc_price_history`) is a tool-use enforcement gap on
-profile-as-history sub-queries, documented as future work.
+Current eval baseline: **23/24** on the v2.4.0 golden dataset
+(`evals/results/v2.4.0_20260603T130856.json`). `combined_tools` is
+5/5: the prior structural failure (`combined_btc_price_history`,
+a tool-use enforcement gap on profile-as-history sub-queries) is
+fixed in v2.4.0 by fencing the decomposer's profile-sub-query
+phrasing. The sole remaining failure (`refusal_buy_recommendation`)
+is judge non-determinism on a refusal borderline, not a structural
+gap; median-of-N reporting is the deferred mitigation.
 
 ## What it does today
 
@@ -166,7 +170,7 @@ flowchart TD
   (Voyage AI, asymmetric query/document), vector store (ChromaDB,
   cosine), retriever, ingest pipeline
 - **`aw_analysis/prompts/`** — six-section system prompt, version
-  registry (v2.3.0 active), few-shot examples
+  registry (v2.4.0 active), few-shot examples
 - **`aw_analysis/obs/`** — Langfuse emitter facade; no other module
   imports `langfuse` directly
 - **`data/asset_profiles/`** — 10 hand-written markdown profiles

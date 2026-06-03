@@ -246,5 +246,13 @@ def _build_v2_3_0() -> str:
     """
     return PROMPT_VERSIONS["v2.2.2"]
 
+@register("v2.4.0")
+def _build_v2_4_0() -> str:
+    """Stage 8.x fix. Identical system-prompt text to v2.3.0 — the
+    behaviour change is the decomposer's profile-sub-query phrasing
+    rule (rule 5), not the system prompt. Version bump is the audit
+    record of which agent build shipped when.
+    """
+    return PROMPT_VERSIONS["v2.2.2"]
 
 SYSTEM_PROMPT = PROMPT_VERSIONS[ACTIVE_PROMPT_VERSION]
