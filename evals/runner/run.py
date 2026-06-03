@@ -296,42 +296,42 @@ def _run_one(
             )
             break
 
-        elapsed = (time.perf_counter() - started) * 1000.0
-        overall_passed, summary = _adjudicate(case, deterministic, judge)
+    elapsed = (time.perf_counter() - started) * 1000.0
+    overall_passed, summary = _adjudicate(case, deterministic, judge)
 
-        # Stage 8: attach deterministic + judge scores to the Langfuse
-        # trace that this case ran on.  The trace_id was captured on the
-        # OrchestratedTurnTrace by orchestration.py while the obs.turn
-        # context was still active; we use it here to score the trace
-        # by ID, which works even though the obs.turn context has exited.
-        langfuse_trace_id = getattr(trace, "langfuse_trace_id", None)
-        _attach_eval_scores(
-            trace_id=langfuse_trace_id,
-            case=case,
-            deterministic=deterministic,
-            judge=judge,
-            overall_passed=overall_passed,
-        )
+    # Stage 8: attach deterministic + judge scores to the Langfuse
+    # trace that this case ran on.  The trace_id was captured on the
+    # OrchestratedTurnTrace by orchestration.py while the obs.turn
+    # context was still active; we use it here to score the trace
+    # by ID, which works even though the obs.turn context has exited.
+    langfuse_trace_id = getattr(trace, "langfuse_trace_id", None)
+    _attach_eval_scores(
+        trace_id=langfuse_trace_id,
+        case=case,
+        deterministic=deterministic,
+        judge=judge,
+        overall_passed=overall_passed,
+    )
 
-        return EvalResult(
-            case_id=case.id,
-            query_class=case.query_class,
-            deterministic=deterministic,
-            judge=judge,
-            final_text=final_text,
-            total_input_tokens=trace.total_input_tokens,
-            total_output_tokens=trace.total_output_tokens,
-            total_cost_usd=trace.total_cost_usd,
-            iteration_count=len(trace.iterations),
-            duration_ms=elapsed,
-            overall_passed=overall_passed,
-            failure_summary=summary,
-            safety_net_fired=trace.safety_net_fired,
-            decomposition=_serialise_plan(trace.decomposition_plan),
-            decomposition_fallback_reason=trace.decomposition_fallback_reason,
-            sub_traces=[_serialise_trace(t) for t in trace.sub_traces],
-            langfuse_trace_id=langfuse_trace_id,
-        )
+    return EvalResult(
+        case_id=case.id,
+        query_class=case.query_class,
+        deterministic=deterministic,
+        judge=judge,
+        final_text=final_text,
+        total_input_tokens=trace.total_input_tokens,
+        total_output_tokens=trace.total_output_tokens,
+        total_cost_usd=trace.total_cost_usd,
+        iteration_count=len(trace.iterations),
+        duration_ms=elapsed,
+        overall_passed=overall_passed,
+        failure_summary=summary,
+        safety_net_fired=trace.safety_net_fired,
+        decomposition=_serialise_plan(trace.decomposition_plan),
+        decomposition_fallback_reason=trace.decomposition_fallback_reason,
+        sub_traces=[_serialise_trace(t) for t in trace.sub_traces],
+        langfuse_trace_id=langfuse_trace_id,
+    )
 
 
 def _adjudicate(
