@@ -25,7 +25,7 @@ from aw_analysis.agent.orchestration import OrchestratedConversation
 from aw_analysis.client import AnthropicClient
 from aw_analysis.prompts.versions import PROMPT_VERSIONS, ACTIVE_PROMPT_VERSION
 from aw_analysis.tools import default_registry  # see CLI for current factory
-from evals.golden.dataset import GOLDEN_DATASET
+from evals.golden import cases_for
 from evals.grader.deterministic import grade_deterministic
 from evals.grader.judge import JUDGE_RUBRIC_VERSION, grade_judge
 from evals.grader.types import (
@@ -52,6 +52,7 @@ class RunReport:
     run_id: str
     prompt_version: str
     judge_rubric_version: str
+    asset_class: str = "crypto"
     cases: list[EvalResult] = field(default_factory=list)
     # Stage 8: optional Langfuse project URL for clickable links in
     # the serialised JSON.  Set from LANGFUSE_PROJECT_URL env var.
@@ -77,9 +78,10 @@ class RunReport:
 
 
 def run_eval(
-    cases: Iterable[EvalCase] = GOLDEN_DATASET,
+    asset_class: str = "crypto",
     prompt_version: str = ACTIVE_PROMPT_VERSION,
     results_dir: Path = Path("evals/results"),
+    cases: Iterable[EvalCase] | None = None,
 ) -> RunReport:
     """Execute the harness end to end.
 
@@ -87,7 +89,11 @@ def run_eval(
     Failures within a case are caught and recorded so one broken case
     doesn't abort the run.
     """
-    results_dir.mkdir(parents=True, exist_ok=True)
+    case_list: list[EvalCase] = (
+        list(cases) if cases is not None else list(cases_for(asset_class))
+    )
+    out_dir = results_dir / asset_class
+    out_dir.mkdir(parents=True, exist_ok=True)
     run_id = time.strftime("%Y%m%dT%H%M%S")
 
     client = AnthropicClient()
@@ -98,11 +104,12 @@ def run_eval(
         run_id=run_id,
         prompt_version=prompt_version,
         judge_rubric_version=JUDGE_RUBRIC_VERSION,
+        asset_class=asset_class,
         langfuse_project_url=os.environ.get("LANGFUSE_PROJECT_URL"),
     )
 
-    for i, case in enumerate(cases, start=1):
-        print(f"[{i:>2}/{len(list(cases)) if hasattr(cases, '__len__') else '?'}] {case.id} ({case.query_class.value})...", end=" ", flush=True)
+    for i, case in enumerate(case_list, start=1):
+        print(f"[{i:>2}/{len(case_list)}] {case.id} ({case.query_class.value})...", end=" ", flush=True)
         result = _run_one(case, client, system_prompt)
         report.cases.append(result)
         print("PASS" if result.overall_passed else "FAIL")
@@ -120,7 +127,7 @@ def run_eval(
         else:
             time.sleep(0.5)
 
-    output_path = results_dir / f"{prompt_version}_{run_id}.json"
+    output_path = out_dir / f"{prompt_version}_{run_id}.json"
     output_path.write_text(json.dumps(report_to_dict(report), indent=2))
     print(f"\nResults written to {output_path}")
     return report
@@ -547,6 +554,7 @@ def report_to_dict(report: RunReport) -> dict:
     return {
         "run_id": report.run_id,
         "prompt_version": report.prompt_version,
+        "asset_class": report.asset_class,
         "judge_rubric_version": report.judge_rubric_version,
         "langfuse_project_url": report.langfuse_project_url,  # Stage 8
         "summary": {

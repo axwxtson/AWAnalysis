@@ -592,7 +592,7 @@ COMBINED_TOOLS_CASES: list[EvalCase] = [
 ]
 
 
-GOLDEN_DATASET: list[EvalCase] = (
+CRYPTO_DATASET: list[EvalCase] = (
     PRICE_CASES
     + PROFILE_CURATED_CASES
     + PROFILE_FALLBACK_CASES
@@ -604,4 +604,4 @@ GOLDEN_DATASET: list[EvalCase] = (
 
 def cases_by_class(query_class: QueryClass) -> list[EvalCase]:
     """Filter helper for the runner."""
-    return [c for c in GOLDEN_DATASET if c.query_class == query_class]
+    return [c for c in CRYPTO_DATASET if c.query_class == query_class]

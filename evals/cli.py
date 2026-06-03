@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 from evals.calibration.run import run_calibration
+from evals.golden import ASSET_CLASSES, cases_for
 from evals.regression.compare import compare
 from evals.runner.report import render
 from evals.runner.run import run_eval
@@ -33,6 +34,12 @@ def main(argv: list[str] | None = None) -> int:
         "--prompt-version",
         default=None,
         help="Prompt version to evaluate (defaults to ACTIVE_PROMPT_VERSION)",
+    )
+    run_p.add_argument(
+        "--asset-class",
+        choices=(*ASSET_CLASSES, "all"),
+        default="all",
+        help="Asset class to evaluate; 'all' runs every non-empty class.",
     )
     run_p.add_argument(
         "--require-calibration",
@@ -62,10 +69,20 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
         version = args.prompt_version or ACTIVE_PROMPT_VERSION
-        report = run_eval(prompt_version=version)
-        print()
-        print(render(report))
-        return 0 if report.pass_rate == 1.0 else 1
+
+        if args.asset_class == "all":
+            selected = [c for c in ASSET_CLASSES if cases_for(c)]
+        else:
+            selected = [args.asset_class]
+
+        exit_code = 0
+        for asset_class in selected:
+            report = run_eval(asset_class=asset_class, prompt_version=version)
+            print()
+            print(render(report))
+            if report.pass_rate != 1.0:
+                exit_code = 1
+        return exit_code
 
     if args.cmd == "compare":
         result = compare(args.baseline, args.candidate)
