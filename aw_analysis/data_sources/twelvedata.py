@@ -92,6 +92,38 @@ class TwelveDataClient:
             "datetime": data.get("datetime"),
         }
 
+    def get_reference(self, query: str) -> dict[str, Any]:
+        """Resolve a name or ticker to basic reference data via symbol
+        search. Free-tier reference only — name, exchange, instrument
+        type, currency, country; no description or fundamentals.
+        """
+        if not self._api_key:
+            raise TwelveDataError("TWELVEDATA_API_KEY not set")
+
+        q = query.strip()
+        params = {"symbol": q, "apikey": self._api_key}
+        try:
+            resp = self._client.get("/symbol_search", params=params)
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise TwelveDataError(f"Twelve Data request failed: {exc}") from exc
+
+        data = resp.json()
+        self._raise_on_api_error(data, q)
+        matches = data.get("data") or []
+        if not matches:
+            raise TwelveDataUnknownSymbol(f"Twelve Data: no match for '{q}'")
+
+        best = _best_equity_match(matches, q)
+        return {
+            "symbol": best.get("symbol"),
+            "name": best.get("instrument_name"),
+            "exchange": best.get("exchange"),
+            "instrument_type": best.get("instrument_type"),
+            "currency": best.get("currency"),
+            "country": best.get("country"),
+        }
+
     @staticmethod
     def _raise_on_api_error(data: Any, ticker: str) -> None:
         """Twelve Data signals errors in the JSON body (status='error'),
@@ -110,7 +142,17 @@ class TwelveDataClient:
     def close(self) -> None:
         self._client.close()
 
-
+def _best_equity_match(matches: list[dict[str, Any]], query: str) -> dict[str, Any]:
+    """Pick the most likely equity from symbol-search results: prefer an
+    exact symbol match, then a stock instrument type, then a US listing."""
+    q = query.strip().upper()
+    exact = [m for m in matches if str(m.get("symbol", "")).upper() == q]
+    pool = exact or matches
+    stocks = [m for m in pool if "stock" in str(m.get("instrument_type", "")).lower()]
+    pool = stocks or pool
+    us = [m for m in pool if str(m.get("country", "")).lower() in ("united states", "usa", "us")]
+    return (us or pool)[0]
+    
 def _to_float(value: Any) -> float | None:
     try:
         return float(value)
