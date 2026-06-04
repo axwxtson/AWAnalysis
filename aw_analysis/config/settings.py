@@ -19,6 +19,7 @@ class Settings:
 
     anthropic_api_key: str
     voyage_api_key: str | None
+    twelvedata_api_key: str | None
     default_model: str
     embedding_model: str
     chroma_path: Path
@@ -41,6 +42,7 @@ class Settings:
         return cls(
             anthropic_api_key=api_key,
             voyage_api_key=os.environ.get("VOYAGE_API_KEY"),
+            twelvedata_api_key=os.environ.get("TWELVEDATA_API_KEY"),
             default_model=os.environ.get("AW_DEFAULT_MODEL", "claude-sonnet-4-5"),
             embedding_model=os.environ.get("AW_EMBEDDING_MODEL", "voyage-3"),
             chroma_path=chroma_path,
