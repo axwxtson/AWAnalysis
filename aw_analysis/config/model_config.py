@@ -25,6 +25,7 @@ class TaskType(str, Enum):
     """Categories of model call the agent makes."""
 
     INTENT_CLASSIFICATION = "intent_classification"
+    SYMBOL_DISAMBIGUATION = "symbol_disambiguation"
     TOOL_SELECTION = "tool_selection"
     FINAL_SYNTHESIS = "final_synthesis"
     REFUSAL = "refusal"
@@ -61,6 +62,16 @@ MODEL_CONFIG_REGISTRY: dict[TaskType, ModelConfig] = {
         rationale=(
             "Structured JSON classification; small intent space; "
             "Haiku at temp 0 is sufficient and ~3x cheaper than Sonnet"
+        ),
+    ),
+    TaskType.SYMBOL_DISAMBIGUATION: ModelConfig(
+        model=HAIKU_MODEL,
+        temperature=0.0,
+        max_tokens=256,
+        rationale=(
+            "Single-symbol class lookup for the long tail; tiny JSON "
+            "output; fires only when a symbol is absent from every "
+            "curated keyspace, so cost is rare and bounded"
         ),
     ),
     TaskType.TOOL_SELECTION: ModelConfig(
