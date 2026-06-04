@@ -20,9 +20,10 @@ from aw_analysis.config.model_pricing import (
     ModelPricing,
     cost_for,
 )
-from aw_analysis.config.settings import SETTINGS
+from aw_analysis.config.settings import REPO_ROOT, SETTINGS
 
 __all__ = [
+    "REPO_ROOT",
     "SETTINGS",
     "MODEL_CONFIG_REGISTRY",
     "ModelConfig",
