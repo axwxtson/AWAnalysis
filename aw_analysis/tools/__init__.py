@@ -11,6 +11,7 @@ from __future__ import annotations
 from aw_analysis.tools.asset_profile import AssetProfileTool
 from aw_analysis.tools.base import Tool, ToolRegistry, ToolResult
 from aw_analysis.tools.crypto_price import CryptoPriceTool
+from aw_analysis.tools.equity_price import EquityPriceTool
 from aw_analysis.tools.market_news import MarketNewsTool
 
 
@@ -22,6 +23,7 @@ def default_registry() -> ToolRegistry:
     """
     registry = ToolRegistry()
     registry.register(CryptoPriceTool())
+    registry.register(EquityPriceTool())
     registry.register(AssetProfileTool())
     registry.register(MarketNewsTool())
     return registry
@@ -32,6 +34,7 @@ __all__ = [
     "ToolRegistry",
     "ToolResult",
     "CryptoPriceTool",
+    "EquityPriceTool",
     "AssetProfileTool",
     "MarketNewsTool",
     "default_registry",
