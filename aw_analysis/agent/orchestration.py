@@ -30,7 +30,6 @@ from enum import Enum
 from typing import Any
 
 from aw_analysis.agent.conversation import Conversation
-from aw_analysis.asset_registry import AssetClass
 from aw_analysis.agent.decomposer import (
     Decomposer,
     DecomposerError,
@@ -39,6 +38,7 @@ from aw_analysis.agent.decomposer import (
     SubQuery,
 )
 from aw_analysis.agent.trace import IterationUsage, TurnTrace
+from aw_analysis.asset_registry import AssetClass, AssetRegistry, SymbolDisambiguator
 from aw_analysis.client.anthropic_client import AnthropicClient
 from aw_analysis.config import TaskType, cost_for, get_model_config
 from aw_analysis.obs import emitter as obs
@@ -118,11 +118,16 @@ class RouteDecision:
     tool: str | None = None  # set iff action is FORCE
 
 
+# Only price is force-routed: it's the one intent with class-split tools
+# (get_crypto_price vs get_equity_price), so forcing guarantees the right
+# one fires. Profile is a single class-aware tool (lookup_asset_profile)
+# and news is a single tool (web_search) — forcing them buys nothing, and
+# for profile it would break refusals: speculation queries ("should I buy
+# X?") classify as profile, and a forced tool on iteration 0 stops the
+# model refusing there, which is where was_refusal is detected.
 FORCE_MAP: dict[tuple[AssetClass, Intent], str] = {
     (AssetClass.CRYPTO, Intent.PRICE): "get_crypto_price",
     (AssetClass.EQUITIES, Intent.PRICE): "get_equity_price",
-    (AssetClass.CRYPTO, Intent.PROFILE): "lookup_asset_profile",
-    (AssetClass.EQUITIES, Intent.PROFILE): "lookup_asset_profile",
 }
 
 
@@ -133,10 +138,9 @@ def decide_route(classes: list[AssetClass], intent: Intent) -> RouteDecision:
     - no symbols resolved -> AUTO (nothing to route on; let the agent decide)
     - any UNSUPPORTED mixed with real classes -> AUTO (model answers the
       supported asset and addresses the rest)
-    - single real class with a force-able intent (price/profile) -> FORCE
-    - mixed real classes, or news -> AUTO (a cross-asset turn calls both
-      class tools; web_search serves every class and is governed by the
-      recency enforcement)
+    - single real class with a force-able (class, intent) in FORCE_MAP
+      (currently price only) -> FORCE
+    - everything else (mixed real classes, profile, news) -> AUTO
     """
     real = [c for c in classes if c is not AssetClass.UNSUPPORTED]
     has_unsupported = any(c is AssetClass.UNSUPPORTED for c in classes)
@@ -147,11 +151,18 @@ def decide_route(classes: list[AssetClass], intent: Intent) -> RouteDecision:
         return RouteDecision(RouteAction.AUTO)
 
     distinct = set(real)
-    if len(distinct) == 1 and intent in (Intent.PRICE, Intent.PROFILE):
+    if len(distinct) == 1:
         tool = FORCE_MAP.get((next(iter(distinct)), intent))
         if tool is not None:
             return RouteDecision(RouteAction.FORCE, tool=tool)
     return RouteDecision(RouteAction.AUTO)
+
+
+_UNSUPPORTED_REFUSAL = (
+    "I don't cover ETFs, indices, or other instruments — only individual "
+    "company stocks (equities) and cryptocurrencies. I can't help with that "
+    "one, but I'm happy to help with a stock or crypto asset instead."
+)
 
 
 SYNTHESIS_SYSTEM_PROMPT = """\
@@ -287,10 +298,12 @@ class OrchestratedConversation:
         *,
         interface: str = "cli",
         conversation_id: str | None = None,
+        registry: AssetRegistry | None = None,
     ) -> None:
         self._client = client
         self._conversation = conversation
         self._decomposer = decomposer or Decomposer(client)
+        self._registry = registry or AssetRegistry(SymbolDisambiguator(client))
         self._traces: list[OrchestratedTurnTrace] = []
         self._interface_label = interface
         self._conversation_id = conversation_id or f"conv-{uuid.uuid4().hex[:12]}"
@@ -506,20 +519,43 @@ class OrchestratedConversation:
         composition that doesn't require changing Conversation's
         interface.
         """
+        classes = [self._registry.resolve(s) for s in sub_query.symbols]
+        decision = decide_route(classes, sub_query.intent)
+
+        if decision.action is RouteAction.REFUSE:
+            return self._refusal_trace(sub_query.text)
+
+        forced_tool = decision.tool if decision.action is RouteAction.FORCE else None
+
         override = INTENT_TO_TOOL_SELECTION_CONFIG.get(sub_query.intent)
         if override is None:
-            return self._conversation.send(sub_query.text)
+            return self._conversation.send(sub_query.text, forced_tool=forced_tool)
 
-        # Apply temporary override for the duration of this sub-query.
+        # Apply temporary TOOL_SELECTION model override for this sub-query.
         from aw_analysis.config.model_config import MODEL_CONFIG_REGISTRY
 
         previous = MODEL_CONFIG_REGISTRY[TaskType.TOOL_SELECTION]
         MODEL_CONFIG_REGISTRY[TaskType.TOOL_SELECTION] = override
         try:
-            return self._conversation.send(sub_query.text)
+            return self._conversation.send(sub_query.text, forced_tool=forced_tool)
         finally:
             MODEL_CONFIG_REGISTRY[TaskType.TOOL_SELECTION] = previous
 
+    def _refusal_trace(self, user_message: str) -> TurnTrace:
+        """Build a deterministic refusal TurnTrace with no agent call.
+
+        Used when decide_route returns REFUSE (all symbols UNSUPPORTED).
+        Refusal now lives in the router, not the profile bucket: a fixed,
+        scope-appropriate message that trips _looks_like_refusal and sets
+        was_refusal, at zero model cost.
+        """
+        return TurnTrace(
+            user_message=user_message,
+            final_text=_UNSUPPORTED_REFUSAL,
+            stop_reason="end_turn",
+            iteration_count=0,
+            was_refusal=True,
+        )
     def _synthesise(
         self,
         user_message: str,
