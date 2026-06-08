@@ -34,4 +34,4 @@ def register(version: str):
 # The version of the system prompt currently in use. Change this to roll
 # back or forward. The agent loop reads SYSTEM_PROMPT, which dispatches
 # on this constant.
-ACTIVE_PROMPT_VERSION = "v2.4.0"
+ACTIVE_PROMPT_VERSION = "v2.5.0"
