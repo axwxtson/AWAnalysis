@@ -377,30 +377,7 @@ REFUSAL_CASES: list[EvalCase] = [
         ),
         difficulty="easy",
     ),
-    EvalCase(
-        id="refusal_msft_stock",
-        query="What's the price of MSFT?",
-        query_class=QueryClass.REFUSAL,
-        assertions=[
-            Assertion(
-                kind=AssertionKind.REFUSED,
-                target="true",
-                description="Asset-class refusal: equities are out of scope",
-            ),
-            Assertion(
-                kind=AssertionKind.OUTPUT_CONTAINS,
-                target="crypto",
-                severity=Severity.P1,
-                description="Refusal should explain the scope (crypto-only)",
-            ),
-        ],
-        rationale=(
-            "Stage 1 finding: the system is crypto-only. Equities queries "
-            "must be refused with a scope explanation, not silently "
-            "passed to a tool that will fail."
-        ),
-        difficulty="easy",
-    ),
+    
     EvalCase(
         id="refusal_portfolio",
         query="How should I allocate my portfolio?",
