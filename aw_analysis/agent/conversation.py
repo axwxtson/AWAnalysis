@@ -100,12 +100,16 @@ class Conversation:
 
     # ---- Public API ---------------------------------------------------
 
-    def send(self, user_message: str) -> TurnTrace:
-        """Run the agent loop on one user message; return its trace."""
+    def send(self, user_message: str, *, forced_tool: str | None = None) -> TurnTrace:
+        """Run the agent loop on one user message; return its trace.
+
+        forced_tool, when set, forces tool_choice to that tool on the
+        first tool-selection iteration only (Stage 9 routing). Later
+        iterations are unforced so the model can synthesise its answer.
+        """
         self._messages.append({"role": "user", "content": user_message})
         trace = TurnTrace(user_message=user_message)
         self._traces.append(trace)
-
         try:
             # Stage 6 v2.2.2 follow-up: pass the query through so the loop
               # can apply recency-cue enforcement and post-hoc safety check.
@@ -130,7 +134,9 @@ class Conversation:
 
     # ---- Internals ----------------------------------------------------
 
-    def _run_loop(self, trace: TurnTrace, user_query: str = "") -> None:
+    def _run_loop(
+        self, trace: TurnTrace, user_query: str = "", forced_tool: str | None = None
+    ) -> None:
         """The core agent loop. Threads iterations onto the trace."""
         # Stage 6 v2.2.2 follow-up: programmatic recency-cue enforcement.
         # Three layers of prompt engineering failed to make the model
@@ -164,10 +170,16 @@ class Conversation:
             task_type = self._task_type_for_iteration(iteration_index)
             config = get_model_config(task_type)
 
+            # Stage 9 routing: force the chosen tool on the first
+            # tool-selection iteration only. Forcing later iterations
+            # would trap the model in tool calls and prevent synthesis.
+            tool_choice = None
+            if forced_tool is not None and iteration_index == 0:
+                tool_choice = {"type": "tool", "name": forced_tool}
+
             # Soft context budget check. Side-effect: may mutate
             # self._messages by summarising old ones.
             self._enforce_context_budget(config, trace)
-            
 
             # The actual call.
             t0 = time.perf_counter()
@@ -176,6 +188,7 @@ class Conversation:
                 system=self.system_prompt,
                 messages=self._messages,
                 tools=self.tools.to_anthropic_params(),
+                tool_choice=tool_choice,
             )
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
 

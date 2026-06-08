@@ -36,11 +36,17 @@ class AnthropicClient:
         system: str | list[dict[str, Any]],
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
+        tool_choice: dict[str, Any] | None = None,
     ) -> Any:
         """Create a single message with the given ModelConfig.
 
         Note that we pass the SDK named arguments only; positional
         is brittle across SDK versions.
+
+        tool_choice, when set, forces the model's tool use for this call
+        (e.g. {"type": "tool", "name": "get_equity_price"}). The agent
+        loop only forces on the first tool-selection iteration; later
+        iterations leave it None so the model can synthesise an answer.
         """
         kwargs: dict[str, Any] = {
             "model": config.model,
@@ -51,8 +57,10 @@ class AnthropicClient:
         }
         if tools is not None:
             kwargs["tools"] = tools
+        if tool_choice is not None:
+            kwargs["tool_choice"] = tool_choice
         return self._sdk.messages.create(**kwargs)
-
+        
     def count_tokens(
         self,
         *,

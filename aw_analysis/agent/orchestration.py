@@ -26,9 +26,11 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from aw_analysis.agent.conversation import Conversation
+from aw_analysis.asset_registry import AssetClass
 from aw_analysis.agent.decomposer import (
     Decomposer,
     DecomposerError,
@@ -88,6 +90,68 @@ INTENT_TO_TOOL_SELECTION_CONFIG: dict[Intent, ModelConfig | None] = {
     Intent.PROFILE: None,  # keep Sonnet — curated/fallback branch needs prose
     Intent.NEWS: None,     # keep Sonnet — web_search synthesis quality
 }
+
+
+# ---------------------------------------------------------------------------
+# Stage 9: (asset_class, intent) -> tool routing.
+#
+# decide_route is a pure function over the asset classes of a sub-query's
+# symbols and its intent. The wiring in _run_sub_query (step 3b) resolves
+# symbols -> classes via the AssetRegistry, calls decide_route, and acts:
+# FORCE passes forced_tool to Conversation.send; REFUSE produces a
+# deterministic refusal with no agent call; AUTO runs the sub-query
+# unforced (mixed-class, news, or nothing to route on).
+#
+# The absence of an (UNSUPPORTED, *) entry in FORCE_MAP is the refuse
+# branch — refusal stops living inside the profile bucket.
+# ---------------------------------------------------------------------------
+
+class RouteAction(str, Enum):
+    FORCE = "force"
+    AUTO = "auto"
+    REFUSE = "refuse"
+
+
+@dataclass(frozen=True)
+class RouteDecision:
+    action: RouteAction
+    tool: str | None = None  # set iff action is FORCE
+
+
+FORCE_MAP: dict[tuple[AssetClass, Intent], str] = {
+    (AssetClass.CRYPTO, Intent.PRICE): "get_crypto_price",
+    (AssetClass.EQUITIES, Intent.PRICE): "get_equity_price",
+    (AssetClass.CRYPTO, Intent.PROFILE): "lookup_asset_profile",
+    (AssetClass.EQUITIES, Intent.PROFILE): "lookup_asset_profile",
+}
+
+
+def decide_route(classes: list[AssetClass], intent: Intent) -> RouteDecision:
+    """Decide how to route a sub-query from its symbols' classes + intent.
+
+    - all symbols UNSUPPORTED -> REFUSE (the deterministic gate)
+    - no symbols resolved -> AUTO (nothing to route on; let the agent decide)
+    - any UNSUPPORTED mixed with real classes -> AUTO (model answers the
+      supported asset and addresses the rest)
+    - single real class with a force-able intent (price/profile) -> FORCE
+    - mixed real classes, or news -> AUTO (a cross-asset turn calls both
+      class tools; web_search serves every class and is governed by the
+      recency enforcement)
+    """
+    real = [c for c in classes if c is not AssetClass.UNSUPPORTED]
+    has_unsupported = any(c is AssetClass.UNSUPPORTED for c in classes)
+
+    if classes and not real:
+        return RouteDecision(RouteAction.REFUSE)
+    if not classes or has_unsupported:
+        return RouteDecision(RouteAction.AUTO)
+
+    distinct = set(real)
+    if len(distinct) == 1 and intent in (Intent.PRICE, Intent.PROFILE):
+        tool = FORCE_MAP.get((next(iter(distinct)), intent))
+        if tool is not None:
+            return RouteDecision(RouteAction.FORCE, tool=tool)
+    return RouteDecision(RouteAction.AUTO)
 
 
 SYNTHESIS_SYSTEM_PROMPT = """\
