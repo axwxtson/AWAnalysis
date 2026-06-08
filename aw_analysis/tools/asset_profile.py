@@ -224,8 +224,14 @@ class AssetProfileTool(Tool):
                 "country": data["country"],
             },
             "note": (
-                "Basic reference data only. Detailed editorial profiles "
-                "are available for curated large caps; fuller fundamentals "
-                "require a Twelve Data paid tier."
+                "GROUNDING: this is the ONLY information available for this "
+                "equity — name, ticker, exchange, type, currency, country. "
+                "No description, business summary, founding history, "
+                "products, or financials are available. State only the "
+                "fields above and attribute them to Twelve Data reference "
+                "data. Do NOT add any business description, history, "
+                "founders, or other details from memory — if asked for more "
+                "than these fields, say a detailed profile isn't available "
+                "for this asset."
             ),
         }, indent=2)
