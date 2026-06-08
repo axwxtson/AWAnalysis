@@ -10,7 +10,7 @@ Engineering programme (see [axwxtson/ai-systems-engineering](https://github.com/
 
 ## Status
 
-**8 stages complete.** Each stage layered in patterns from one study
+**9 stages complete.** Each stage layered in patterns from one study
 module, with the eval harness regression-tested on every commit.
 
 | Stage | Module | What it adds |
@@ -23,35 +23,47 @@ module, with the eval harness regression-tested on every commit.
 | 6 | Evaluation & Testing | Two-layer eval harness with calibrated LLM judge (current) |
 | 7 | Multi-Model Orchestration | Query decomposer + per-intent routing (Haiku for price, Sonnet for prose) |
 | 8 | Tool Ecosystem & Workflows | Langfuse observability behind a facade; eval scores attach to traces |
+| 9 | Cross-asset expansion | Equities as a first-class asset class: symbol→class registry, `get_equity_price`, per-`(class,intent)` tool-choice routing, per-asset-class eval suites |
 
-Current eval baseline: **23/24** on the v2.4.0 golden dataset
-(`evals/results/v2.4.0_20260603T130856.json`). `combined_tools` is
-5/5: the prior structural failure (`combined_btc_price_history`,
-a tool-use enforcement gap on profile-as-history sub-queries) is
-fixed in v2.4.0 by fencing the decomposer's profile-sub-query
-phrasing. The sole remaining failure (`refusal_buy_recommendation`)
-is judge non-determinism on a refusal borderline, not a structural
-gap; median-of-N reporting is the deferred mitigation.
+Current eval baseline (v2.5.0), partitioned by asset class:
+**crypto 23/23** and **equities 16/16**. The suites live under
+`evals/golden/{crypto,equities}/` and run independently via
+`--asset-class`; results route to `evals/results/<class>/`. Asset-class
+is an orthogonal dimension of the dataset, not a special case — the six
+query classes (price, profile-curated, profile-fallback, news, refusal,
+combined-tools) are shared across both. The cross-asset comparison case
+(`price_compare_apple_btc`) is a permanent guard that a single mixed-class
+query fires both class price tools in one turn.
 
 ## What it does today
 
-The agent answers crypto market questions using three retrieval modalities,
-choosing dynamically based on the query, with multi-intent compound queries
+The agent answers cross-asset market questions — **cryptocurrencies and
+publicly-traded equities** — using four retrieval modalities, choosing
+dynamically based on the query, with multi-intent compound queries
 decomposed and routed per sub-query:
 
 - **`get_crypto_price`** — live price, 24h change, market cap, and volume
-  via CoinGecko. Works for any asset CoinGecko tracks.
-- **`lookup_asset_profile`** — background information about an asset.
-  Tiered retrieval: tries a curated RAG corpus first; falls back to
-  CoinGecko's description endpoint when there's no curated profile.
-- **`search_market_news`** — recent news via Anthropic's web search tool,
-  with inline citations preserved through to the final answer.
+  for a cryptocurrency via CoinGecko.
+- **`get_equity_price`** — live price, daily change, and volume for an
+  individual company stock via Twelve Data.
+- **`lookup_asset_profile`** — background information about an asset
+  (crypto or equity). Tiered retrieval: tries a curated RAG corpus first;
+  falls back to CoinGecko's description (crypto) or Twelve Data reference
+  data (equity) when there's no curated profile.
+- **web search** — recent news via Anthropic's web search tool, with
+  inline citations preserved through to the final answer.
 - **No tool** — for follow-ups answerable from conversation history,
-  or general crypto concepts.
+  or general concepts.
+
+ETFs, indices, forex, and commodities are deliberately out of scope: a
+symbol→class registry gates them and the agent refuses cleanly rather
+than half-supporting them.
 
 The asset profile tool returns a `source` field in its results
-(`"curated"`, `"coingecko"`, or `"none"`), and the agent attributes
-provenance accordingly — "from our research" vs. "according to CoinGecko"
+(`"curated"`, `"coingecko"`, `"twelvedata"`, or `"none"`), and the agent
+attributes provenance accordingly — "from our research" vs. "according to
+CoinGecko" vs. "per Twelve Data's reference data" — rather than presenting
+all sources as equivalent.rding to CoinGecko"
 — rather than presenting all sources as equivalent.
 
 For compound queries (e.g. "What's BTC trading at and what's the latest
@@ -59,6 +71,10 @@ news on it?"), a classifier decomposes the query into single-intent
 sub-queries, each routed to the appropriate model (Haiku for
 deterministic price calls, Sonnet for prose-heavy profile and news
 calls), with a final synthesis pass composing one user-facing answer.
+Each sub-query also carries the asset symbols it mentions; a symbol→class
+registry resolves those to an asset class, and `(class, intent)` routing
+forces the correct price tool (crypto vs equity) — or, for a mixed-class
+comparison, leaves both available so they fire in one turn.
 
 ## How we know it works
 
@@ -78,21 +94,22 @@ calibration pass measures exact agreement, ±1 agreement, direction
 agreement, position consistency, and length bias against five
 explicit thresholds.
 
-Golden dataset: 24 cases across six query classes (price, profile via
-curated retrieval, profile via CoinGecko fallback, news, refusal,
+Golden dataset: per-asset-class suites under `evals/golden/{crypto,equities}/`
+— **23 crypto + 16 equity cases** across six shared query classes (price,
+profile via curated retrieval, profile via fallback, news, refusal,
 combined-tools). Every case has an explicit rationale.
 
 ```bash
 # Calibrate the judge (required once per rubric version)
 PYTHONPATH=$(pwd) python -m evals.cli calibrate
 
-# Run the full harness against the active prompt
-PYTHONPATH=$(pwd) python -m evals.cli run
+# Run a suite against the active prompt (crypto, equities, or all)
+PYTHONPATH=$(pwd) python -m evals.cli run --asset-class all
 
 # Compare two runs (baseline vs candidate)
 PYTHONPATH=$(pwd) python -m evals.cli compare \
-  evals/results/v2.2.0_.json \
-  evals/results/v2.3.0_.json
+  evals/results/crypto/v2.4.0_.json \
+  evals/results/crypto/v2.5.0_.json
 ```
 
 Every eval case also emits a Langfuse trace with deterministic and
@@ -133,6 +150,7 @@ flowchart TD
     CLI --> Orch[OrchestratedConversation]
     Orch --> Dec[Decomposer: Haiku classifier]
     Dec --> Plan{Single intent?}
+    Reg --> Plan{Single intent?}
     Plan -->|yes| SubQ[Sub-query: one agent loop]
     Plan -->|no| MultiQ[N sub-queries: per-intent routing]
     MultiQ --> Synth[Synthesis: Sonnet composes one answer]
@@ -141,12 +159,15 @@ flowchart TD
     Conv --> Client[AnthropicClient with per-task ModelConfig]
     Client --> Tools[Tools]
     Tools --> Price[get_crypto_price]
+    Tools --> EqPrice[get_equity_price]
     Tools --> Profile[lookup_asset_profile]
-    Tools --> News[search_market_news]
+    Tools --> News[web search]
     Price --> CG1[CoinGecko /simple/price]
+    EqPrice --> TD1[Twelve Data /quote]
     Profile --> Curated{Curated tier: ChromaDB + Voyage}
     Curated -->|score >= 0.70| Profile
-    Curated -->|score < 0.70| CG2[CoinGecko /coins description]
+    Curated -->|crypto miss| CG2[CoinGecko /coins description]
+    Curated -->|equity miss| TD2[Twelve Data /symbol_search]
     News --> WS[Anthropic web search]
     Orch -.trace.-> Obs[Langfuse emitter]
     Orch -.trace.-> Evals[evals/ harness]
@@ -161,20 +182,25 @@ flowchart TD
   `ToolCall`, agent loop, error types, `OrchestratedConversation`
   (Stage 7), `Decomposer` (Stage 7)
 - **`aw_analysis/client/`** — Anthropic SDK wrapper
-- **`aw_analysis/tools/`** — three tools (`get_crypto_price`,
-  `lookup_asset_profile`, `search_market_news`) with schemas, descriptions,
-  and structured `ToolResult` returns; `default_registry()` constructs
-  the standard registry used by both the CLI and the eval harness
-- **`aw_analysis/data_sources/`** — plain HTTP clients (CoinGecko)
+- **`aw_analysis/tools/`** — four tools (`get_crypto_price`,
+  `get_equity_price`, `lookup_asset_profile`, web search) with schemas,
+  descriptions, and structured `ToolResult` returns; `default_registry()`
+  constructs the standard registry used by both the CLI and the eval harness
+- **`aw_analysis/data_sources/`** — plain HTTP clients (CoinGecko for
+  crypto, Twelve Data for equities) with typed, categorical errors
+- **`aw_analysis/asset_registry.py`** — symbol→`AssetClass` registry:
+  deterministic for curated tickers/names and the ETF/index gate, with a
+  Haiku disambiguator for the long tail; the single source of truth for
+  which symbols are known and which classes are real
 - **`aw_analysis/rag/`** — chunker (per-section markdown), embedder
   (Voyage AI, asymmetric query/document), vector store (ChromaDB,
   cosine), retriever, ingest pipeline
 - **`aw_analysis/prompts/`** — six-section system prompt, version
-  registry (v2.4.0 active), few-shot examples
+  registry (v2.5.0 active; cross-asset scope), few-shot examples
 - **`aw_analysis/obs/`** — Langfuse emitter facade; no other module
   imports `langfuse` directly
-- **`data/asset_profiles/`** — 10 hand-written markdown profiles
-  (one per researched asset)
+- **`data/asset_profiles/`** — 20 hand-written markdown profiles on a
+  unified schema (10 crypto + 10 equity large caps) 
 - **`data/chroma/`** — generated vector store (gitignored)
 - **`bin/aw`** — shell wrapper invoking `python -m aw_analysis.cli.main`
 - **`aw_analysis/config/`** — runtime settings, per-task `ModelConfig`
@@ -197,6 +223,7 @@ cp .env.example .env
 # Edit .env to set:
 #   ANTHROPIC_API_KEY    (required)
 #   VOYAGE_API_KEY       (required for the curated RAG tier)
+#   TWELVEDATA_API_KEY   (required for equity price + reference data)
 #   LANGFUSE_PUBLIC_KEY  (optional; enables observability)
 #   LANGFUSE_SECRET_KEY  (optional; enables observability)
 #   LANGFUSE_HOST        (optional; defaults to Langfuse Cloud)
@@ -209,10 +236,13 @@ python -m aw_analysis.rag.ingest
 ```
 
 If `VOYAGE_API_KEY` is not set, the agent still runs — the curated tier
-silently disables and asset profile queries fall through to the CoinGecko
-description endpoint. If `LANGFUSE_*` keys are not set, the agent still
-runs — observability is disabled with a single stderr warning on first
-call, and the codebase otherwise behaves identically.
+silently disables and asset profile queries fall through to the
+description/reference fallback. `TWELVEDATA_API_KEY` is needed only when
+the key is actually used (equity queries); a missing key surfaces as a
+clean tool error rather than an import-time failure. If `LANGFUSE_*` keys
+are not set, the agent still runs — observability is disabled with a
+single stderr warning on first call, and the codebase otherwise behaves
+identically.
 
 ## Usage
 
@@ -308,6 +338,37 @@ benefit from Sonnet. The routing override lives in
 `OrchestratedConversation`, not in `MODEL_CONFIG_REGISTRY`, so the
 decision is localised and the wrapped `Conversation` class stays
 unaware of routing.
+
+**Why is asset-class a registry and not a branch?** Adding equities
+could have been an `if crypto … else equity …` fork threaded through the
+price path, the profile path, and routing. Instead asset-class is an
+orthogonal dimension resolved once by a symbol→class registry, and
+routing is a `(class, intent) → tool` lookup. The test the design had to
+pass: "compare Apple and Bitcoin" fires both `get_crypto_price` and
+`get_equity_price` in one turn with no class-branch in the hot path. The
+registry is deterministic for curated tickers/names and the ETF/index
+gate, and only calls a model (Haiku) to disambiguate genuinely unknown
+symbols.
+
+**Why force `tool_choice` for price but not profile or news?** Price is
+the one intent with class-split tools, so forcing the resolved one
+guarantees the right tool fires. Profile is a single class-aware tool and
+news is a single tool — forcing them buys nothing, and forcing profile
+would suppress refusals: speculation queries ("should I buy X?") classify
+as profile, and a forced tool on the first turn stops the model refusing
+where refusal is detected. Out-of-scope assets (ETFs, indices) are
+refused deterministically by the router before any model call.
+
+**Why a thin equity profile fallback, and why does it score low on
+relevance?** Twelve Data's free tier exposes reference data (name,
+exchange, type) but not company descriptions or fundamentals, which sit
+behind a paid tier — a deliberate scoping choice for a portfolio piece,
+upgradable without an architecture change. The fallback's tool output
+explicitly constrains the model to the returned fields and forbids adding
+detail from memory. The eval makes the trade visible: the fallback scores
+5/5 on faithfulness (it never fabricates) and low on relevance (it
+honestly says a detailed profile isn't available). Faithfulness over
+relevance is the right call, and measuring both axes is what surfaces it.
 
 **Why Langfuse and no other framework?** Standalone observability is
 hard to reproduce — OTEL semantic conventions, batch span export, a
