@@ -58,6 +58,21 @@ EQUITY_SYMBOLS: frozenset[str] = frozenset({
     "META", "TSLA", "JPM", "V", "JNJ",
 })
 
+# Curated names → deterministic class, so common cross-asset queries
+# ("compare Apple and Bitcoin") resolve without a disambiguation call.
+# Aliases not listed here fall through to the Haiku disambiguator, which
+# already handles them — this is an optimisation, not a correctness
+# requirement.
+CRYPTO_NAMES: frozenset[str] = frozenset({
+    "BITCOIN", "ETHEREUM", "SOLANA", "RIPPLE", "CARDANO",
+    "DOGECOIN", "AVALANCHE", "CHAINLINK", "POLKADOT", "POLYGON",
+})
+EQUITY_NAMES: frozenset[str] = frozenset({
+    "APPLE", "MICROSOFT", "NVIDIA", "ALPHABET", "GOOGLE", "AMAZON",
+    "META", "FACEBOOK", "TESLA", "JPMORGAN", "VISA",
+    "JOHNSON & JOHNSON",
+})
+
 # Policy gate → UNSUPPORTED. ETFs and indices: out of scope by decision,
 # gated here so they refuse cleanly instead of leaking a malformed symbol
 # into get_equity_price. When indices/ETFs come into scope in a future
@@ -143,9 +158,9 @@ class AssetRegistry:
         from every curated keyspace (i.e. 'unknown, ask the model').
         None never escapes resolve()."""
         s = symbol.strip().upper()
-        if s in CRYPTO_SYMBOLS:
+        if s in CRYPTO_SYMBOLS or s in CRYPTO_NAMES:
             return AssetClass.CRYPTO
-        if s in EQUITY_SYMBOLS:
+        if s in EQUITY_SYMBOLS or s in EQUITY_NAMES:
             return AssetClass.EQUITIES
         if s in UNSUPPORTED_SYMBOLS:
             return AssetClass.UNSUPPORTED

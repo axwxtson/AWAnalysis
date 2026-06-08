@@ -60,11 +60,15 @@ class SubQuery:
     """A single-intent sub-query produced by the decomposer.
 
     text is a complete, standalone English question that gets sent
-    through Conversation.send unchanged.
+    through Conversation.send unchanged. symbols holds the asset
+    mentions (names or tickers, verbatim) for the orchestration layer
+    to resolve to asset classes; empty when none were detected, in
+    which case routing falls back to AUTO.
     """
 
     intent: Intent
     text: str
+    symbols: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -130,47 +134,53 @@ Rules:
    history, origins, founders, or "most significant event", append
    that ask as a trailing clause rather than leading with it. Preserve
    the asset name/ticker verbatim (rule 3).
+6. SYMBOLS. For each sub-query, list the asset mentions it concerns in
+   a "symbols" array — names or tickers exactly as the user wrote them
+   (e.g. "Apple", "BTC", "Bitcoin"). One entry per distinct asset; use
+   [] if the sub-query names no specific asset. Do not invent tickers
+   or expand names — copy what the user wrote.
 
 Output schema (JSON, no prose, no markdown fences):
 {
   "sub_queries": [
-    {"intent": "profile" | "price" | "news", "text": "..."}
+    {"intent": "profile" | "price" | "news", "text": "...", "symbols": ["..."]}
   ]
 }
 
 Examples:
 
 User: "What's the price of BTC?"
-Output: {"sub_queries": [{"intent": "price", "text": "What's the price of BTC?"}]}
+Output: {"sub_queries": [{"intent": "price", "text": "What's the price of BTC?", "symbols": ["BTC"]}]}
 
 User: "What is Solana?"
-Output: {"sub_queries": [{"intent": "profile", "text": "What is Solana?"}]}
+Output: {"sub_queries": [{"intent": "profile", "text": "What is Solana?", "symbols": ["Solana"]}]}
 
 User: "Latest news on Ethereum"
-Output: {"sub_queries": [{"intent": "news", "text": "Latest news on Ethereum"}]}
+Output: {"sub_queries": [{"intent": "news", "text": "Latest news on Ethereum", "symbols": ["Ethereum"]}]}
 
 User: "What is Solana and what is the latest news on it?"
-Output: {"sub_queries": [{"intent": "profile", "text": "What is Solana?"}, {"intent": "news", "text": "What is the latest news on Solana?"}]}
+Output: {"sub_queries": [{"intent": "profile", "text": "What is Solana?", "symbols": ["Solana"]}, {"intent": "news", "text": "What is the latest news on Solana?", "symbols": ["Solana"]}]}
 
 User: "Give me the full picture on Ethereum: price, what it does, and any recent news"
-Output: {"sub_queries": [{"intent": "profile", "text": "What is Ethereum and what does it do?"}, {"intent": "price", "text": "What is the current price of Ethereum?"}, {"intent": "news", "text": "What is the latest news on Ethereum?"}]}
+Output: {"sub_queries": [{"intent": "profile", "text": "What is Ethereum and what does it do?", "symbols": ["Ethereum"]}, {"intent": "price", "text": "What is the current price of Ethereum?", "symbols": ["Ethereum"]}, {"intent": "news", "text": "What is the latest news on Ethereum?", "symbols": ["Ethereum"]}]}
 
 User: "What's BTC trading at and what was the most significant event in its history?"
-Output: {"sub_queries": [{"intent": "price", "text": "What is the current price of BTC?"}, {"intent": "profile", "text": "What is BTC? Include the most significant events in its history."}]}
+Output: {"sub_queries": [{"intent": "price", "text": "What is the current price of BTC?", "symbols": ["BTC"]}, {"intent": "profile", "text": "What is BTC? Include the most significant events in its history.", "symbols": ["BTC"]}]}
 
 User: "What was the most significant event in Bitcoin's history?"
-Output: {"sub_queries": [{"intent": "profile", "text": "What is Bitcoin? Include the most significant events in its history."}]}
+Output: {"sub_queries": [{"intent": "profile", "text": "What is Bitcoin? Include the most significant events in its history.", "symbols": ["Bitcoin"]}]}
 
 User: "What happened at the most recent Bitcoin halving?"
-Output: {"sub_queries": [{"intent": "news", "text": "What happened at the most recent Bitcoin halving?"}]}
+Output: {"sub_queries": [{"intent": "news", "text": "What happened at the most recent Bitcoin halving?", "symbols": ["Bitcoin"]}]}
 
 User: "Compare BTC and ETH prices"
-Output: {"sub_queries": [{"intent": "price", "text": "Compare BTC and ETH prices"}]}
+Output: {"sub_queries": [{"intent": "price", "text": "Compare BTC and ETH prices", "symbols": ["BTC", "ETH"]}]}
 
 User: "BTC vs ETH market cap"
-Output: {"sub_queries": [{"intent": "price", "text": "Compare BTC and ETH market caps"}]}
+Output: {"sub_queries": [{"intent": "price", "text": "Compare BTC and ETH market caps", "symbols": ["BTC", "ETH"]}]}
 
-
+User: "Compare Apple and Bitcoin prices"
+Output: {"sub_queries": [{"intent": "price", "text": "Compare Apple and Bitcoin prices", "symbols": ["Apple", "Bitcoin"]}]}
 """
 
 
@@ -266,7 +276,13 @@ class Decomposer:
                 )
             if not isinstance(text, str) or not text.strip():
                 raise DecomposerError(f"sub_query text empty or non-string: {text!r}")
-            sub_queries.append(SubQuery(intent=Intent(intent_str), text=text.strip()))
+            symbols_raw = sq.get("symbols", [])
+            if not isinstance(symbols_raw, list):
+                symbols_raw = []
+            symbols = [str(s).strip() for s in symbols_raw if str(s).strip()]
+            sub_queries.append(
+                SubQuery(intent=Intent(intent_str), text=text.strip(), symbols=symbols)
+            )
 
         return QueryPlan(
             original_query=original_query,
