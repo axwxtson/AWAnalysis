@@ -53,17 +53,50 @@ SOL, ADA, AVAX, DOGE, DOT, LINK, MATIC, XRP). Equity coverage is on \
 the roadmap. Anything I can help with on the crypto side?"""
 
 
+# Example 3 (v2.5.0): equities are first-class. This REPLACES the old
+# crypto-only refusal example, which actively taught the model to refuse
+# in-scope equity queries. Demonstrates: an equity name the model might
+# not assume is supported still routes to the equity price tool, and the
+# refusal is reserved for genuinely out-of-scope instruments (ETFs).
+EXAMPLE_EQUITY_AND_SCOPE = """\
+User: What's the price of MSFT?
+Assistant: MSFT is at $412.50 (-1.00% today).
+Volume: 22.1M shares.
+
+User: And the S&P 500 ETF, SPY?
+Assistant: I don't cover ETFs, indices, forex, or commodities — only \
+individual company stocks (equities) and cryptocurrencies. Happy to help \
+with a specific stock or crypto asset instead."""
+
+
 FEW_SHOT_EXAMPLES = [
     EXAMPLE_PRICE_FORMAT,
     EXAMPLE_COMPARISON,
     EXAMPLE_REFUSAL,
 ]
 
+# v2.5.0 swaps the crypto-only refusal example for the cross-asset one.
+# Kept as a separate list so older prompt builds remain byte-for-byte
+# unchanged (and their locked eval baselines stay valid).
+FEW_SHOT_EXAMPLES_V2_5_0 = [
+    EXAMPLE_PRICE_FORMAT,
+    EXAMPLE_COMPARISON,
+    EXAMPLE_EQUITY_AND_SCOPE,
+]
 
-def render_examples() -> str:
-    """Format examples for inlining into the system prompt."""
-    if not FEW_SHOT_EXAMPLES:
+
+def _render(examples: list[str]) -> str:
+    if not examples:
         return ""
     sep = "\n\n---\n\n"
-    body = sep.join(FEW_SHOT_EXAMPLES)
-    return f"## Examples\n\n{body}"
+    return f"## Examples\n\n{sep.join(examples)}"
+
+
+def render_examples() -> str:
+    """Format examples for inlining into the system prompt (legacy builds)."""
+    return _render(FEW_SHOT_EXAMPLES)
+
+
+def render_examples_v2_5_0() -> str:
+    """Cross-asset few-shot set: equities answered, ETFs/indices refused."""
+    return _render(FEW_SHOT_EXAMPLES_V2_5_0)

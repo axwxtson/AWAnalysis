@@ -15,7 +15,7 @@ Structure (Module 2 pattern):
 
 from __future__ import annotations
 
-from aw_analysis.prompts.examples import render_examples
+from aw_analysis.prompts.examples import render_examples, render_examples_v2_5_0
 from aw_analysis.prompts.versions import (
     ACTIVE_PROMPT_VERSION,
     PROMPT_VERSIONS,
@@ -396,7 +396,7 @@ def _build_v2_5_0() -> str:
         _tool_selection_v2_5_0(),
         _output_contract(),
         _refusal_policy_v2_5_0(),
-        render_examples(),
+        render_examples_v2_5_0(),
         _critical_rules_restated(),
     ]
     return "\n\n".join(s for s in sections if s)
