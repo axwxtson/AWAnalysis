@@ -3,11 +3,11 @@
 Real API calls. Run with:
 
     cd /Users/alex/Documents/Graft/ClaudeCode/AWAnalysis
-    PYTHONPATH=$(pwd) python3 -m pytest tests/test_decomposer.py -v
+    PYTHONPATH=$(pwd) python3 -m evals.calibration.calibrate_decomposer
 
-Or directly:
-
-    PYTHONPATH=$(pwd) python3 tests/test_decomposer.py
+It is a calibration harness, not a pytest module: it makes real API
+calls and gates on agreement rates. It deliberately lives outside
+tests/ so `pytest` does not try to collect it.
 
 The CALIBRATION_SET is 30 hand-graded cases mirroring the Stage 6
 judge-calibration protocol. Targets: ≥90% exact-plan agreement, ≥95%
