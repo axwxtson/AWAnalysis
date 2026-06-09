@@ -107,5 +107,27 @@ def _register_profile_resources(server: FastMCP) -> None:
 _register_profile_resources(mcp)
 
 
+# --- Prompt: a user-invoked slash-command for cross-asset comparison ---
+#
+# A prompt is user-controlled: the user picks it from the host UI. It does
+# not answer anything and cannot call tools; it produces a message the model
+# then acts on (by calling ask_aw_analysis). It deliberately knows nothing
+# about asset classes -- producing a clean compound query and letting the
+# pipeline resolve classes and routing keeps the intelligence in one place.
+# The phrasing matches the validated cross-asset routing case.
+
+@mcp.prompt(title="Compare two assets")
+def compare_assets(asset_a: str, asset_b: str) -> str:
+    """Compare two assets (crypto or equities) head to head.
+
+    Produces a compound market query that the agent decomposes, routes per
+    asset class, and answers as one attributed comparison.
+    """
+    return (
+        f"Compare the current prices of {asset_a} and {asset_b}, "
+        f"with the key facts for each."
+    )
+
+
 if __name__ == "__main__":
     mcp.run()
