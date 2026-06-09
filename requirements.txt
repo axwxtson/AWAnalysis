@@ -6,4 +6,6 @@ rich>=13.7.0
 voyageai>=0.2.4
 chromadb>=0.5.0
 langfuse>=3.0.0,<4.0.0
+mcp>=1.27.2,<2.0.0
+
 
