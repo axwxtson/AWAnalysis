@@ -1,11 +1,13 @@
-"""Direct stdio client for the AW Analysis MCP server — no host model.
+"""Manual end-to-end smoke check for the AW Analysis MCP server.
 
-Launches aw_analysis.mcp_server as a subprocess, speaks MCP to it, and
-calls ask_aw_analysis with one crypto case. This is the live verify-gate
-for the server before any host (Inspector / Claude Desktop) is involved.
+NOT a unit test — this launches the real server as a stdio subprocess and
+makes live API calls (Anthropic, CoinGecko). It is the no-host verify-gate:
+it speaks MCP directly with no host model in the loop, exercising all three
+primitives — the ask_aw_analysis tool, the asset-profile resources, and the
+compare_assets prompt.
 
-Run from the repo root, in the venv:
-    python mcp_smoke.py
+Run from anywhere, with the venv interpreter:
+    .venv/bin/python bin/mcp_smoke.py
 """
 
 from __future__ import annotations
@@ -13,18 +15,23 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 from pydantic import AnyUrl
 
-# Launch the server with the SAME interpreter running this script (the
-# venv python), so the subprocess has mcp + aw_analysis available.
-# PYTHONPATH lets `-m aw_analysis.mcp_server` resolve regardless of cwd.
+# Repo root derived from this file's location (bin/ -> repo root), not the
+# working directory, so the launched subprocess resolves aw_analysis no
+# matter where the script is run from.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+# Launch the server with the SAME interpreter running this script (the venv
+# python), so the subprocess has mcp + aw_analysis available.
 server_params = StdioServerParameters(
     command=sys.executable,
     args=["-m", "aw_analysis.mcp_server"],
-    env={**os.environ, "PYTHONPATH": os.getcwd()},
+    env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
 )
 
 
@@ -34,11 +41,9 @@ async def main() -> None:
             # MCP handshake: negotiate protocol version + capabilities.
             await session.initialize()
 
-            # Capability discovery — the host learns what the server offers.
+            # Tool (model-controlled). Single-intent crypto: the fast path.
             tools = await session.list_tools()
             print("tools advertised:", [t.name for t in tools.tools])
-
-            # The one live case: single-intent, crypto, fast path.
             result = await session.call_tool(
                 "ask_aw_analysis",
                 {"query": "What is the price of Bitcoin?"},
@@ -48,15 +53,13 @@ async def main() -> None:
                 if isinstance(block, types.TextContent):
                     print("ANSWER:\n", block.text)
 
-            # Resources are app-controlled: the client lists them and reads
-            # one directly. No model decided to fetch these.
+            # Resources (app-controlled): list them, read one directly.
             resources = await session.list_resources()
             print("resources:", [str(r.uri) for r in resources.resources])
             profile = await session.read_resource(AnyUrl("asset://profiles/bitcoin"))
             print("PROFILE (first 200 chars):\n", profile.contents[0].text[:200])
 
-            # Prompts are user-controlled: the client lists them and renders
-            # one. No model runs here -- a prompt only produces messages.
+            # Prompt (user-controlled): list it, render it. No model runs.
             prompts = await session.list_prompts()
             print("prompts:", [p.name for p in prompts.prompts])
             rendered = await session.get_prompt(
