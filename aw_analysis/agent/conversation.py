@@ -113,7 +113,7 @@ class Conversation:
         try:
             # Stage 6 v2.2.2 follow-up: pass the query through so the loop
               # can apply recency-cue enforcement and post-hoc safety check.
-            self._run_loop(trace, user_query=user_message)
+            self._run_loop(trace, user_query=user_message, forced_tool=forced_tool)
         except TurnBudgetExceeded:
             # Trace already has its iterations recorded; mark
             # truncated and re-raise so callers can decide what to do.
