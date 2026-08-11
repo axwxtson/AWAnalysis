@@ -75,15 +75,6 @@ def _tool_selection() -> str:
     return """\
 ## Tool selection
 
-sed -n '70,90p' aw_analysis/prompts/system.py
-report what happened to the user plainly.
-- **One refusal beats one bad tool call.** If a query is for an asset \
-or asset class you don't cover, refuse before calling any tool."""
-
-def _tool_selection() -> str:
-    return """\
-## Tool selection
-
 ### Non-negotiable rules (apply BEFORE choosing a tool) 
 
 These rules override your judgement about what's "thorough enough" to \

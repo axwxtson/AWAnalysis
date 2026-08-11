@@ -25,6 +25,7 @@ Design:
 from __future__ import annotations
 
 import time
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -40,11 +41,11 @@ from aw_analysis.agent.decomposer import (
 from aw_analysis.agent.trace import IterationUsage, TurnTrace
 from aw_analysis.asset_registry import AssetClass, AssetRegistry, SymbolDisambiguator
 from aw_analysis.client.anthropic_client import AnthropicClient
-from aw_analysis.config import TaskType, cost_for, get_model_config
+from aw_analysis.config import ModelConfig, TaskType, cost_for, get_model_config
+from aw_analysis.config.model_config import MODEL_CONFIG_REGISTRY
+from aw_analysis.config.model_pricing import HAIKU_MODEL
 from aw_analysis.obs import emitter as obs
-import uuid
 from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
-
 
 # Per-intent routing override for the TOOL_SELECTION model. The
 # wrapping Conversation continues to call get_model_config(TOOL_SELECTION)
@@ -55,25 +56,11 @@ from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
 #
 # This keeps the Conversation class entirely unchanged and makes the
 # routing decision a single, localised, well-tested boundary.
-ROUTING_OVERRIDES: dict[Intent, TaskType] = {
-    Intent.PRICE: TaskType.TOOL_SELECTION,  # rule: route price-only sub-queries
-    Intent.PROFILE: TaskType.TOOL_SELECTION,
-    Intent.NEWS: TaskType.TOOL_SELECTION,
-}
 
-
-# Note: ROUTING_OVERRIDES as defined above does NOT yet route price
-# sub-queries to Haiku — it returns the default TOOL_SELECTION (Sonnet).
-# The actual override of model is done via a parallel registry below.
-# Keeping this two-table structure makes "what gets routed where"
-# extremely explicit in code review.
-#
 # Per-intent ModelConfig override for sub-query tool selection.
 # If the entry is None, use the default get_model_config(TOOL_SELECTION).
 # If the entry is a ModelConfig, use it for that intent's sub-query
 # instead.
-from aw_analysis.config import ModelConfig
-from aw_analysis.config.model_pricing import HAIKU_MODEL
 
 _HAIKU_TOOL_SELECTION = ModelConfig(
     model=HAIKU_MODEL,
@@ -203,9 +190,6 @@ def _current_trace_id() -> str | None:
     except Exception:  # noqa: BLE001
         return None
 
-
-class OrchestratedConversation:
-    ...
 
 @dataclass
 class OrchestratedTurnTrace:
@@ -531,9 +515,7 @@ class OrchestratedConversation:
         if override is None:
             return self._conversation.send(sub_query.text, forced_tool=forced_tool)
 
-        # Apply temporary TOOL_SELECTION model override for this sub-query.
-        from aw_analysis.config.model_config import MODEL_CONFIG_REGISTRY
-
+        # Apply temporary TOOL_SELECTION model override for this sub-query
         previous = MODEL_CONFIG_REGISTRY[TaskType.TOOL_SELECTION]
         MODEL_CONFIG_REGISTRY[TaskType.TOOL_SELECTION] = override
         try:
