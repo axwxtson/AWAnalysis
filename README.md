@@ -10,8 +10,9 @@ Engineering programme (see [axwxtson/ai-systems-engineering](https://github.com/
 
 ## Status
 
-**9 stages complete.** Each stage layered in patterns from one study
-module, with the eval harness regression-tested on every commit.
+**10 stages complete.** Each stage layered in patterns from one study
+module. The eval harness is run manually before commits; there is no CI
+pipeline yet (see [KNOWN_ISSUES.md](KNOWN_ISSUES.md)).
 
 | Stage | Module | What it adds |
 |-------|--------|--------------|
@@ -20,20 +21,25 @@ module, with the eval harness regression-tested on every commit.
 | 3 | Agent Architectures | Stateful Conversation with cross-turn memory, structured traces |
 | 4 | RAG Systems | Embedding pipeline, vector store, tiered retrieval |
 | 5 | LLM Fundamentals | Per-task ModelConfig, token accounting, soft context budget |
-| 6 | Evaluation & Testing | Two-layer eval harness with calibrated LLM judge (current) |
+| 6 | Evaluation & Testing | Two-layer eval harness with calibrated LLM judge |
 | 7 | Multi-Model Orchestration | Query decomposer + per-intent routing (Haiku for price, Sonnet for prose) |
 | 8 | Tool Ecosystem & Workflows | Langfuse observability behind a facade; eval scores attach to traces |
 | 9 | Cross-asset expansion | Equities as a first-class asset class: symbol→class registry, `get_equity_price`, per-`(class,intent)` tool-choice routing, per-asset-class eval suites |
+| 10 | MCP server | The orchestrated agent exposed over Model Context Protocol (FastMCP, stdio): one tool, 20 profile resources, one prompt template |
 
-Current eval baseline (v2.5.0), partitioned by asset class:
-**crypto 23/23** and **equities 16/16**. The suites live under
-`evals/golden/{crypto,equities}/` and run independently via
+The golden set is 39 cases (23 crypto, 16 equities), partitioned by asset
+class under `evals/golden/{crypto,equities}/` and run independently via
 `--asset-class`; results route to `evals/results/<class>/`. Asset-class
 is an orthogonal dimension of the dataset, not a special case — the six
 query classes (price, profile-curated, profile-fallback, news, refusal,
 combined-tools) are shared across both. The cross-asset comparison case
 (`price_compare_apple_btc`) is a permanent guard that a single mixed-class
 query fires both class price tools in one turn.
+
+The current baseline is being re-measured against the post-`1453796`
+forced-tool path; committed run artefacts under `evals/results/` are the
+source of truth, and known failures are listed in
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 ## What it does today
 
@@ -199,6 +205,11 @@ flowchart TD
   registry (v2.5.0 active; cross-asset scope), few-shot examples
 - **`aw_analysis/obs/`** — Langfuse emitter facade; no other module
   imports `langfuse` directly
+- **`aw_analysis/mcp_server.py`** — MCP server (FastMCP, stdio). Exposes
+  the whole orchestrated agent as a single tool (`ask_aw_analysis`), the
+  20 asset profiles as file-backed resources, and one prompt template
+  (`compare_assets`). Deliberately not raw pipeline primitives: a host
+  gets the Stage 1–9 orchestration, not four tools to sequence itself
 - **`data/asset_profiles/`** — 20 hand-written markdown profiles on a
   unified schema (10 crypto + 10 equity large caps) 
 - **`data/chroma/`** — generated vector store (gitignored)
