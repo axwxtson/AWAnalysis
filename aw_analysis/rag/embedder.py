@@ -21,20 +21,21 @@ from __future__ import annotations
 
 import voyageai
 
-from aw_analysis.config import SETTINGS
+from aw_analysis.config import get_settings
 
 
 class VoyageEmbedder:
     """Wrapper around the Voyage AI embedding client."""
 
     def __init__(self, model: str | None = None) -> None:
-        if not SETTINGS.voyage_api_key:
+        settings = get_settings()
+        if not settings.voyage_api_key:
             raise RuntimeError(
                 "VOYAGE_API_KEY is not set — RAG features are unavailable. "
                 "Get a key at https://dash.voyageai.com/ and set it in .env."
             )
-        self._client = voyageai.Client(api_key=SETTINGS.voyage_api_key)
-        self.model = model or SETTINGS.embedding_model
+        self._client = voyageai.Client(api_key=settings.voyage_api_key)
+        self.model = model or settings.embedding_model
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """Embed a batch of documents for storage."""

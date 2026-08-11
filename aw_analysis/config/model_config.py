@@ -14,11 +14,11 @@ registry, so the registry stays a one-key lookup.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
-from aw_analysis.config.model_pricing import HAIKU_MODEL, SONNET_MODEL
-from aw_analysis.config.settings import SETTINGS
+from aw_analysis.config.model_pricing import HAIKU_MODEL
+from aw_analysis.config.settings import get_settings
 
 
 class TaskType(str, Enum):
@@ -31,6 +31,19 @@ class TaskType(str, Enum):
     REFUSAL = "refusal"
     CONTEXT_SUMMARISATION = "context_summarisation"
     JUDGE = "judge"
+
+
+# Sentinel for "whatever get_settings().default_model resolves to at call time".
+# #
+# The registry is built at import, but settings are now lazy, so an entry
+# cannot bake in the default model without reintroducing the import-time
+# key requirement. Entries carry this sentinel instead and
+# get_model_config() substitutes the real model on lookup.
+#
+# Safe because the only code that touches MODEL_CONFIG_REGISTRY directly
+# is orchestration._run_sub_query, which stores and restores whole
+# ModelConfig objects and never reads .model.
+DEFAULT_MODEL = "__settings_default__"
 
 
 @dataclass(frozen=True)
@@ -53,7 +66,7 @@ class ModelConfig:
 # The TOOL_SELECTION default stays on Sonnet — the orchestration layer
 # overrides per sub-query intent (price-only → Haiku) by looking up
 # task-type-specific configs through this same registry; see
-# orchestration.ROUTING_OVERRIDES.
+# orchestration.INTENT_TO_TOOL_SELECTION_CONFIG.
 MODEL_CONFIG_REGISTRY: dict[TaskType, ModelConfig] = {
     TaskType.INTENT_CLASSIFICATION: ModelConfig(
         model=HAIKU_MODEL,
@@ -75,31 +88,31 @@ MODEL_CONFIG_REGISTRY: dict[TaskType, ModelConfig] = {
         ),
     ),
     TaskType.TOOL_SELECTION: ModelConfig(
-        model=SETTINGS.default_model,
+        model=DEFAULT_MODEL,
         temperature=0.2,
         max_tokens=1024,
         rationale="Module 5 Ex 5.2: predictable structure with theoretical headroom",
     ),
     TaskType.FINAL_SYNTHESIS: ModelConfig(
-        model=SETTINGS.default_model,
+        model=DEFAULT_MODEL,
         temperature=0.7,
         max_tokens=2048,
         rationale="Natural prose; 2.5x peak observed output on hardest existing query",
     ),
     TaskType.REFUSAL: ModelConfig(
-        model=SETTINGS.default_model,
+        model=DEFAULT_MODEL,
         temperature=0.0,
         max_tokens=512,
         rationale="Refusal wording is contract-shaped, not creative",
     ),
     TaskType.CONTEXT_SUMMARISATION: ModelConfig(
-        model=SETTINGS.default_model,
+        model=DEFAULT_MODEL,
         temperature=0.0,
         max_tokens=1024,
         rationale="Greedy condensation; deterministic structure",
     ),
     TaskType.JUDGE: ModelConfig(
-        model=SETTINGS.default_model,
+        model=DEFAULT_MODEL,
         temperature=0.0,
         max_tokens=1024,
         rationale="Stage 6 calibrated judge; non-determinism flagged as eval-side concern",
@@ -114,5 +127,12 @@ def get_model_config(task_type: TaskType) -> ModelConfig:
     task type (e.g. TOOL_SELECTION) and then apply a query-class
     override on top of it. Call sites inside Conversation continue to
     use this directly with no awareness of routing.
+
+    Entries carrying DEFAULT_MODEL are resolved here against the live
+    settings, so the registry can be built at import while the key is
+    only required when a config is actually used.
     """
-    return MODEL_CONFIG_REGISTRY[task_type]
+    config = MODEL_CONFIG_REGISTRY[task_type]
+    if config.model == DEFAULT_MODEL:
+        return replace(config, model=get_settings().default_model)
+    return config

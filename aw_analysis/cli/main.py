@@ -15,6 +15,7 @@ from rich.markdown import Markdown
 from aw_analysis.agent import Conversation, TurnBudgetExceeded
 from aw_analysis.agent.trace import TurnTrace
 from aw_analysis.client import AnthropicClient
+from aw_analysis.config import get_settings
 from aw_analysis.tools import ToolRegistry, default_registry
 from aw_analysis.agent.orchestration import OrchestratedConversation
 # Importing aw_analysis.obs at startup registers the atexit flush hook, ensuring traces are flushed when the CLI exits.
@@ -98,6 +99,11 @@ def _handle(user_message: str, conversation: Conversation) -> None:
 
 
 def main() -> None:
+    # Fail fast. Settings are lazy so the library imports without a key;
+    # this is an application entry point, so a missing key is fatal here
+    # and should say so before any work starts.
+    get_settings()
+
     client = AnthropicClient()
     inner_conversation = Conversation(
         client=client,

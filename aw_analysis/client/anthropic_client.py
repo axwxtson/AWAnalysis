@@ -15,7 +15,7 @@ from typing import Any
 
 import anthropic
 
-from aw_analysis.config import SETTINGS, ModelConfig
+from aw_analysis.config import ModelConfig, get_settings
 
 
 class AnthropicClient:
@@ -27,8 +27,8 @@ class AnthropicClient:
     """
 
     def __init__(self) -> None:
-        self._sdk = anthropic.Anthropic(api_key=SETTINGS.anthropic_api_key)
-
+        self._sdk = anthropic.Anthropic(api_key=get_settings().anthropic_api_key)
+        
     def create(
         self,
         *,

@@ -16,6 +16,7 @@ import json
 import sys
 from pathlib import Path
 
+from aw_analysis.config import get_settings
 from evals.calibration.run import run_calibration
 from evals.golden import ASSET_CLASSES, cases_for
 from evals.regression.compare import compare
@@ -57,12 +58,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.cmd == "calibrate":
+        get_settings()  # fail fast: calibration makes live judge calls
         report = run_calibration()
         print()
         print(_format_calibration(report))
         return 0 if report.passes_gate else 1
 
     if args.cmd == "run":
+        get_settings()  # fail fast: eval makes live judge calls
         if args.require_calibration and not _calibration_passed():
             print("ERROR: --require-calibration set but no passing calibration found.")
             print("Run `aw-eval calibrate` first.")
@@ -108,7 +111,7 @@ def _calibration_passed() -> bool:
     return False
 
 
-def _format_calibration(report) -> str:  # noqa: ANN001 - dataclass
+def _format_calibration(report) -> str:
     lines = [
         f"=== Calibration: {report.rubric_version} ===",
         f"passes gate: {report.passes_gate}",

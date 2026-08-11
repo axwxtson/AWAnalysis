@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -26,7 +27,7 @@ class Settings:
     log_level: str
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
             raise RuntimeError(
@@ -49,5 +50,21 @@ class Settings:
             log_level=os.environ.get("AW_LOG_LEVEL", "INFO"),
         )
 
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return the process-wide Settings, constructing on first call.
 
-SETTINGS = Settings.from_env()
+    Deliberately lazy. An earlier version bound
+    `SETTINGS = Settings.from_env()` at module scope, which meant
+    importing any module that transitively touched config required an
+    ANTHROPIC_API_KEY. That made offline unit tests and CI impossible
+    and is why the only tests that existed were on obs/, the one
+    subtree that degrades gracefully without keys.
+
+    Validation still fails fast, but at the application entry points
+    (cli.main, mcp_server, evals.cli) rather than at import.
+
+    Tests that mutate the environment should call
+    `get_settings.cache_clear()` first.
+    """
+    return Settings.from_env()

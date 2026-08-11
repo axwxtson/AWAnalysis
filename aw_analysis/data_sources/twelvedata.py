@@ -16,7 +16,7 @@ from typing import Any
 
 import httpx
 
-from aw_analysis.config import SETTINGS
+from aw_analysis.config import get_settings
 
 TWELVEDATA_BASE = "https://api.twelvedata.com"
 
@@ -36,13 +36,15 @@ class TwelveDataUnknownSymbol(TwelveDataError):
 class TwelveDataClient:
     """Synchronous Twelve Data client.
 
-    The API key is read from SETTINGS at construction but not validated
+    The API key is read from settings at construction but not validated
     until a call is made, so a missing key only bites when the tool is
     actually invoked (mirrors the lazy-credential pattern elsewhere).
     """
 
     def __init__(self, api_key: str | None = None, timeout: float = 10.0) -> None:
-        self._api_key = api_key if api_key is not None else SETTINGS.twelvedata_api_key
+        self._api_key = (
+            api_key if api_key is not None else get_settings().twelvedata_api_key
+        )
         self._client = httpx.Client(
             base_url=TWELVEDATA_BASE,
             timeout=timeout,

@@ -22,8 +22,7 @@ from pathlib import Path
 import chromadb
 from chromadb.api.models.Collection import Collection
 
-from aw_analysis.config import SETTINGS
-
+from aw_analysis.config import get_settings
 
 COLLECTION_NAME = "asset_profiles"
 
@@ -32,7 +31,7 @@ class ChromaStore:
     """Persistent ChromaDB client for the asset profile collection."""
 
     def __init__(self, path: Path | None = None) -> None:
-        self.path = path or SETTINGS.chroma_path
+        self.path = path or get_settings().chroma_path
         self.path.mkdir(parents=True, exist_ok=True)
         self._client = chromadb.PersistentClient(path=str(self.path))
 

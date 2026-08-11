@@ -27,7 +27,7 @@ from pydantic import AnyUrl
 from aw_analysis.agent.conversation import Conversation
 from aw_analysis.agent.orchestration import OrchestratedConversation
 from aw_analysis.client.anthropic_client import AnthropicClient
-from aw_analysis.config import REPO_ROOT
+from aw_analysis.config import REPO_ROOT, get_settings
 from aw_analysis.prompts.system import SYSTEM_PROMPT
 from aw_analysis.tools import default_registry
 
@@ -132,4 +132,8 @@ def compare_assets(asset_a: str, asset_b: str) -> str:
 
 
 if __name__ == "__main__":
+    # Fail fast before the stdio transport opens. An MCP host surfaces a
+    # startup crash far more legibly than a tool call that fails later
+    # with a credential error.
+    get_settings()
     mcp.run()
