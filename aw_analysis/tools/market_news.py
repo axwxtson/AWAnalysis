@@ -11,10 +11,17 @@ mostly like any other tool. The tool-activity line will not show a
 duration for it because we don't time the dispatch — the search happens
 inside the model's response generation.
 
+Cross-asset since Stage 9: news applies to cryptocurrencies and to
+publicly-traded equities alike. This is the one tool with no class split
+— unlike price (get_crypto_price / get_equity_price), a news search is
+the same operation whatever the asset is, which is also why routing
+never forces it (see orchestration.FORCE_MAP).
+
 Use cases:
 - "Did anything happen to Solana this week?"
+- "Any recent news on NVIDIA's earnings?"
 - "What's the latest on the spot Bitcoin ETF?"
-- "Why is ETH down today?"
+- "Why is Tesla down today?"
 - Any question where the answer is in news rather than reference content.
 """
 
@@ -26,17 +33,31 @@ from aw_analysis.tools.base import Tool
 
 
 class MarketNewsTool(Tool):
+    # `web_search` is not a name we chose and is not an accidental
+    # collision with Anthropic's identifier — it IS that identifier.
+    # This tool is a passthrough to the server-side search tool, so the
+    # name is fixed by the {"type": "web_search_20250305", "name":
+    # "web_search"} contract emitted in to_anthropic_param below.
+    #
+    # It also never crosses the MCP boundary: mcp_server.py exposes one
+    # tool (ask_aw_analysis), so a third-party host cannot see this name
+    # and cannot collide with its own search tool. That falls out of the
+    # decision to expose the orchestrated agent rather than raw pipeline
+    # primitives.
     name = "web_search"
     description = (
         "Search the web for recent news, events, or analysis about "
-        "cryptocurrency markets and assets. Use this when the user asks "
-        "about: recent events ('what happened to Solana this week'), "
-        "current sentiment or analysis ('why is ETH down'), upcoming "
-        "events ('when is the next Bitcoin halving in news terms'), or "
+        "financial markets — both cryptocurrencies and publicly-traded "
+        "equities. Use this when the user asks about: recent events "
+        "('what happened to Solana this week', 'any news on NVIDIA's "
+        "earnings'), current sentiment or analysis ('why is ETH down', "
+        "'why did Tesla drop today'), upcoming events ('when is the next "
+        "Bitcoin halving in news terms', 'when does Apple report'), or "
         "anything time-sensitive that wouldn't be in static reference "
         "material. Do NOT use this for: current prices (use "
-        "get_crypto_price), background/biographical information about "
-        "an asset (use lookup_asset_profile), or speculative predictions."
+        "get_crypto_price for crypto or get_equity_price for equities), "
+        "background/biographical information about an asset (use "
+        "lookup_asset_profile), or speculative predictions."
     )
     input_schema: dict[str, Any] = {
         "type": "object",
@@ -46,8 +67,9 @@ class MarketNewsTool(Tool):
                 "description": (
                     "A focused search query. Examples: 'Solana network "
                     "outage 2026', 'spot Bitcoin ETF flows this week', "
-                    "'Ethereum upgrade news'. Be specific about the "
-                    "asset and the time-frame if known."
+                    "'NVIDIA Q2 earnings reaction', 'Tesla delivery "
+                    "numbers this quarter'. Be specific about the asset "
+                    "and the time-frame if known."
                 ),
             },
         },
