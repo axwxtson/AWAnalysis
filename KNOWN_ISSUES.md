@@ -41,27 +41,36 @@ provable no-op on this case.
 names. Likely a structural rather than directive change, since the
 directive already exists.
 
-### `news_nvidia_event` — faithfulness 3 → 2 on one run
+### `news_nvidia_event` — resolved, not reproducible
 
-**What happens.** One observed drop in the faithfulness score.
+**What was observed.** One faithfulness score of 2 (from 3) on a single
+run around 8 June.
 
-**Diagnosis (provisional).** Probably run-to-run variance. `web_search`
-returns different results on each call, so the `news` class has
-non-deterministic inputs by construction. The Stage 9 retrospective
-already records `news` faithfulness around 3.5 as expected and
-explicitly says not to tune it away. A single 3 → 2 move is not
-evidence of a regression.
+**Measured (Block 1.6).** Five consecutive runs at v2.5.0 on 12 August:
+faithfulness 4, 5, 5, 5, 5. All five passed. `bin/variance_probe.py`,
+scratch results not committed.
 
-**Not caused by routing — confirmed (Block 1.5).** Same argument as
-above: `NEWS` intent has no `FORCE_MAP` entry, so `forced_tool` is
-`None` either way. `bin/route_probe.py` confirmed the decomposer does
-not split this query despite the "earnings" framing: one sub-query,
-`intent=news`, `symbols=['NVIDIA']`, `classes=['equities']`,
-`action=auto`, `forced_tool=None`.
+**Reading.** The case is not currently failing and does not go into the
+baseline as a known failure. Note that this is *not* evidence the
+original 2 was stochastic — a spread of one point across five runs is
+narrow, not noisy. The honest statement is that the score is not
+reproducible today, and the cause cannot be recovered: `web_search`
+inputs have changed over two months, the judge may drift across that
+interval, and Block 1.4 altered the news tool description that the model
+reads on exactly this class of query. Those cannot be separated after
+the fact.
 
-**Resolution.** Block 1.6 runs the case three to five times and records
-the spread. If 2 sits inside the observed range, this entry closes as
-expected variance rather than a defect.
+**Lesson.** A news-class case measured once, against a tool with
+time-varying inputs, is not a reproducible measurement. News-class cases
+should be run n times with the distribution recorded at the point of
+measurement, not a single score.
+
+**Not caused by routing — confirmed (Block 1.5).** `NEWS` intent has no
+`FORCE_MAP` entry, so `forced_tool` is `None` either way.
+`bin/route_probe.py` confirmed the decomposer does not split this query
+despite the "earnings" framing: one sub-query, `intent=news`,
+`symbols=['NVIDIA']`, `classes=['equities']`, `action=auto`,
+`forced_tool=None`.
 
 ### No committed current baseline
 
