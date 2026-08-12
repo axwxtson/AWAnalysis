@@ -11,35 +11,33 @@ Last reviewed: 11.8.26
 
 ## Evaluation
 
-### `profile_shopify_fallback` — faithfulness 2 (expected 5)
+### `profile_shopify_fallback` — passes, but relevance 2
 
-**What happens.** The equity profile fallback path returns thin Twelve
-Data reference fields (name, exchange, type). The model appends a
-business description for Shopify that is not present in the returned
-data.
+**Measured (Block 1.7).** Three consecutive runs at v2.5.0 on 12 August:
+faithfulness 5, 5, 5 and relevance 2, 2, 2. All passed. The June
+faithfulness failure (2) is not reproducible.
 
-**Diagnosis (confident).** Training-data gravity on a well-known name.
-This is the same failure Stage 9 already fixed once for Oracle in
-`fix(profile): ground the equity fallback to its reference fields` —
-the grounding language constrains the model to the returned fields, and
-it holds for Oracle but not for a larger-cap name where the prior is
-stronger.
+**What the numbers mean.** The equity fallback returns thin Twelve Data
+reference fields — name, exchange, instrument type — with no business
+description. The Stage 9 grounding fix constrains the model to those
+fields, so it no longer invents a description: faithfulness 5. But there
+is nothing in the returned data that answers "What is Shopify?", so the
+answer is a faithful non-answer: relevance 2.
 
-**Not caused by routing — confirmed (Block 1.5).** `FORCE_MAP` contains
-only `(CRYPTO, PRICE)` and `(EQUITIES, PRICE)`. This case is `PROFILE`
-intent, so `decide_route` returns `AUTO` and `forced_tool` is `None`.
-The one-line fix in `1453796` forwards `forced_tool` to `_run_loop`;
-when it is `None` the post-fix call is identical to the pre-fix call.
+**Why it passes.** The pass gate checks faithfulness against
+JUDGE_PASS_THRESHOLD and does not gate on relevance. A case can be
+maximally faithful and nearly useless and still pass.
 
-`bin/route_probe.py` confirmed the one empirical assumption in that
-argument — that the decomposer produces a single non-price sub-query.
-It does: one sub-query, `intent=profile`, `symbols=['Shopify']`,
-`classes=['equities']`, `action=auto`, `forced_tool=None`. The fix is a
-provable no-op on this case.
+**The underlying asymmetry.** Crypto fallbacks return CoinGecko
+descriptions, so there is content to be faithful to. Equity fallbacks
+return reference data only, so grounding produces silence. Same code
+path, different data shape, opposite user experience.
 
-**Resolution.** Extend the Oracle grounding fix to hold on high-prior
-names. Likely a structural rather than directive change, since the
-directive already exists.
+**Resolution.** Two separable pieces of work: fetch or curate a
+description source for equity fallbacks so there is something to ground
+against; and decide whether the pass gate should consider relevance, or
+whether a faithful non-answer is an acceptable pass. The second is a
+policy question about what the suite is measuring.
 
 ### `news_nvidia_event` — resolved, not reproducible
 

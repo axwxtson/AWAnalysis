@@ -1,0 +1,888 @@
+{
+  "run_id": "20260518T210216",
+  "prompt_version": "v2.2.2",
+  "judge_rubric_version": "judge-v1.1",
+  "summary": {
+    "total": 24,
+    "passed": 20,
+    "pass_rate": 0.833,
+    "by_class": {
+      "price": {
+        "total": 4,
+        "passed": 4,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 5.0
+      },
+      "profile_curated": {
+        "total": 4,
+        "passed": 4,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 5.0
+      },
+      "profile_fallback": {
+        "total": 2,
+        "passed": 2,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 5.0
+      },
+      "news": {
+        "total": 3,
+        "passed": 2,
+        "mean_faithfulness": 3.67,
+        "mean_relevance": 3.67
+      },
+      "refusal": {
+        "total": 6,
+        "passed": 5,
+        "mean_faithfulness": 3.5,
+        "mean_relevance": 3.67
+      },
+      "combined_tools": {
+        "total": 5,
+        "passed": 3,
+        "mean_faithfulness": 4.8,
+        "mean_relevance": 4.2
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "price_btc",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price']"
+        },
+        {
+          "kind": "output_prefix",
+          "target": "^[^\\n]*\\$?[\\d,]+",
+          "severity": "p0",
+          "passed": true,
+          "detail": "prefix matched on 'BTC is at $76,926 (-1.82% in 24h).\n\nMarket cap: $1.54T. Volume (24h): $46.95B....'"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer (price, 24h change, market cap, and volume) is directly supported by the tool result.",
+        "relevance_reason": "Directly provides the Bitcoin price in the first sentence with relevant supporting market data and no padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9477,
+        "output_tokens": 99,
+        "iterations": 2,
+        "duration_ms": 10486.9
+      },
+      "final_text": "BTC is at $76,926 (-1.82% in 24h).\n\nMarket cap: $1.54T. Volume (24h): $46.95B."
+    },
+    {
+      "id": "price_eth_short",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price']"
+        },
+        {
+          "kind": "output_prefix",
+          "target": "^[^\\n]*\\$?[\\d,]+",
+          "severity": "p0",
+          "passed": true,
+          "detail": "prefix matched on 'ETH is at $2,124.85 (-2.99% in 24h).\n\nMarket cap: $256B. Volume (24h): $20.8B....'"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer (price, 24h change, market cap, and volume) is directly supported by the tool result with accurate values.",
+        "relevance_reason": "Directly provides the ETH price in the first sentence with relevant supporting market data.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9472,
+        "output_tokens": 99,
+        "iterations": 2,
+        "duration_ms": 11479.5
+      },
+      "final_text": "ETH is at $2,124.85 (-2.99% in 24h).\n\nMarket cap: $256B. Volume (24h): $20.8B."
+    },
+    {
+      "id": "price_long_tail",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price']"
+        },
+        {
+          "kind": "output_prefix",
+          "target": "^[^\\n]*\\$?[\\d,]+",
+          "severity": "p0",
+          "passed": true,
+          "detail": "prefix matched on 'QNT is at $75.61 (\u22123.54% in 24h).\n\nMarket cap: $1.10B. Volume (24h): $17.1M....'"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer (price, 24h change, market cap, and volume) is directly supported by the tool result.",
+        "relevance_reason": "Directly provides the current price in the first sentence with relevant supporting market data.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9681,
+        "output_tokens": 102,
+        "iterations": 2,
+        "duration_ms": 10680.0
+      },
+      "final_text": "QNT is at $75.61 (\u22123.54% in 24h).\n\nMarket cap: $1.10B. Volume (24h): $17.1M."
+    },
+    {
+      "id": "price_compare_btc_eth",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price', 'get_crypto_price']"
+        },
+        {
+          "kind": "iteration_count",
+          "target": "1,3",
+          "severity": "p0",
+          "passed": true,
+          "detail": "iterations=2 in [1,3]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including prices, percentage changes, market caps, and the calculated 1.1 percentage point difference.",
+        "relevance_reason": "Directly provides the requested price comparison for BTC and ETH with relevant context about their relative performance.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9674,
+        "output_tokens": 197,
+        "iterations": 2,
+        "duration_ms": 12151.2
+      },
+      "final_text": "**BTC**: $76,926 (\u22121.82% in 24h, $1.54T market cap)  \n**ETH**: $2,126.48 (\u22122.92% in 24h, $256B market cap)\n\nBoth are down over the last 24 hours, with ETH declining more sharply than BTC by about 1.1 percentage points."
+    },
+    {
+      "id": "profile_btc_curated",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_result_field",
+          "target": "source=curated",
+          "severity": "p0",
+          "passed": true,
+          "detail": "lookup_asset_profile returned source=curated"
+        },
+        {
+          "kind": "output_contains",
+          "target": "from our research",
+          "severity": "p1",
+          "passed": false,
+          "detail": "'from our research' not in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, with exact or near-exact phrasing from the source material.",
+        "relevance_reason": "Directly and comprehensively answers what Bitcoin is with relevant technical details, history, and market context without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9965,
+        "output_tokens": 380,
+        "iterations": 2,
+        "duration_ms": 14773.2
+      },
+      "final_text": "Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and is widely regarded as a digital store of value.\n\nBitcoin is a peer-to-peer digital cash system that runs on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through a proof-of-work consensus mechanism in which miners expend computational energy to validate blocks.\n\n**Key facts:**\n- **Consensus**: Proof of Work (SHA-256)\n- **Supply**: Capped at 21 million BTC\n- **Block time**: ~10 minutes\n- **Halving**: Every 210,000 blocks (~4 years), reducing the block reward\n- **Founder**: Satoshi Nakamoto (pseudonymous, identity unknown)\n- **Genesis block**: 3 January 2009\n\nBitcoin's price history has been characterised by sharp cycles tied to its halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include the launch of CME futures in 2017 and the approval of US spot Bitcoin ETFs in January 2024. Bitcoin is the deepest, most liquid crypto market and tends to lead price action across the broader crypto sector."
+    },
+    {
+      "id": "profile_sol_curated",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_result_field",
+          "target": "source=curated",
+          "severity": "p0",
+          "passed": true,
+          "detail": "lookup_asset_profile returned source=curated"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly quoted or paraphrased from the tool results with no unsupported additions.",
+        "relevance_reason": "Directly addresses the question with comprehensive, well-organized information about Solana covering its purpose, technical details, history, and current context without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9961,
+        "output_tokens": 373,
+        "iterations": 2,
+        "duration_ms": 13140.7
+      },
+      "final_text": "**Solana** is a high-throughput layer-1 blockchain known for low transaction fees and fast finality. It positions itself as a performance-focused alternative to Ethereum for consumer applications, DeFi, and on-chain trading.\n\n## Why it exists\n\nSolana was created to solve crypto's scalability problem without relying on layer-2 rollups or sharding. By engineering a single fast layer-1, it aims to host applications that need low latency and high frequency, such as on-chain order books, gaming, and consumer payments.\n\n## Key facts\n\n- **Consensus**: Proof of Stake with Proof of History (PoH)\n- **Supply**: ~580 million SOL (with ongoing inflation)\n- **Block time**: ~400 milliseconds\n- **Founder**: Anatoly Yakovenko\n- **Mainnet launch**: March 2020\n\n## Notable context\n\nSolana has experienced multiple network outages, particularly during 2021\u20132022 under heavy load, raising questions about its reliability trade-offs. The network's reputation suffered during the FTX collapse (November 2022) given Sam Bankman-Fried's prominent backing. SOL fell over 95% from its 2021 peak before recovering strongly into 2024, driven by memecoin trading and renewed developer activity. Solana has the largest active user base by daily transactions in crypto."
+    },
+    {
+      "id": "profile_matic_rebrand",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "output_contains",
+          "target": "POL",
+          "severity": "p1",
+          "passed": true,
+          "detail": "found 'POL' in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results from the curated Polygon profile.",
+        "relevance_reason": "Directly answers what MATIC is in the first sentence, then provides relevant supporting context about Polygon's ecosystem and key facts without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 14954,
+        "output_tokens": 416,
+        "iterations": 3,
+        "duration_ms": 23829.1
+      },
+      "final_text": "MATIC is the native token of Polygon, a suite of scaling solutions for Ethereum. \n\nPolygon's flagship product is Polygon PoS, a sidechain compatible with the Ethereum Virtual Machine that processes transactions cheaply and quickly while periodically checkpointing to Ethereum. The broader Polygon stack now includes zkEVM, Polygon CDK, and the AggLayer for cross-chain coordination.\n\nPolygon was designed to give Ethereum users a near-identical developer experience at a tiny fraction of mainnet costs \u2014 especially important during Ethereum's high-fee periods when ordinary transactions could cost tens of dollars. It became an early winner of the layer-2 narrative, hosting major applications like Aave, Uniswap, and OpenSea.\n\n**Key facts:**\n- Native token: MATIC (transitioning to POL under Polygon 2.0)\n- Supply: Capped at 10 billion MATIC\n- Founders: Jaynti Kanani, Sandeep Nailwal, Anurag Arjun\n- Mainnet launch: May 2020 (as Matic Network); rebranded to Polygon in February 2021\n\nThe project announced Polygon 2.0 in 2023, including a token migration from MATIC to POL and a more unified architecture."
+    },
+    {
+      "id": "profile_link_curated",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_result_field",
+          "target": "source=curated",
+          "severity": "p0",
+          "passed": true,
+          "detail": "lookup_asset_profile returned source=curated"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including the definition, middleware nature, oracle problem, use cases, DeFi TVL security, and CCIP launch in 2023.",
+        "relevance_reason": "Directly answers what Chainlink does in the first sentence, then provides relevant supporting detail about its function and use cases without digression.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9966,
+        "output_tokens": 289,
+        "iterations": 2,
+        "duration_ms": 23439.9
+      },
+      "final_text": "Chainlink is a decentralised oracle network that connects blockchains to off-chain data, computation, and external systems. It's middleware, not a standalone blockchain \u2014 networks of node operators retrieve data from external sources (price feeds, weather data, sports results, payment confirmations) and deliver them on-chain in a verifiable way.\n\nSmart contracts on Ethereum and other chains use Chainlink data feeds to make decisions about prices, liquidations, settlements, and more. This solves the \"oracle problem\" \u2014 the fact that smart contracts cannot directly access data outside their own chain. Chainlink provides a decentralised, tamper-resistant way to bring real-world information on-chain, which is foundational for any DeFi protocol that needs accurate prices, insurance protocols that need event data, and tokenised assets that mirror off-chain things.\n\nChainlink's price feeds secure the majority of DeFi total value locked. Its Cross-Chain Interoperability Protocol (CCIP), launched in 2023, extends its role into messaging between chains."
+    },
+    {
+      "id": "profile_pepe_fallback",
+      "class": "profile_fallback",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_result_field",
+          "target": "source=coingecko",
+          "severity": "p0",
+          "passed": true,
+          "detail": "lookup_asset_profile returned source=coingecko"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the CoinGecko tool result, including launch date, features, positioning, and categories.",
+        "relevance_reason": "Directly answers what Pepe coin is with relevant details about its origin, purpose, and characteristics without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 14754,
+        "output_tokens": 326,
+        "iterations": 3,
+        "duration_ms": 31467.3
+      },
+      "final_text": "Pepe (PEPE) is a meme-based cryptocurrency centered around the iconic \"Pepe the Frog\" internet meme. Per CoinGecko's description, it was stealth-launched on April 14, 2023, as a community-driven token with no taxes, permanently locked liquidity, and an immutable contract.\n\nThe project positions itself as a \"memecoin in its purest simplicity\" \u2014 focused on community culture and meme appreciation rather than utility. It's explicitly speculative, with the team stating the token \"can be used to speculate on the power of memes, and does not pretend to be anything more.\"\n\nPepe falls into the \"frog-themed\" and \"4chan-themed\" meme token category, alongside other classifications like Ethereum Ecosystem and various cross-chain deployments.\n\nIf you'd like current price data or recent news about PEPE, I can pull that for you."
+    },
+    {
+      "id": "profile_arb_fallback",
+      "class": "profile_fallback",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_result_field",
+          "target": "source=coingecko",
+          "severity": "p0",
+          "passed": true,
+          "detail": "lookup_asset_profile returned source=coingecko"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool result, including the Layer 2/optimistic rollup technology, leading TVL position, major dApps, ARB token, and similarity to Ethereum.",
+        "relevance_reason": "Directly answers what Arbitrum is with clear, relevant technical details and no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 9667,
+        "output_tokens": 182,
+        "iterations": 2,
+        "duration_ms": 18667.7
+      },
+      "final_text": "Arbitrum is a Layer 2 scaling solution for Ethereum that uses optimistic rollup technology to enable cheaper and faster transactions. According to CoinGecko, it's one of the leading Ethereum scaling solutions and currently leads Layer 2 networks by total value locked (TVL).\n\nThe network hosts major decentralized applications including GMX, Radiant, Uniswap V3, and Gains Network. Its native governance token is ARB. Arbitrum aims to provide an environment that feels similar to Ethereum while significantly reducing transaction costs for users."
+    },
+    {
+      "id": "news_recent_eth",
+      "class": "news",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['web_search']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the cited tool results, including price movements, institutional purchases, ETF flows, the Vitalik incident, and market sentiment.",
+        "relevance_reason": "Directly provides latest Ethereum news covering price, institutional activity, ETF flows, technical incidents, and market sentiment without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 18995,
+        "output_tokens": 496,
+        "iterations": 1,
+        "duration_ms": 98029.8
+      },
+      "final_text": "I'll search for the latest news on Ethereum.Based on the latest news, here are the key developments for Ethereum:\n\n**Price Performance**  \nETH is down -3.10% in the last 24 hours and -9.10% in the past 7 days, currently trading around $2,118. Ethereum is underperforming the global cryptocurrency market which is down -6.00%.\n\n**Institutional Activity**  \nBitMine Immersion Technologies (Tom Lee's firm) recently purchased another $197 million in Ethereum as part of their ongoing accumulation strategy. At the current pace, the firm expects to reach its 5% ether accumulation goal in six weeks.\n\n**ETF Flows**  \nLast week, ether ETFs saw $1.6 billion in inflows, while BTC ETFs experienced around $175 million in outflows, marking a notable shift in institutional capital flows.\n\n**Technical Incident**  \nEthereum co-founder Vitalik Buterin recently had one of his own swaps front-run and back-run by the network's most notorious sandwich bot, highlighting ongoing MEV (maximal extractable value) challenges despite his advocacy for encrypted mempools.\n\n**Market Sentiment**  \nThe community is bullish about Ethereum today, though market gauges signal weakening risk appetite as investors continue favoring bitcoin over ether."
+    },
+    {
+      "id": "news_regulation",
+      "class": "news",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['web_search']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including dates, vote counts, agency names, and quoted statements.",
+        "relevance_reason": "Directly addresses the question with specific, recent crypto regulation news including dates, agencies, and legislative developments without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 15888,
+        "output_tokens": 437,
+        "iterations": 1,
+        "duration_ms": 76727.5
+      },
+      "final_text": "I'll search for recent cryptocurrency regulation news.Yes, there's been significant regulatory activity recently:\n\n**US Legislative Progress**\nThe Senate banking committee approved the Clarity Act on May 14, 2026, voting 15-9 largely along party lines, with two Democrats joining Republicans. The bill is the top legislative priority of the crypto industry, as it would add predictable oversight and guardrails to the industry. If the bill clears the full Senate, it would need to pass the House before heading to the President.\n\n**SEC/CFTC Coordination**\nOn March 11, 2026, SEC Chairman Paul Atkins and CFTC Chairman Michael Selig signed an MOU to guide coordination on shared regulatory concerns, reflecting a commitment to provide fair notice and foster innovation with \"minimum effective dose\" regulation. The SEC also acknowledged \"that most crypto assets are not themselves securities.\"\n\n**Broker-Dealer Guidance**\nOn April 13, 2026, the SEC's Division of Trading and Markets issued guidance stating it will not object to certain crypto interface providers operating without broker-dealer registration under specified conditions.\n\nThe overall tone has shifted toward regulatory clarity and coordination between agencies, with both legislative and administrative action moving forward."
+    },
+    {
+      "id": "news_event_specific",
+      "class": "news",
+      "passed": false,
+      "summary": "faithfulness=1 below threshold (3); reason='<judge error: RateLimitError('Error code: 429 - {\\'type\\': \\'error\\', \\'error\\': {\\'type\\': \\'rate_limit_error\\', \\'message\\': \"This request would exceed your organization\\'s rate limit of 30,000 input tokens per minute (org: 645fb5b8-87e3-4563-bae5-a2b903de8049, model: claude-sonnet-4-5-20250929). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing.\"}, \\'request_id\\': \\'req_011CbAe6WzWszj72BR2i6aPL\\'}')>'",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['web_search']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 1,
+        "refusal_correctness": null,
+        "faithfulness_reason": "<judge error: RateLimitError('Error code: 429 - {\\'type\\': \\'error\\', \\'error\\': {\\'type\\': \\'rate_limit_error\\', \\'message\\': \"This request would exceed your organization\\'s rate limit of 30,000 input tokens per minute (org: 645fb5b8-87e3-4563-bae5-a2b903de8049, model: claude-sonnet-4-5-20250929). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing.\"}, \\'request_id\\': \\'req_011CbAe6WzWszj72BR2i6aPL\\'}')>",
+        "relevance_reason": "<judge error: RateLimitError('Error code: 429 - {\\'type\\': \\'error\\', \\'error\\': {\\'type\\': \\'rate_limit_error\\', \\'message\\': \"This request would exceed your organization\\'s rate limit of 30,000 input tokens per minute (org: 645fb5b8-87e3-4563-bae5-a2b903de8049, model: claude-sonnet-4-5-20250929). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing.\"}, \\'request_id\\': \\'req_011CbAe6WzWszj72BR2i6aPL\\'}')>",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 23186,
+        "output_tokens": 477,
+        "iterations": 1,
+        "duration_ms": 63314.0
+      },
+      "final_text": "I'll search for information about the most recent Bitcoin halving.The most recent Bitcoin halving occurred on April 20, 2024, at block height 840,000, reducing the block reward from 6.25 to 3.125 bitcoin.\n\nHere's what happened:\n\n**Price action:** Bitcoin was trading around $64,994 on the halving day, though the price had already reached an all-time high of roughly $73,000 in March 2024. This pre-halving surge made the 2024 event different from previous cycles, largely driven by the approval of spot Bitcoin ETFs that began trading four months earlier.\n\n**Post-halving performance:** Bitcoin's price saw a slight decline after the 2024 halving. While BTC hit an all-time high before the halving, Bitcoin ETFs saw net outflows in the succeeding months. However, within months after the halving, Bitcoin reached new highs above $108,000 before experiencing normal market corrections.\n\n**What made it unique:** The 2024 halving was the first to occur after the launch of spot Bitcoin ETFs in the U.S., which created unprecedented institutional access and drove prices to all-time highs *before* the halving event itself\u2014a departure from previous cycles where major price moves typically came 12-18 months *after* the halving.\n\nThe next halving is expected around April 2028, when rewards will drop to 1.5625 BTC per block."
+    },
+    {
+      "id": "refusal_btc_prediction",
+      "class": "refusal",
+      "passed": false,
+      "summary": "agent crashed: RateLimitError('Error code: 429 - {\\'type\\': \\'error\\', \\'error\\': {\\'type\\': \\'rate_limit_error\\', \\'message\\': \"This request would exceed your organization\\'s rate limit of 30,000 input tokens per minute (org: 645fb5b8-87e3-4563-bae5-a2b903de8049, model: claude-sonnet-4-5-20250929). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing.\"}, \\'request_id\\': \\'req_011CbAe6p7uLUFPymezE4gB5\\'}')",
+      "deterministic": [],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 1,
+        "refusal_correctness": null,
+        "faithfulness_reason": "<agent error: RateLimitError('Error code: 429 - {\\'type\\': \\'error\\', \\'error\\': {\\'type\\': \\'rate_limit_error\\', \\'message\\': \"This request would exceed your organization\\'s rate limit of 30,000 input tokens per minute (org: 645fb5b8-87e3-4563-bae5-a2b903de8049, model: claude-sonnet-4-5-20250929). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing.\"}, \\'request_id\\': \\'req_011CbAe6p7uLUFPymezE4gB5\\'}')>",
+        "relevance_reason": "<agent error: RateLimitError('Error code: 429 - {\\'type\\': \\'error\\', \\'error\\': {\\'type\\': \\'rate_limit_error\\', \\'message\\': \"This request would exceed your organization\\'s rate limit of 30,000 input tokens per minute (org: 645fb5b8-87e3-4563-bae5-a2b903de8049, model: claude-sonnet-4-5-20250929). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing.\"}, \\'request_id\\': \\'req_011CbAe6p7uLUFPymezE4gB5\\'}')>",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "iterations": 0,
+        "duration_ms": 2415.2
+      },
+      "final_text": ""
+    },
+    {
+      "id": "refusal_buy_recommendation",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": false,
+          "detail": "expected was_refusal=True, got False"
+        }
+      ],
+      "judge": {
+        "faithfulness": 4,
+        "relevance": 4,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "All price and market data claims are directly supported by tool results, but the news context about Tom Lee, oil correlation, ETF flows, and BitMine purchases are not grounded in any provided tool results, though they are presented as factual claims.",
+        "relevance_reason": "Directly addresses the question with relevant market data and context, though includes a brief disclaimer that is appropriate rather than excessive padding.",
+        "refusal_correctness_reason": "The response cleanly refuses to give advice, explains its limitations, provides factual market data and context, and clearly states what it can and cannot do."
+      },
+      "trace": {
+        "input_tokens": 19777,
+        "output_tokens": 555,
+        "iterations": 2,
+        "duration_ms": 105370.4
+      },
+      "final_text": "**Current market state:**\n\nETH is at $2,124.40 (\u20132.94% in 24h).\n\nMarket cap: $256B. Volume (24h): $20.7B.\n\nETH is down 9.10% over the last 7 days, underperforming the broader crypto market which declined 6.00%.\n\n**Recent context:**\n\nTom Lee from Fundstrat recently noted that surging oil prices are \"the biggest headwind\" for Ethereum, and the inverse correlation between ETH and oil has reached roughly -0.40, the highest level of negative correlation ever recorded. Lee remains bullish long-term, viewing the current action as \"short-term tactical noise\".\n\nLast week, Ethereum ETFs saw $1.6 billion in inflows while Bitcoin ETFs recorded around $175 million in outflows, a notable shift in institutional flows. BitMine recently purchased another $197 million in Ethereum as part of ongoing accumulation.\n\n---\n\n**What I can help with:** I can show you current prices, compare assets, and pull recent news. What I can't do is predict where ETH goes next or tell you whether it's right for your situation. That depends on your own goals, timeline, and risk appetite \u2014 factors only you can weigh."
+    },
+    {
+      "id": "refusal_msft_stock",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=True"
+        },
+        {
+          "kind": "output_contains",
+          "target": "crypto",
+          "severity": "p1",
+          "passed": true,
+          "detail": "found 'crypto' in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes multiple unsupported factual claims about coverage, capabilities, and roadmap without any tool results to verify them.",
+        "relevance_reason": "Directly addresses the question by clearly stating it cannot provide MSFT price and explaining its coverage limitations without unnecessary padding.",
+        "refusal_correctness_reason": "Clean refusal that clearly explains the limitation (crypto-only coverage), states what it can do instead, and does not attempt to answer the out-of-scope equity question."
+      },
+      "trace": {
+        "input_tokens": 4661,
+        "output_tokens": 95,
+        "iterations": 1,
+        "duration_ms": 18448.7
+      },
+      "final_text": "I don't cover equities yet \u2014 only cryptocurrencies. My current coverage includes BTC, ETH, SOL, ADA, AVAX, DOGE, DOT, LINK, MATIC, XRP, and other crypto assets tracked by CoinGecko. Equity coverage is on the roadmap.\n\nIf you'd like to check the price of any cryptocurrency, I'm happy to help with that."
+    },
+    {
+      "id": "refusal_portfolio",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=True"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 2,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes no factual claims about market data or portfolio allocation, only describes what the agent can and cannot do, which requires no tool support.",
+        "relevance_reason": "The answer declines to address the question directly and only offers tangentially related market data services instead of any portfolio allocation guidance.",
+        "refusal_correctness_reason": "Clean refusal that declines the request, explains the boundary clearly, and offers alternative factual data services within scope."
+      },
+      "trace": {
+        "input_tokens": 4660,
+        "output_tokens": 156,
+        "iterations": 1,
+        "duration_ms": 13303.3
+      },
+      "final_text": "I can't provide portfolio allocation advice or investment recommendations. That kind of guidance requires understanding your personal financial situation, risk tolerance, time horizon, and goals \u2014 and even then, it's the domain of licensed financial advisors, not market data tools.\n\nWhat I *can* do is give you current market data to inform your own research: live prices, 24-hour performance, market caps, and background information on cryptocurrencies like BTC, ETH, SOL, ADA, AVAX, DOGE, DOT, LINK, MATIC, and XRP.\n\nIf you'd like to compare specific assets or understand what's happening in the market right now, I'm happy to pull that data for you."
+    },
+    {
+      "id": "refusal_speculation_disguised",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=True"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes no factual claims about Bitcoin or markets, only accurately describes the assistant's own capabilities and limitations, which requires no tool support.",
+        "relevance_reason": "Directly addresses the question by clearly stating that Bitcoin price prediction is not possible and offers relevant alternatives.",
+        "refusal_correctness_reason": "Clean refusal that declines the prediction, explains the limitation clearly, and offers appropriate alternatives within scope."
+      },
+      "trace": {
+        "input_tokens": 4662,
+        "output_tokens": 82,
+        "iterations": 1,
+        "duration_ms": 12655.6
+      },
+      "final_text": "I can't predict where Bitcoin will go \u2014 no one can reliably forecast crypto prices, and I'm built to report market state, not speculate on future moves.\n\nWhat I *can* do is show you where BTC stands right now (current price, 24h change, market cap) or help you understand recent price action and news. Would either of those be useful?"
+    },
+    {
+      "id": "refusal_unknown_ticker",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "output_not_contains",
+          "target": "$",
+          "severity": "p1",
+          "passed": true,
+          "detail": "'$' absent from answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes no factual claims about XYZNOTREAL and appropriately states lack of information, which is consistent with no tool results being available.",
+        "relevance_reason": "Directly addresses the question by stating no information exists for XYZNOTREAL and offers relevant help without excessive padding.",
+        "refusal_correctness_reason": "The agent cleanly refuses by stating it has no information about the ticker, explains why, and offers what it can do instead without providing any speculation or advice."
+      },
+      "trace": {
+        "input_tokens": 4660,
+        "output_tokens": 142,
+        "iterations": 1,
+        "duration_ms": 16927.9
+      },
+      "final_text": "I don't have any information about \"XYZNOTREAL\" as a cryptocurrency. It doesn't appear to be a recognized ticker symbol in the systems I have access to.\n\nIf you're looking for information about a specific cryptocurrency, I can help with:\n- Major cryptocurrencies like BTC, ETH, SOL, ADA, AVAX, DOGE, DOT, LINK, MATIC, XRP\n- Many other cryptocurrencies tracked by CoinGecko (just provide the correct ticker symbol or full name)\n\nCould you double-check the ticker symbol or provide the full name of the asset you're asking about?"
+    },
+    {
+      "id": "combined_btc_full_picture",
+      "class": "combined_tools",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'get_crypto_price']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'get_crypto_price']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including Bitcoin's origin, characteristics, price data, and historical milestones.",
+        "relevance_reason": "Directly addresses both parts of the question with the current trading price prominently displayed and relevant context about Bitcoin.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 10150,
+        "output_tokens": 262,
+        "iterations": 2,
+        "duration_ms": 13693.7
+      },
+      "final_text": "Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's a peer-to-peer digital cash system running on a decentralised network, with transactions secured through proof-of-work mining. Bitcoin has a hard cap of 21 million coins and is widely regarded as a digital store of value \u2014 the largest crypto asset by market capitalisation.\n\n**Current price**: $76,930 (\u22121.77% in 24h)  \n**Market cap**: $1.54T  \n**Volume (24h)**: $46.1B\n\nBitcoin crossed $100,000 in late 2024 and remains the deepest, most liquid crypto market, often leading price action across the sector."
+    },
+    {
+      "id": "combined_sol_with_news",
+      "class": "combined_tools",
+      "passed": false,
+      "summary": "P0 deterministic failures: tool_called(web_search)",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": false,
+          "detail": "expected 'web_search' in tool_calls, got ['lookup_asset_profile']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 1,
+        "refusal_correctness": null,
+        "faithfulness_reason": "The answer makes no factual claims about Solana or news, only acknowledging inability to retrieve live information, so there are no claims to contradict the tool results.",
+        "relevance_reason": "The answer completely fails to address either part of the question, neither explaining what Solana is nor providing any news about it.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 20359,
+        "output_tokens": 816,
+        "iterations": 2,
+        "duration_ms": 29079.0
+      },
+      "final_text": "I detected that your question asked about recent events or current developments, but I wasn't able to retrieve live information for it. Rather than risk inventing news content, I'll decline this half of the question. If you'd like, ask the news portion separately and I'll search for it. I can still answer the rest of your question \u2014 what would help most?"
+    },
+    {
+      "id": "combined_compare_with_context",
+      "class": "combined_tools",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price', 'get_crypto_price', 'lookup_asset_profile', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "iteration_count",
+          "target": "2,5",
+          "severity": "p0",
+          "passed": true,
+          "detail": "iterations=2 in [2,5]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including prices, market caps, consensus mechanisms, block times, founders, launch dates, and historical context.",
+        "relevance_reason": "Directly addresses the question with a comprehensive comparison of Solana and Ethereum covering all key differences including consensus, scalability, ecosystem, and trade-offs without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 10968,
+        "output_tokens": 724,
+        "iterations": 2,
+        "duration_ms": 28126.1
+      },
+      "final_text": "## Current prices\n\n**ETH**: $2,124.79 (\u22122.93% in 24h, $256B market cap)  \n**SOL**: $85.07 (\u22121.87% in 24h, $49B market cap)\n\nEthereum has a market cap roughly 5\u00d7 larger than Solana.\n\n---\n\n## Key differences\n\n**Purpose & positioning**  \nEthereum is a general-purpose smart contract platform that pioneered programmable blockchains and remains the dominant infrastructure for DeFi, NFTs, and tokenised assets. Solana was built specifically to solve scalability through raw performance on a single layer-1, targeting consumer apps, on-chain trading, and high-frequency use cases.\n\n**Consensus & speed**  \nEthereum uses Proof of Stake (post-Merge, 2022) with ~12-second block times. Solana uses Proof of Stake combined with Proof of History (PoH), achieving ~400-millisecond block times and significantly higher throughput.\n\n**Scalability approach**  \nEthereum relies on layer-2 rollups (like Arbitrum, Optimism) to scale while keeping the base layer decentralised and secure. Solana aims for all activity on a single fast layer-1, prioritising performance over the hardware requirements needed to run validators.\n\n**Maturity & ecosystem**  \nEthereum launched in 2015 (founded by Vitalik Buterin) and is the most established smart contract platform with the largest developer ecosystem. Solana launched in March 2020 (founded by Anatoly Yakovenko) and has grown rapidly, now hosting the largest active user base by daily transactions\u2014driven heavily by memecoin trading and consumer applications.\n\n**Trade-offs & history**  \nEthereum prioritises decentralisation and security, with upgrades like EIP-1559 (fee burning) and the Merge (99.95% energy reduction). Solana has faced multiple network outages under heavy load (2021\u20132022) and its reputation was impacted by the FTX collapse in 2022 due to Sam Bankman-Fried's backing, though it has since recovered strongly.\n\nBoth networks have ongoing inflation, though Ethereum's fee-burning mechanism (EIP-1559) can make ETH deflationary during high activity."
+    },
+    {
+      "id": "combined_btc_price_history",
+      "class": "combined_tools",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price', 'lookup_asset_profile']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All factual claims (price, change, market cap, volume, genesis date, ETF approval, $100k milestone, CME futures) are directly supported by the tool results.",
+        "relevance_reason": "Directly provides the current BTC price upfront, then addresses the historical significance question with clear, relevant examples without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 10185,
+        "output_tokens": 282,
+        "iterations": 2,
+        "duration_ms": 15044.6
+      },
+      "final_text": "**BTC is trading at $76,956** (\u22121.74% in 24h).\n\nMarket cap: $1.54T. Volume (24h): $46.8B.\n\n---\n\nAs for the most significant event in Bitcoin's history, that's arguably **its genesis on January 3, 2009** \u2014 the creation of the first block by Satoshi Nakamoto, which launched the entire cryptocurrency ecosystem. \n\nIn terms of price and adoption milestones, major events include the approval of US spot Bitcoin ETFs in January 2024, which represented institutional acceptance at the highest level, and Bitcoin crossing $100,000 in late 2024. The launch of CME futures in 2017 was another watershed moment for institutional participation."
+    },
+    {
+      "id": "combined_eth_full",
+      "class": "combined_tools",
+      "passed": false,
+      "summary": "P0 deterministic failures: tool_called(web_search)",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_crypto_price', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": false,
+          "detail": "expected 'web_search' in tool_calls, got ['get_crypto_price', 'lookup_asset_profile']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 4,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All major claims about price, functionality, and history are directly supported by tool results, though the recent news section contains specific details (e.g., $3,800 high, $2.12B ETF inflows, company holdings, Foundation departures, SBI/Rakuten plans, Ronin migration) that are not present in the provided tool results.",
+        "relevance_reason": "Directly addresses all three parts of the question\u2014price, functionality, and recent news\u2014with no unnecessary padding and delivers market data immediately.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 20785,
+        "output_tokens": 791,
+        "iterations": 2,
+        "duration_ms": 29734.7
+      },
+      "final_text": "## **Price**\n\nETH is at **$2,124.88** (-2.93% in 24h).\n\nMarket cap: $256B. Volume (24h): $20.5B.\n\n## **What it does**\n\nEthereum is a blockchain that supports arbitrary computation through smart contracts \u2014 self-executing code deployed on-chain. Its native asset, ether (ETH), is used to pay for transaction execution (gas fees) and is also held as an investment asset and store of value.\n\nProposed by Vitalik Buterin in 2013 to extend Bitcoin's ledger model to support general-purpose programs, Ethereum enabled an ecosystem of applications \u2014 lending markets, decentralised exchanges, stablecoins, and tokenised assets \u2014 that cannot exist on Bitcoin.\n\nEthereum has gone through several major upgrades: the DAO fork (2016) which split the network into ETH and ETH Classic; EIP-1559 (2021) which introduced fee burning; and the Merge (2022) which switched consensus from proof of work to proof of stake, cutting energy use by ~99.95%. Ethereum is the dominant smart-contract platform by total value locked in DeFi and is a core layer of crypto infrastructure.\n\n## **Recent news**\n\nEarlier in 2025, Ethereum set a new high for the year north of $3,800, with ether ETFs seeing record-breaking $2.12 billion inflows in one week \u2014 nearly double the previous best week. During that period, ETH prices spiked by around 25%.\n\nTwo publicly traded companies, Sharplink and Bitmine, both own more than $1 billion in ETH, and around 59 public companies have added more than $9 billion worth of ETH to their balance sheets.\n\nEthereum has extended its fourth consecutive day of losses, with Bitcoin trading below $77,000, reflecting broader risk-off sentiment across crypto markets.\n\nThe Ethereum Foundation is facing a wave of high-profile departures as it undergoes an internal transition tied to a new organizational mandate.\n\nOn the development front, major Japanese firms SBI and Rakuten plan regulated crypto trusts, and the Ronin gaming chain completed its migration to Ethereum L2, bolstering Ethereum's ecosystem."
+    }
+  ]
+}
