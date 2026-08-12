@@ -25,12 +25,17 @@ the grounding language constrains the model to the returned fields, and
 it holds for Oracle but not for a larger-cap name where the prior is
 stronger.
 
-**Not caused by routing.** `FORCE_MAP` contains only `(CRYPTO, PRICE)`
-and `(EQUITIES, PRICE)`. This case is `PROFILE` intent, so
-`decide_route` returns `AUTO` and `forced_tool` is `None`. The one-line
-fix in `1453796` forwards `forced_tool` to `_run_loop`; when it is
-`None` the post-fix call is identical to the pre-fix call. The fix is a
-provable no-op here. To be confirmed empirically in Block 1.5.
+**Not caused by routing — confirmed (Block 1.5).** `FORCE_MAP` contains
+only `(CRYPTO, PRICE)` and `(EQUITIES, PRICE)`. This case is `PROFILE`
+intent, so `decide_route` returns `AUTO` and `forced_tool` is `None`.
+The one-line fix in `1453796` forwards `forced_tool` to `_run_loop`;
+when it is `None` the post-fix call is identical to the pre-fix call.
+
+`bin/route_probe.py` confirmed the one empirical assumption in that
+argument — that the decomposer produces a single non-price sub-query.
+It does: one sub-query, `intent=profile`, `symbols=['Shopify']`,
+`classes=['equities']`, `action=auto`, `forced_tool=None`. The fix is a
+provable no-op on this case.
 
 **Resolution.** Extend the Oracle grounding fix to hold on high-prior
 names. Likely a structural rather than directive change, since the
@@ -47,8 +52,12 @@ already records `news` faithfulness around 3.5 as expected and
 explicitly says not to tune it away. A single 3 → 2 move is not
 evidence of a regression.
 
-**Not caused by routing.** Same argument as above: `NEWS` intent has no
-`FORCE_MAP` entry, so `forced_tool` is `None` either way.
+**Not caused by routing — confirmed (Block 1.5).** Same argument as
+above: `NEWS` intent has no `FORCE_MAP` entry, so `forced_tool` is
+`None` either way. `bin/route_probe.py` confirmed the decomposer does
+not split this query despite the "earnings" framing: one sub-query,
+`intent=news`, `symbols=['NVIDIA']`, `classes=['equities']`,
+`action=auto`, `forced_tool=None`.
 
 **Resolution.** Block 1.6 runs the case three to five times and records
 the spread. If 2 sits inside the observed range, this entry closes as
