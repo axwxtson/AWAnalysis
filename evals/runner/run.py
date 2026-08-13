@@ -10,20 +10,16 @@ from __future__ import annotations
 
 import json
 import time
-import anthropic
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
-import uuid
-from datetime import datetime
-from aw_analysis.obs import emitter as obs
 
-
+import anthropic
 
 from aw_analysis.agent.conversation import Conversation
 from aw_analysis.agent.orchestration import OrchestratedConversation
 from aw_analysis.client import AnthropicClient
-from aw_analysis.prompts.versions import PROMPT_VERSIONS, ACTIVE_PROMPT_VERSION
+from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION, PROMPT_VERSIONS
 from aw_analysis.tools import default_registry  # see CLI for current factory
 from evals.golden import cases_for
 from evals.grader.deterministic import grade_deterministic
@@ -37,7 +33,6 @@ from evals.grader.types import (
     QueryClass,
     Severity,
 )
-
 
 # Threshold for judge-as-gate. Below this on faithfulness or refusal
 # correctness, a case fails overall. Module 6 reference: "faithfulness
@@ -542,7 +537,7 @@ def _attach_eval_scores(
             name="case.passed",
             value=1.0 if overall_passed else 0.0,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         # Eval grading must not fail because Langfuse refused a score.
         import sys
         sys.stderr.write(

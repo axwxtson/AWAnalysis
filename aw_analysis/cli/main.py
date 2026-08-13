@@ -12,18 +12,14 @@ import sys
 from rich.console import Console
 from rich.markdown import Markdown
 
-from aw_analysis.agent import Conversation, TurnBudgetExceeded
-from aw_analysis.agent.trace import TurnTrace
-from aw_analysis.client import AnthropicClient
-from aw_analysis.config import get_settings
-from aw_analysis.tools import ToolRegistry, default_registry
-from aw_analysis.agent.orchestration import OrchestratedConversation
 # Importing aw_analysis.obs at startup registers the atexit flush hook, ensuring traces are flushed when the CLI exits.
 import aw_analysis.obs  # noqa: F401 — import for side effects
-
-
-
+from aw_analysis.agent import Conversation, TurnBudgetExceeded
+from aw_analysis.agent.orchestration import OrchestratedConversation
+from aw_analysis.client import AnthropicClient
+from aw_analysis.config import get_settings
 from aw_analysis.prompts.system import SYSTEM_PROMPT
+from aw_analysis.tools import default_registry
 
 console = Console()
 

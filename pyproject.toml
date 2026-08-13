@@ -36,3 +36,66 @@ where = ["."]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
+# Explicit. Without a select list the enforced ruleset is whatever the
+# installed ruff version defaults to, which means upgrading the tool
+# silently changes the gate. Chosen, not inherited.
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes — unused imports, undefined names
+    "I",      # isort — import ordering
+    "UP",     # pyupgrade — modern syntax for the target version
+    "B",      # bugbear — likely bugs
+    "SIM",    # simplify — readability
+    "ISC",    # implicit string concat — catches missing commas in lists
+    "RUF",    # ruff-specific
+    "S",      # bandit — security
+    "BLE",    # blind except
+    "PYI",    # type annotation style
+]
+
+ignore = [
+    # StrEnum would be the modern form, but str+Enum stringification
+    # reaches committed eval artefacts and Langfuse span attributes.
+    # Changing it risks making new runs incomparable with the baseline
+    # committed in Block 1.7. Revisit only with a serialisation test.
+    "UP042",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Observability must never raise into the agent's critical path, so the
+# emitter absorbs every exception by design. The one place where
+# try/except/pass is correct rather than a smell.
+"aw_analysis/obs/emitter.py" = ["S110", "BLE001", "S101"]
+
+# Span-attribute key names. S105 pattern-matches on "TOKEN" in the
+# variable name; these are Langfuse telemetry field names, not secrets.
+"aw_analysis/obs/attributes.py" = ["S105"]
+
+# The eval layer must not crash mid-run on one bad case; the runner
+# catches broadly and records the failure as a result.
+"evals/runner/run.py" = ["BLE001"]
+
+# Chroma collection deletion where the collection may not exist.
+"aw_analysis/rag/store.py" = ["S110", "BLE001"]
+
+# input_schema is a class attribute because the Tool base class contract
+# requires it; to_anthropic_param() reads it. RUF012 wants ClassVar,
+# which would be correct but changes the base class shape. Deferred.
+"aw_analysis/tools/*.py" = ["RUF012"]
+
+# The classifier prompt's few-shot examples are single-line JSON,
+# deliberately, because the format models the expected output shape.
+# Content the model reads is not subject to code formatting rules.
+"aw_analysis/agent/decomposer.py" = ["E501"]
+
+# ❯ is a deliberate prompt glyph in the CLI, not an ambiguous typo.
+"aw_analysis/cli/main.py" = ["RUF001"]
+
+# pytest's entire idiom is bare assert; S101 exists because -O strips
+# them, which does not apply to a test run.
+"tests/**" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aw_analysis", "evals"]

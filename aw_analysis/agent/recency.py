@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import re
 
-
 # Recency cues from the v2.2.2 prompt's RULE 1, in pattern form. Word
 # boundaries on every pattern so "current" doesn't match "currently"
 # inadvertently (the second pattern handles that case explicitly).

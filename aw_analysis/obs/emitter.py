@@ -23,14 +23,14 @@ when observability is disabled they wrap None.
 from __future__ import annotations
 
 import contextlib
-import uuid
 import sys
+import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Any
 
 from aw_analysis.obs import attributes as A
 from aw_analysis.obs.client import get_langfuse_client, is_enabled
-
 
 # ── Opaque handles ──────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ class SubQuery:
 # ── Internal helpers ────────────────────────────────────────────────
 
 
-def _now_ms_from_duration(duration_ms: int | float | None) -> float | None:
+def _now_ms_from_duration(duration_ms: float | None) -> float | None:
     """Pass-through with type normalisation.  Kept as a function so
     later changes to time semantics live in one place."""
     if duration_ms is None:
@@ -76,7 +76,7 @@ def _safe_update(observation: Any | None, **kwargs: Any) -> None:
         return
     try:
         observation.update(**kwargs)
-    except Exception:  # noqa: BLE001 — observability must not raise
+    except Exception:
         # The Langfuse SDK has its own debug logging; we silently
         # absorb here to keep the agent's critical path clean.
         pass
@@ -159,7 +159,7 @@ def turn(
                 tags=tags,
                 input={"user_message": user_message},
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
         handle = Turn(span=root_span, conversation_id=cid,
@@ -224,7 +224,7 @@ def finalise(
         return
     try:
         client.update_current_trace(output={"final_text": final_text})
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 
@@ -263,7 +263,7 @@ def classifier(
                 text_in=getattr(usage, "input_text", None),
                 text_out=getattr(usage, "output_text", None),
             )
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 
@@ -306,7 +306,7 @@ def sub_query(
             },
         ) as sq_span:
             yield SubQuery(span=sq_span)
-    except Exception:  # noqa: BLE001
+    except Exception:
         yield SubQuery(span=None)
 
 
@@ -334,7 +334,7 @@ def iteration(
             text_in=text_in,
             text_out=text_out,
         )
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 
@@ -416,7 +416,7 @@ def tool_call(parent: SubQuery | Turn, *, tool_call_obj: Any) -> None:
             level="ERROR" if not tool_call_obj.success else "DEFAULT",
         ):
             pass
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 
@@ -449,7 +449,7 @@ def synthesis(
                 text_in=text_in,
                 text_out=text_out,
             )
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 
@@ -477,5 +477,5 @@ def score(
         return
     try:
         client.score_current_trace(name=name, value=value, comment=comment)
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass

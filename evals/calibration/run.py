@@ -13,12 +13,11 @@ thresholds.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
-import time
 
 from aw_analysis.client import AnthropicClient
-from aw_analysis.config.model_config import TaskType, get_model_config
 from evals.calibration.bias import run_length_bias, run_position_bias
 from evals.calibration.reference_set import REFERENCE_SET, ReferencePair
 from evals.grader.judge import (
@@ -28,7 +27,6 @@ from evals.grader.judge import (
     _refusal_correctness_rubric,
     _relevance_rubric,
 )
-
 
 # Calibration thresholds. Pulled directly from Module 6 Ex 6.2 findings.
 EXACT_AGREEMENT_TARGET: float = 0.60  # 60%

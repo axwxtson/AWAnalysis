@@ -46,7 +46,7 @@ class ChromaStore:
         """Wipe the collection — used during ingestion."""
         try:
             self._client.delete_collection(COLLECTION_NAME)
-        except Exception:  # noqa: BLE001 — collection may not exist
+        except Exception:
             pass
 
     def upsert(

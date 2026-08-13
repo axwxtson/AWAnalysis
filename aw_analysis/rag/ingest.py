@@ -14,7 +14,6 @@ is something that happens at build time, not at query time.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 from rich.console import Console
 

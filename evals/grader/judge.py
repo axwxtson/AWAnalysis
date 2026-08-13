@@ -27,7 +27,6 @@ from aw_analysis.client import AnthropicClient
 from aw_analysis.config.model_config import TaskType, get_model_config
 from evals.grader.types import JudgeScores, QueryClass
 
-
 JUDGE_RUBRIC_VERSION: Final[str] = "judge-v1.1"
 
 
@@ -216,7 +215,7 @@ def _judge_one_with_reason(
     return _parse_judge_json(text)
 
 
-def _extract_text(response) -> str:  # noqa: ANN001 - SDK type
+def _extract_text(response) -> str:
     """Pull text from a Messages response. Tolerant of empty content
     blocks because the judge call uses no tools."""
     for block in response.content:

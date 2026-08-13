@@ -21,23 +21,21 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from aw_analysis.client.anthropic_client import AnthropicClient
-from aw_analysis.config import (
-    ModelConfig,
-    TaskType,
-    get_model_config,
-)
 from aw_analysis.agent.errors import TurnBudgetExceeded
-from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace
-from aw_analysis.tools.base import ToolRegistry, ToolResult
-from aw_analysis.config import cost_for
-
 from aw_analysis.agent.recency import (
     SAFETY_NET_MESSAGE,
     has_recency_cue,
     looks_like_news_fabrication,
 )
-
+from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace
+from aw_analysis.client.anthropic_client import AnthropicClient
+from aw_analysis.config import (
+    ModelConfig,
+    TaskType,
+    cost_for,
+    get_model_config,
+)
+from aw_analysis.tools.base import ToolRegistry
 
 # Refusal-pattern detection. We don't try to be smart here; we look
 # for the lead-in phrases the prompt uses. False negatives are fine

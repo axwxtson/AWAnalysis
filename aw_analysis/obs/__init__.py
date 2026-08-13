@@ -21,9 +21,9 @@ Usage:
 """
 from __future__ import annotations
 
-from aw_analysis.obs import emitter as emitter  # noqa: F401 — public re-export
-from aw_analysis.obs.client import is_enabled, get_langfuse_client  # noqa: F401
-from aw_analysis.obs.shutdown import register_shutdown_hook  # noqa: F401
+from aw_analysis.obs import emitter as emitter
+from aw_analysis.obs.client import get_langfuse_client, is_enabled  # noqa: F401
+from aw_analysis.obs.shutdown import register_shutdown_hook
 
 # Register the atexit flush on package import.  Cheap, idempotent, and
 # ensures CLI invocations always flush before the process exits.

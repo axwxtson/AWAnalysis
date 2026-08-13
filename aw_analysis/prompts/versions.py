@@ -14,7 +14,6 @@ improvements, PATCH for fixes that don't change observable behaviour.
 
 from __future__ import annotations
 
-
 # All known prompt versions. Each entry holds the full system prompt
 # string for that version. Old versions are kept here so evals and
 # rollbacks work.

@@ -27,7 +27,6 @@ from aw_analysis.data_sources.twelvedata import TwelveDataClient, TwelveDataErro
 from aw_analysis.rag import Retriever
 from aw_analysis.tools.base import Tool
 
-
 # Top-1 retrieval score above which the curated corpus is considered
 # authoritative. Below this, we fall back to CoinGecko.
 # Empirical starting point; Stage 6 evals will tune.

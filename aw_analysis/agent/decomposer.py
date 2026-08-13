@@ -209,7 +209,7 @@ class Decomposer:
                 system=DECOMPOSER_SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_message}],
             )
-        except Exception as exc:  # noqa: BLE001 — broad on purpose; we wrap
+        except Exception as exc:
             raise DecomposerError(f"classifier API call failed: {exc}") from exc
 
         raw_text = self._extract_text(response)

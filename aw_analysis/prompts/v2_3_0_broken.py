@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from aw_analysis.prompts.versions import register
 
-
 # Lifted from the v2.2.0 builder with the entire refusal section deleted
 # and the recency-restated rules pruned to remove anything mentioning
 # refusal. Everything else is identical so the diff is small and the
