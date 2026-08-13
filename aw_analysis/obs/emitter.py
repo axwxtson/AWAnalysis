@@ -74,12 +74,10 @@ def _safe_update(observation: Any | None, **kwargs: Any) -> None:
     """
     if observation is None:
         return
-    try:
+    # The Langfuse SDK has its own debug logging; we silently absorb
+    # here to keep the agent's critical path clean.
+    with contextlib.suppress(Exception):
         observation.update(**kwargs)
-    except Exception:
-        # The Langfuse SDK has its own debug logging; we silently
-        # absorb here to keep the agent's critical path clean.
-        pass
 
 
 # ── Top-level turn ──────────────────────────────────────────────────
@@ -153,14 +151,12 @@ def turn(
     ) as root_span:
         # Apply tags + session id at the trace level (these
         # propagate to the trace, not just the root observation).
-        try:
+        with contextlib.suppress(Exception):
             client.update_current_trace(
                 session_id=cid,
                 tags=tags,
                 input={"user_message": user_message},
             )
-        except Exception:
-            pass
 
         handle = Turn(span=root_span, conversation_id=cid,
                       prompt_version=prompt_version)
@@ -222,10 +218,8 @@ def finalise(
     client = get_langfuse_client()
     if client is None:
         return
-    try:
+    with contextlib.suppress(Exception):
         client.update_current_trace(output={"final_text": final_text})
-    except Exception:
-        pass
 
 
 # ── Classifier (decomposer call) ────────────────────────────────────
@@ -326,7 +320,7 @@ def iteration(
     client = get_langfuse_client()
     if client is None:
         return
-    try:
+    with contextlib.suppress(Exception):
         _emit_iteration_generation(
             client,
             name=f"iteration:{usage.task_type}",
@@ -334,8 +328,6 @@ def iteration(
             text_in=text_in,
             text_out=text_out,
         )
-    except Exception:
-        pass
 
 
 def _emit_iteration_generation(
@@ -475,7 +467,6 @@ def score(
     client = get_langfuse_client()
     if client is None:
         return
-    try:
+    with contextlib.suppress(Exception):
         client.score_current_trace(name=name, value=value, comment=comment)
-    except Exception:
-        pass
+

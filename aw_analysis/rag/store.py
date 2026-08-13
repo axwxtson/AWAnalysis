@@ -17,6 +17,7 @@ Why ChromaDB and not pgvector for Stage 4?
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 
 import chromadb
@@ -44,10 +45,8 @@ class ChromaStore:
 
     def reset(self) -> None:
         """Wipe the collection — used during ingestion."""
-        try:
+        with contextlib.suppress(Exception):
             self._client.delete_collection(COLLECTION_NAME)
-        except Exception:
-            pass
 
     def upsert(
         self,

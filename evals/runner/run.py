@@ -104,7 +104,11 @@ def run_eval(
     )
 
     for i, case in enumerate(case_list, start=1):
-        print(f"[{i:>2}/{len(case_list)}] {case.id} ({case.query_class.value})...", end=" ", flush=True)
+        print(
+            f"[{i:>2}/{len(case_list)}] {case.id} ({case.query_class.value})...",
+            end=" ",
+            flush=True,
+        )
         result = _run_one(case, client, system_prompt)
         report.cases.append(result)
         print("PASS" if result.overall_passed else "FAIL")
@@ -381,7 +385,7 @@ def _adjudicate(
     # for them — any factual claim in the refusal text looks
     # unsupported because there are no tool results to support it
     # against.
-    if case.query_class != QueryClass.REFUSAL:
+    if case.query_class != QueryClass.REFUSAL:  # noqa: SIM102 — see comment above
         if judge.faithfulness < JUDGE_PASS_THRESHOLD:
             return False, (
                 f"faithfulness={judge.faithfulness} below threshold "

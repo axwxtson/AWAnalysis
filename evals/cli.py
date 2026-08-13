@@ -122,9 +122,14 @@ def _format_calibration(report) -> str:
         f"  direction:    {report.direction_agreement:.2f} (target >={0.80})",
         f"  signed bias:  {report.mean_signed_bias:+.2f}",
         "",
-        f"position bias consistency: {report.position_bias.get('consistency_rate')} (target >={0.75})",
-        f"length bias mean signed gap: {report.length_bias.get('mean_signed_gap')} "
-        f"(|gap| target <={0.5})",
+        (
+            f"position bias consistency: "
+            f"{report.position_bias.get('consistency_rate')} (target >={0.75})"
+        ),
+        (
+            f"length bias mean signed gap: "
+            f"{report.length_bias.get('mean_signed_gap')} (|gap| target <={0.5})"
+        ),
     ]
     if report.gate_failures:
         lines.append("")

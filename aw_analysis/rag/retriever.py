@@ -53,7 +53,7 @@ class Retriever:
         distances = raw["distances"][0]
 
         results: list[RetrievalResult] = []
-        for i, doc_id in enumerate(ids):
+        for i in range(len(ids)):
             metadata = metadatas[i]
             # Distance for cosine space is in [0, 2]; convert to a
             # similarity score in approximately [0, 1].

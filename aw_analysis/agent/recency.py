@@ -66,7 +66,10 @@ _FABRICATION_INDICATORS: tuple[re.Pattern[str], ...] = (
     re.compile(r"##? News Update\b", re.IGNORECASE),
     re.compile(r"\bbreaking news\b", re.IGNORECASE),
     # Specific date patterns suggest fabrication if web_search didn't fire.
-    re.compile(r"\b(?:on |in )?(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b"),
+    # E501 suppressed below: splitting a month alternation across lines
+    # risks a silent whitespace bug in a pattern that gates fabrication
+    # detection. One long line is the safer form.
+    re.compile(r"\b(?:on |in )?(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b"),  # noqa: E501
     re.compile(r"\b\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b"),
 )
 

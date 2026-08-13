@@ -36,8 +36,10 @@ server_params = StdioServerParameters(
 
 
 async def main() -> None:
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
+    async with (
+        stdio_client(server_params) as (read, write),
+        ClientSession(read, write) as session,
+    ):
             # MCP handshake: negotiate protocol version + capabilities.
             await session.initialize()
 

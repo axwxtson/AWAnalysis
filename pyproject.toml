@@ -97,5 +97,19 @@ ignore = [
 # them, which does not apply to a test run.
 "tests/**" = ["S101"]
 
+# Judge rubrics and calibration reference answers are model inputs, and
+# golden case definitions are fixed test data. Their wording is the
+# instrument being measured, so rewrapping them changes what is
+# measured. Same argument as the decomposer few-shots above.
+"evals/grader/judge.py" = ["E501"]
+"evals/calibration/*.py" = ["E501"]
+"evals/golden/**" = ["E501"]
+
+# count_tokens and the debug block formatter are both informational: if
+# they fail the correct behaviour is to carry on without summarisation
+# or without a pretty rendering, not to kill the user's turn. Same
+# pattern as obs/emitter.py.
+"aw_analysis/agent/conversation.py" = ["BLE001"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["aw_analysis", "evals"]
