@@ -36,10 +36,14 @@ combined-tools) are shared across both. The cross-asset comparison case
 (`price_compare_apple_btc`) is a permanent guard that a single mixed-class
 query fires both class price tools in one turn.
 
-The current baseline is being re-measured against the post-`1453796`
-forced-tool path; committed run artefacts under `evals/results/` are the
-source of truth, and known failures are listed in
-[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+Current baseline (v2.5.0, 12 August 2026): **crypto 23/23, equities
+16/16**. Committed run artefacts under `evals/results/` are the source
+of truth for every figure quoted here.
+
+Read those figures with the suite's measurement error in mind. Thirteen
+committed runs of a byte-identical prompt range from 18/24 to 23/24, so
+a single run resolves to roughly ±2-3 cases and no single-run comparison
+can detect a small effect. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 ## What it does today
 
