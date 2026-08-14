@@ -29,8 +29,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from aw_analysis.tools.base import Tool
 from anthropic.types import WebSearchTool20250305Param
+
+from aw_analysis.tools.base import Tool
+
 
 class MarketNewsTool(Tool):
     # `web_search` is not a name we chose and is not an accidental

@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Deliberately no ANTHROPIC_API_KEY. Block 1.2 made the package import
+# without credentials; running CI keyless is the standing proof that the
+# fix holds. It also means CI structurally cannot spend money or leak a
+# key, which is a property rather than a limitation.
+
+jobs:
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install dev tooling
+        run: pip install -r requirements-dev.lock
+      - name: Lint
+        run: ruff check aw_analysis/ evals/ tests/ bin/
+
+  types:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Must match python_version in [tool.mypy]. A mismatch makes
+          # mypy parse third-party stubs under the wrong syntax rules
+          # and fail on constructs the runtime supports.
+          python-version: "3.14"
+      - name: Install runtime and dev dependencies
+        run: |
+          pip install -r requirements.lock
+          pip install -r requirements-dev.lock
+      - name: Type check
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: mypy
+
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install runtime and dev dependencies
+        run: |
+          pip install -r requirements.lock
+          pip install -r requirements-dev.lock
+      - name: Test
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest tests/ -v
+
+  import-check:
+    name: keyless import
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install runtime dependencies
+        run: pip install -r requirements.lock
+      - name: Import the package with no credentials
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -c "
+          import aw_analysis.agent.orchestration
+          import aw_analysis.agent.conversation
+          import aw_analysis.agent.decomposer
+          import aw_analysis.asset_registry
+          import aw_analysis.tools
+          import aw_analysis.rag.retriever
+          import aw_analysis.cli.main
+          import aw_analysis.mcp_server
+          import evals.cli
+          print('package imports with no ANTHROPIC_API_KEY')
+          "
