@@ -181,12 +181,7 @@ handling in the repo is `time.sleep()` inside `evals/runner/run.py`. A
 jitter inside `AnthropicClient`, policy injected rather than hardcoded,
 and the eval runner's sleeps removed once it lands.
 
-### No CI
 
-There is no `.github/` directory. Ruff, mypy and pytest all run
-manually.
-
-**Resolution.** Block 2.
 
 ### Effectively no unit test coverage
 
@@ -194,7 +189,8 @@ Three tests, all observability smoke tests. Nothing covers the agent,
 decomposer, routing, retrieval, tools, graders or the MCP server. This
 was a consequence of import-time settings (fixed in Block 1.2), not of
 choice: `obs/` was the only subtree that could be imported without an
-API key.
+API key. Now enforced by CI, which means the three tests run on every push. That
+makes the gap visible rather than fixing it.
 
 **Resolution.** Block 4.
 
@@ -206,6 +202,59 @@ regression demo — but it means a knowingly broken prompt version is
 importable from the library.
 
 **No action planned.** Documented so the choice is visible.
+
+
+### `Tool` is an ABC where it should be a Protocol
+
+Four mypy `override` errors are suppressed in `pyproject.toml`. Tool
+subclasses narrow `execute(**kwargs: Any)` to named parameters
+(`ticker`, `query`), which breaks Liskov substitutability. Mypy is
+right about the rule and wrong about this code: the narrowing is a
+runtime guard, because `ToolRegistry.dispatch` calls
+`execute(**tool_input)` where `tool_input` is JSON the model produced,
+so a wrong key raises `TypeError` immediately instead of being
+swallowed.
+
+An ABC promises any subclass works wherever the base does. A Protocol
+promises compatible shape without that contract, which is what is
+actually meant here — nothing holds a generic `Tool` and invents
+arguments; the registry always calls with that tool's own schema.
+
+**Resolution.** Convert `Tool` to a Protocol and remove the
+suppression.
+
+### `rag/` is not type-checked
+
+Six mypy errors surface when it follows imports into the module. The
+one worth attention: `embedder.py` declares `list[list[float]]` while
+Voyage's own types say `list[list[float]] | list[list[int]]`. If
+integer embeddings were ever returned, cosine distances change and the
+`CURATED_THRESHOLD = 0.70` gate means something different. Almost
+certainly never happens; nothing checks.
+
+The other five are Chroma's parameter types being wider than what the
+store passes.
+
+**Resolution.** Next module on the mypy ratchet.
+
+### `requirements-dev.lock` is hand-maintained
+
+Twelve packages pinned by reading `pip freeze` and adding transitive
+dependencies by hand. It is complete today, verified by
+`pip install --dry-run`, but nothing keeps it that way. Two packages
+(`ast_serialize`, `Pygments`) were only found because a dry run
+surfaced them.
+
+**Resolution.** Generate it with `uv pip compile` or `pip-tools`.
+
+### CI works around the broken editable install
+
+Every job sets `PYTHONPATH: ${{ github.workspace }}` because
+`pip install -e .` fails on an opentelemetry namespace problem. The
+pipeline is compensating for a packaging defect rather than fixing it,
+and anyone cloning the repo hits the same wall.
+
+**Resolution.** Diagnose the namespace conflict.
 
 ---
 
@@ -220,3 +269,18 @@ correctly finds nothing under `tests/`. This reconciles cleanly and is
 not a defect.
 
 **No action.**
+
+
+
+---
+
+## Resolved
+
+### No CI — resolved 14 August 2026 (Block 2)
+
+`.github/workflows/ci.yml` runs four jobs on every push and pull
+request: ruff, mypy on the allowlist, pytest, and a keyless import
+check. The fourth exists because the other three cannot catch a
+regression of the lazy-settings fix — neither linter executes imports,
+and the only tests are on `obs/`, which works without credentials
+regardless.

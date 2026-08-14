@@ -1,5 +1,7 @@
 # AW Analysis
 
+[![CI](https://github.com/axwxtson/AWAnalysis/actions/workflows/ci.yml/badge.svg)](https://github.com/axwxtson/AWAnalysis/actions/workflows/ci.yml)
+
 Cross-asset market intelligence agent. Ask questions about markets in plain
 English; the agent decomposes the query by intent, routes per-intent to the
 appropriate model and tools, answers with explicit attribution, and emits a
@@ -11,8 +13,14 @@ Engineering programme (see [axwxtson/ai-systems-engineering](https://github.com/
 ## Status
 
 **10 stages complete.** Each stage layered in patterns from one study
-module. The eval harness is run manually before commits; there is no CI
-pipeline yet (see [KNOWN_ISSUES.md](KNOWN_ISSUES.md)).
+module. CI runs ruff, mypy, the test suite, and a keyless import check
+on every push and pull request. Eval runs are manual and deliberately
+not in CI: they cost money and need credentials the pipeline does not
+have.
+
+Note the scope honestly. The test suite is three observability smoke
+tests, and mypy runs on a ratcheted allowlist rather than the whole
+package. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 | Stage | Module | What it adds |
 |-------|--------|--------------|
