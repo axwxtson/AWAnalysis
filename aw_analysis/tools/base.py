@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-from anthropic.types import ToolParam
+from anthropic.types import ToolParam, ToolUnionParam
 
 
 @dataclass
@@ -38,7 +38,16 @@ class Tool(ABC):
     description: str
     input_schema: dict[str, Any]
 
-    def to_anthropic_param(self) -> ToolParam:
+    def to_anthropic_param(self) -> ToolUnionParam:
+        """Serialise this tool for the API's tools array.
+
+        Returns the union rather than ToolParam because server-side
+        tools are a genuinely different shape: a client tool sends
+        {name, description, input_schema}, while a server tool sends
+        {type, name} and is dispatched by Anthropic rather than by our
+        registry. The SDK models both, so the base class should not
+        claim every tool is the client form.
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -97,7 +106,7 @@ class ToolRegistry:
                 error=type(exc).__name__,
             )
 
-    def to_anthropic_params(self) -> list[ToolParam]:
+    def to_anthropic_params(self) -> list[ToolUnionParam]:
         return [t.to_anthropic_param() for t in self._tools.values()]
 
     def names(self) -> list[str]:

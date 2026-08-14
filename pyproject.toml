@@ -113,3 +113,27 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["aw_analysis", "evals"]
+
+[tool.mypy]
+python_version = "3.14"
+ignore_missing_imports = true
+follow_imports = "silent"
+# Ratcheted. Modules listed in files= are checked and must pass; the rest
+# are read for types but their own errors are not reported. Add modules
+# here as they are cleaned rather than switching the whole package on and
+# living with a permanently red gate.
+files = ["aw_analysis/tools/"]
+
+[[tool.mypy.overrides]]
+# Tool subclasses narrow execute(**kwargs) to named parameters (ticker,
+# query). Mypy is right that this breaks substitutability, but the
+# narrowing is a deliberate runtime guard: ToolRegistry.dispatch calls
+# execute(**tool_input) where tool_input is JSON the model produced, so
+# a wrong key raises TypeError immediately instead of being swallowed.
+# Widening to **kwargs to satisfy the checker would remove that guard.
+#
+# The correct fix is a Protocol rather than an ABC, since nothing holds
+# a generic Tool and invents arguments — the registry always calls with
+# that tool's own schema. Deferred; see KNOWN_ISSUES.md.
+module = "aw_analysis.tools.*"
+disable_error_code = ["override"]

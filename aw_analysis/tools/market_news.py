@@ -30,7 +30,7 @@ from __future__ import annotations
 from typing import Any
 
 from aw_analysis.tools.base import Tool
-
+from anthropic.types import WebSearchTool20250305Param
 
 class MarketNewsTool(Tool):
     # `web_search` is not a name we chose and is not an accidental
@@ -87,8 +87,8 @@ class MarketNewsTool(Tool):
     # Anthropic's web search has a different shape than our client-tool
     # schema. We override to_anthropic_param to emit the server-tool
     # form instead.
-    def to_anthropic_param(self) -> dict[str, Any]:
+    def to_anthropic_param(self) -> WebSearchTool20250305Param:
         return {
             "type": "web_search_20250305",
-            "name": self.name,
+            "name": "web_search",
         }
