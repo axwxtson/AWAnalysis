@@ -14,11 +14,9 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import anthropic
-
 from aw_analysis.agent.conversation import Conversation
 from aw_analysis.agent.orchestration import OrchestratedConversation
-from aw_analysis.client import AnthropicClient
+from aw_analysis.client import AnthropicClient, RetryPolicy
 from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION, PROMPT_VERSIONS
 from aw_analysis.tools import default_registry  # see CLI for current factory
 from evals.golden import cases_for
@@ -91,7 +89,7 @@ def run_eval(
     out_dir.mkdir(parents=True, exist_ok=True)
     run_id = time.strftime("%Y%m%dT%H%M%S")
 
-    client = AnthropicClient()
+    client = AnthropicClient(policy=EVAL_RETRY_POLICY)
     system_prompt = PROMPT_VERSIONS[prompt_version]
 
     import os
@@ -176,6 +174,25 @@ def _serialise_trace(turn_trace):
         ],
     }
 
+# The eval path retries on a flat schedule, not an exponential one.
+# A rate window drains at a fixed rate, so a second failure does not
+# mean "more overloaded, wait longer" the way a 529 does: it means the
+# window still has not drained. backoff_factor=1.0 is the only way to
+# express that, which is why it is a policy field rather than a
+# hardcoded doubling.
+#
+# 30s reproduces the interval the removed runner loop intended, which
+# was empirically sufficient for Tier 1's 30K input tokens/min. It
+# lives here rather than in aw_analysis/client/retry.py because evals
+# import from aw_analysis and never the reverse.
+EVAL_RETRY_POLICY = RetryPolicy(
+    max_attempts=3,
+    base_delay=30.0,
+    backoff_factor=1.0,
+    max_delay=60.0,
+    jitter=0.0,
+)
+
 def _run_one(
     case: EvalCase, client: AnthropicClient, system_prompt: str
 ) -> EvalResult:
@@ -207,100 +224,40 @@ def _run_one(
         conversation_id=f"eval-{case.id}",
     )
 
-    # Stage 6 operational fix: rate-limit retry. Tier 1's 30K input
-    # tokens/min budget can be tripped by news cases running in close
-    # sequence (the trace grows large from web_search results, the
-    # judge call sends the full trace, three of them in a 60s window
-    # exceeds the budget). A single retry after 30s clears the rolling
-    # window enough to proceed.
-    max_rate_limit_retries = 2
-    trace = None
-    final_text = ""
-    for attempt in range(max_rate_limit_retries + 1):
-        try:
-            trace = conversation.send(case.query)
-            final_text = trace.final_text or ""
-            break
-        
-        except anthropic.RateLimitError:
-            if attempt == max_rate_limit_retries:
-                # Final attempt failed — fall through to broad handler.
-                # No bare-except equivalent here; re-raise so the
-                # outer try captures and records the failure.
-                raise
-            # Reset the conversation state (the failed send may have
-            # left partial messages) and back off. Stage 7: rebuild the
-            # OrchestratedConversation, not the bare Conversation —
-            # otherwise the next send() returns a TurnTrace instead of
-            # an OrchestratedTurnTrace and downstream code crashes.
-            inner_conversation = Conversation(
-                client=client,
-                tools=default_registry(),
-                system_prompt=system_prompt,
-            )
-            conversation = OrchestratedConversation(
-                client=client,
-                conversation=inner_conversation,
-                interface="eval",
-                conversation_id=f"eval-{case.id}",
-            )
-            time.sleep(30.0)
-            
-            time.sleep(30.0)
-        except Exception as exc:  # broad on purpose - eval layer must not crash
-            elapsed = (time.perf_counter() - started) * 1000.0
-            return _failure_eval_result(case, repr(exc), elapsed)
-
-    if trace is None:
-        # Shouldn't be reachable — either the loop broke after success or
-        # raised after exhausting retries. Defensive fallback.
+    # Rate-limit retry is the client's job now, on EVAL_RETRY_POLICY.
+    # This handler records an exhausted retry as a failed case rather
+    # than aborting the run: errors as data, at the eval layer.
+    try:
+        trace = conversation.send(case.query)
+        final_text = trace.final_text or ""
+    except Exception as exc:  # broad on purpose - eval layer must not crash
         elapsed = (time.perf_counter() - started) * 1000.0
-        return _failure_eval_result(
-            case, "rate-limit retries exhausted with no recorded trace", elapsed
-        )
+        return _failure_eval_result(case, repr(exc), elapsed)
 
     deterministic = grade_deterministic(case.assertions, trace, final_text)
 
-    judge = None
-    for attempt in range(max_rate_limit_retries + 1):
-        try:
-            judge = grade_judge(
-                case_query=case.query,
-                final_text=final_text,
-                trace=trace,
-                query_class=case.query_class,
-                client=client,
-            )
-            break
-        except anthropic.RateLimitError:
-            if attempt == max_rate_limit_retries:
-                # Final attempt failed — record a sentinel judge so
-                # the case shows up as failed-with-context rather than
-                # silently passing.
-                judge = JudgeScores(
-                    faithfulness=1,
-                    relevance=1,
-                    refusal_correctness=None,
-                    faithfulness_reason=(
-                        "<judge rate-limited after retries; case not graded>"
-                    ),
-                    relevance_reason=(
-                        "<judge rate-limited after retries; case not graded>"
-                    ),
-                    refusal_correctness_reason=None,
-                )
-                break
-            time.sleep(30.0)
-        except Exception as exc:
-            judge = JudgeScores(
-                faithfulness=1,
-                relevance=1,
-                refusal_correctness=None,
-                faithfulness_reason=f"<judge error: {exc!r}>",
-                relevance_reason=f"<judge error: {exc!r}>",
-                refusal_correctness_reason=None,
-            )
-            break
+    try:
+        judge = grade_judge(
+            case_query=case.query,
+            final_text=final_text,
+            trace=trace,
+            query_class=case.query_class,
+            client=client,
+        )
+    except Exception as exc:
+        # A rate-limited judge lands here too, after the client has
+        # exhausted EVAL_RETRY_POLICY. The sentinel scores of 1 make
+        # the case fail visibly rather than passing ungraded, and the
+        # repr carries more context than the old rate-limit-specific
+        # message did.
+        judge = JudgeScores(
+            faithfulness=1,
+            relevance=1,
+            refusal_correctness=None,
+            faithfulness_reason=f"<judge error: {exc!r}>",
+            relevance_reason=f"<judge error: {exc!r}>",
+            refusal_correctness_reason=None,
+        )
 
     elapsed = (time.perf_counter() - started) * 1000.0
     overall_passed, summary = _adjudicate(case, deterministic, judge)
