@@ -137,3 +137,11 @@ def compute_delay(
         policy.base_delay * policy.backoff_factor ** (attempt - 1),
     )
     return capped * (1.0 - policy.jitter * rng())
+
+# count_tokens feeds the Conversation budget guard, which discards any
+# failure and proceeds without summarisation. Retrying it would block
+# the hot path for seconds to produce a result the caller throws away.
+# This is a property of the call, not of the deployment, so it is not
+# a configurable policy field: there is no entry point where retrying
+# count_tokens is correct.
+NO_RETRY = RetryPolicy(max_attempts=1)

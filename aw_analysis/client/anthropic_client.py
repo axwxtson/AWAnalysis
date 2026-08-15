@@ -11,11 +11,20 @@ Stage 5 changes:
 """
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 import anthropic
 
+from aw_analysis.client.retry import (
+    NO_RETRY,
+    RetryPolicy,
+    compute_delay,
+    retry_after_seconds,
+)
 from aw_analysis.config import ModelConfig, get_settings
+
+T = TypeVar("T")
 
 
 class AnthropicClient:
@@ -26,8 +35,58 @@ class AnthropicClient:
     in one file rather than dozens.
     """
 
-    def __init__(self) -> None:
-        self._sdk = anthropic.Anthropic(api_key=get_settings().anthropic_api_key)
+    def __init__(self, *, policy: RetryPolicy | None = None) -> None:
+        # max_retries=0 disables the SDK's own retry loop. anthropic
+        # 0.107.1 defaults it to 2, so leaving it unset stacks the
+        # SDK's jittered backoff underneath ours: up to three SDK
+        # calls per attempt of ours, and the eval runner's loop on
+        # top of that again. Retry is owned in this class or nowhere.
+        self._sdk = anthropic.Anthropic(
+            api_key=get_settings().anthropic_api_key,
+            max_retries=0,
+        )
+        self._policy = policy or RetryPolicy()
+
+    def _with_retry(
+        self,
+        call: Callable[[], T],
+        *,
+        policy: RetryPolicy | None = None,
+    ) -> T:
+        """Run `call`, retrying transient API failures per policy.
+
+        Catches anthropic.APIError, the root of the SDK's hierarchy,
+        rather than Exception. A TypeError from argument construction
+        is our bug and must surface on the first attempt rather than
+        being retried three times.
+
+        Server advice is a floor and the policy cap is a ceiling. The
+        retry-after header is re-read from each fresh response, so a
+        long first wait shortens as the window drains.
+
+        Fail-fast uses the *remaining* sleep budget, not the total. At
+        the last attempt only one sleep remains, so advice of 30s
+        against a 15s cap is unreachable and sleeping into it pays the
+        full latency to surface the same error. Re-raising is bare, so
+        the caller still receives the original typed exception with
+        the header intact.
+        """
+        active = policy or self._policy
+        for attempt in range(1, active.max_attempts + 1):
+            try:
+                return call()
+            except anthropic.APIError as exc:
+                if attempt == active.max_attempts or not active.classify(exc):
+                    raise
+                wait = compute_delay(attempt, active)
+                advised = retry_after_seconds(exc)
+                if advised is not None:
+                    remaining = (active.max_attempts - attempt) * active.max_delay
+                    if advised > remaining:
+                        raise
+                    wait = min(active.max_delay, max(wait, advised))
+                active.sleep(wait)
+        raise RuntimeError("unreachable: RetryPolicy validates max_attempts >= 1")
         
     def create(
         self,
@@ -59,7 +118,7 @@ class AnthropicClient:
             kwargs["tools"] = tools
         if tool_choice is not None:
             kwargs["tool_choice"] = tool_choice
-        return self._sdk.messages.create(**kwargs)
+        return self._with_retry(lambda: self._sdk.messages.create(**kwargs))
         
     def count_tokens(
         self,
@@ -84,5 +143,8 @@ class AnthropicClient:
         }
         if tools is not None:
             kwargs["tools"] = tools
-        response = self._sdk.messages.count_tokens(**kwargs)
+        response = self._with_retry(
+            lambda: self._sdk.messages.count_tokens(**kwargs),
+            policy=NO_RETRY,
+        )
         return int(response.input_tokens)
