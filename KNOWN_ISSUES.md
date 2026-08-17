@@ -270,7 +270,24 @@ not a defect.
 
 **No action.**
 
+### Retry bounds sleeps, not request durations
 
+`RetryPolicy` bounds the time spent sleeping between attempts:
+`(max_attempts - 1) * max_delay`. It does not bound how long any single
+request takes. The SDK's own request timeout is a separate setting, left
+at its default, so a hung or very slow connection can exceed the
+policy's apparent worst case. Verified by reading the SDK, not observed
+in practice.
+
+This matters most for `MCP_RETRY_POLICY`, sized at 20s against a
+third-party host's tool-call timeout of roughly 30s. The 20s is the
+sleep budget only; a slow request on top of it can still overrun the
+host, which is the failure this policy exists to avoid.
+
+**Resolution.** Pass an explicit `timeout` to the SDK client. Kept out
+of Block 3 deliberately: it is a separate decision from retry policy and
+wants its own reasoning about what a reasonable ceiling is per entry
+point.
 
 ---
 

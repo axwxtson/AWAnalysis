@@ -26,12 +26,33 @@ from pydantic import AnyUrl
 
 from aw_analysis.agent.conversation import Conversation
 from aw_analysis.agent.orchestration import OrchestratedConversation
-from aw_analysis.client.anthropic_client import AnthropicClient
+from aw_analysis.client import AnthropicClient, RetryPolicy
 from aw_analysis.config import REPO_ROOT, get_settings
 from aw_analysis.prompts.system import SYSTEM_PROMPT
 from aw_analysis.tools import default_registry
 
 mcp = FastMCP("aw-analysis")
+
+# This server runs as a subprocess under a third-party host, which
+# applies its own tool-call timeout. If that fires mid-call we lose
+# the response, the trace and the error text: the host just reports a
+# failed tool. Our own retry giving up is strictly better, since it
+# surfaces a typed exception and a trace with the retry counts on it.
+#
+# Worst case is (max_attempts - 1) * max_delay = 20s of sleep, inside
+# a ~30s budget with headroom for the failed requests themselves. A
+# fourth attempt would take that to exactly 30 with no headroom, and
+# a 529 either clears in two short retries or is sustained enough
+# that a third wait rarely converts it.
+#
+# Bounds the sleeps, not the request durations: the SDK's own request
+# timeout is a separate knob, so a hung connection can still exceed
+# this. Recorded in KNOWN_ISSUES.md.
+MCP_RETRY_POLICY = RetryPolicy(
+    max_attempts=3,
+    base_delay=2.0,
+    max_delay=10.0,
+)
 
 
 @mcp.tool()
@@ -59,7 +80,7 @@ def ask_aw_analysis(query: str) -> str:
     Returns:
         The synthesised, attributed answer as plain text.
     """
-    client = AnthropicClient()
+    client = AnthropicClient(policy=MCP_RETRY_POLICY)
     inner = Conversation(
         client=client,
         tools=default_registry(),
