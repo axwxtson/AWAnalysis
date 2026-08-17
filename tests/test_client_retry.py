@@ -350,3 +350,48 @@ def test_policy_rejects_invalid_settings(kwargs: dict[str, Any]) -> None:
     """Fail where the policy is written, not mid-run."""
     with pytest.raises(ValueError):
         RetryPolicy(**kwargs)
+
+def test_create_forwards_on_retry() -> None:
+    """The callback must reach the loop, not just the signature.
+
+    Without this, a refactor that drops the forwarding would leave
+    every trace reporting zero retries while the retry itself still
+    worked, and nothing else in this file would notice.
+    """
+    policy, slept = _recording_policy()
+    client = AnthropicClient(policy=policy)
+    messages = _FakeMessages(_status_error(429), _status_error(429), "ok")
+    client._sdk.messages = messages  # type: ignore[misc]
+
+    seen: list[tuple[int, float]] = []
+    result = client.create(
+        config=ModelConfig(
+            model="claude-sonnet-4-5",
+            temperature=0.0,
+            max_tokens=16,
+            rationale="test",
+        ),
+        system="s",
+        messages=[{"role": "user", "content": "hi"}],
+        on_retry=lambda attempt, wait: seen.append((attempt, wait)),
+    )
+
+    assert result == "ok"
+    assert seen == [(1, 1.0), (2, 2.0)]
+    assert slept == [1.0, 2.0]
+
+
+def test_count_tokens_never_fires_on_retry() -> None:
+    """NO_RETRY means the callback path is unreachable there."""
+    policy, slept = _recording_policy()
+    client = AnthropicClient(policy=policy)
+    messages = _FakeMessages(_status_error(429))
+    client._sdk.messages = messages  # type: ignore[misc]
+
+    with pytest.raises(anthropic.APIStatusError):
+        client.count_tokens(
+            model="claude-sonnet-4-5",
+            system="s",
+            messages=[{"role": "user", "content": "hi"}],
+        )
+    assert slept == []

@@ -37,6 +37,8 @@ TOKEN_OUTPUT = "usage.tokens.output"
 COST_USD = "cost.usd"
 DURATION_MS = "duration.ms"
 RATIONALE = "model.rationale"
+RETRIES = "retry.count"
+RETRY_WAIT_MS = "retry.wait.ms"
 
 # ── Tool call attributes ────────────────────────────────────────────
 TOOL_NAME = "tool.name"

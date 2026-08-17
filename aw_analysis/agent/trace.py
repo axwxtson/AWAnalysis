@@ -47,6 +47,11 @@ class IterationUsage:
     rationale: str  # Carried from ModelConfig for trace readability.
     duration_ms: int = 0  # Wall-clock time of the model call, populated by Conversation.
     cost_usd: float = 0.0 # Populated by Conversation, summed by TurnTrace
+    retries: int = 0  # Client retry attempts for this iteration, 0 on the happy path.
+    retry_wait_ms: int = 0  # Time spent sleeping between those attempts.
+    # duration_ms includes retry_wait_ms: the sleeps happen inside the
+    # client.create call that Conversation times. Subtract to get the
+    # real model latency, or a retried iteration reads as a slow one.
 
 
 @dataclass
@@ -85,3 +90,12 @@ class TurnTrace:
     def total_cost_usd(self) -> float:
         """Stage-7: sum cost across iterations."""
         return sum(i.cost_usd for i in self.iterations)
+
+    @property
+    def total_retries(self) -> int:
+        """Block 3: retry attempts across the turn.
+
+        Non-zero means the API pushed back somewhere in this turn.
+        Per-iteration counts say where.
+        """
+        return sum(i.retries for i in self.iterations)

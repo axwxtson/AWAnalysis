@@ -353,6 +353,8 @@ def _emit_iteration_generation(
         A.STOP_REASON: usage.stop_reason,
         A.RATIONALE: usage.rationale,
         A.DURATION_MS: _now_ms_from_duration(getattr(usage, "duration_ms", None)),
+        A.RETRIES: int(getattr(usage, "retries", 0) or 0),
+        A.RETRY_WAIT_MS: int(getattr(usage, "retry_wait_ms", 0) or 0),
     }
     usage_details = {
         "input": usage.input_tokens,

@@ -71,6 +71,32 @@ def _looks_like_refusal(text: str) -> bool:
     return any(p.search(text) for p in _REFUSAL_PATTERNS)
 
 
+class _RetryRecorder:
+    """Accumulates client retry attempts for one model call.
+
+    Passed to AnthropicClient.create as the on_retry callback. A fresh
+    instance per call means counts cannot leak between iterations of
+    the agent loop, which per-iteration attribution depends on.
+
+    Defined at module level rather than as a closure in the loop: a
+    function defined inside a loop that closes over loop-body
+    variables is a late-binding hazard (ruff B023), and suppressing
+    that rule to accommodate the pattern would be the wrong way round.
+    """
+
+    def __init__(self) -> None:
+        self.retries = 0
+        self.wait_s = 0.0
+
+    def __call__(self, _attempt: int, wait: float) -> None:
+        self.retries += 1
+        self.wait_s += wait
+
+    @property
+    def wait_ms(self) -> int:
+        return int(self.wait_s * 1000)
+
+
 @dataclass
 class Conversation:
     """A live, stateful agent conversation.
@@ -180,6 +206,7 @@ class Conversation:
             self._enforce_context_budget(config, trace)
 
             # The actual call.
+            recorder = _RetryRecorder()
             t0 = time.perf_counter()
             response = self.client.create(
                 config=config,
@@ -187,6 +214,7 @@ class Conversation:
                 messages=self._messages,
                 tools=self.tools.to_anthropic_params(),
                 tool_choice=tool_choice,
+                on_retry=recorder,
             )
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
 
@@ -210,6 +238,8 @@ class Conversation:
                         response.usage.input_tokens,
                         response.usage.output_tokens,
                     ),
+                    retries=recorder.retries,
+                    retry_wait_ms=recorder.wait_ms,
                 )
             )
 
@@ -344,6 +374,7 @@ class Conversation:
         config = get_model_config(TaskType.CONTEXT_SUMMARISATION)
         # We don't pass the agent's tools or system prompt to the
         # summariser — its job is purely condensation.
+        recorder = _RetryRecorder()
         t0 = time.perf_counter()
         response = self.client.create(
             config=config,
@@ -353,6 +384,7 @@ class Conversation:
                 "questions. Do not add commentary."
             ),
             messages=messages_to_summarise,
+            on_retry=recorder,
         )
         elapsed_ms = int((time.perf_counter() - t0) * 1000)
 
@@ -374,6 +406,8 @@ class Conversation:
                     int(response.usage.input_tokens),
                     int(response.usage.output_tokens),
                 ),
+                retries=recorder.retries,
+                retry_wait_ms=recorder.wait_ms,
             )
         )
         return text

@@ -52,6 +52,7 @@ class AnthropicClient:
         call: Callable[[], T],
         *,
         policy: RetryPolicy | None = None,
+        on_retry: Callable[[int, float], None] | None = None,
     ) -> T:
         """Run `call`, retrying transient API failures per policy.
 
@@ -85,6 +86,12 @@ class AnthropicClient:
                     if advised > remaining:
                         raise
                     wait = min(active.max_delay, max(wait, advised))
+                if on_retry is not None:
+                    # Called before the sleep, with the wait about to be
+                    # served. The caller attributes it to the iteration
+                    # in flight; the exception is deliberately not
+                    # passed, so callers need not import anthropic.
+                    on_retry(attempt, wait)
                 active.sleep(wait)
         raise RuntimeError("unreachable: RetryPolicy validates max_attempts >= 1")
         
@@ -96,6 +103,7 @@ class AnthropicClient:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         tool_choice: dict[str, Any] | None = None,
+        on_retry: Callable[[int, float], None] | None = None,
     ) -> Any:
         """Create a single message with the given ModelConfig.
 
@@ -118,7 +126,10 @@ class AnthropicClient:
             kwargs["tools"] = tools
         if tool_choice is not None:
             kwargs["tool_choice"] = tool_choice
-        return self._with_retry(lambda: self._sdk.messages.create(**kwargs))
+        return self._with_retry(
+            lambda: self._sdk.messages.create(**kwargs),
+            on_retry=on_retry,
+        )
         
     def count_tokens(
         self,
