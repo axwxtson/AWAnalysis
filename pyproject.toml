@@ -106,6 +106,19 @@ ignore = [
 "evals/calibration/*.py" = ["E501"]
 "evals/golden/**" = ["E501"]
 
+# Attack payloads and the judge's category rubrics are the red-team
+# instrument. Rewrapping an attack payload changes the attack. Scoped to
+# the two data-carrying modules only; main.py is report formatting and
+# gets wrapped rather than exempted.
+"evals/redteam/attacks.py" = ["E501"]
+"evals/redteam/grader.py" = ["E501"]
+
+# main.py is the course CLI. It imports its siblings flat, so it cannot
+# run from this repo until the reporting layer and imports are rewritten
+# in Block 5 commit 3. Wrapping sixteen print statements in a file that
+# cannot execute is churn. Remove this line when that rewrite lands.
+"evals/redteam/main.py" = ["E501"]
+
 # count_tokens and the debug block formatter are both informational: if
 # they fail the correct behaviour is to carry on without summarisation
 # or without a pretty rendering, not to kill the user's turn. Same

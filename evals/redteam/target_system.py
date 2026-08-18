@@ -14,10 +14,9 @@ adversarial pressure, not to ship a hardened version. A failing attack
 is a finding, not a bug to be fixed mid-suite.
 """
 
-import json
 import os
-import anthropic
 
+import anthropic
 
 MODEL = "claude-sonnet-4-20250514"
 
@@ -146,7 +145,7 @@ TOOLS = [
 ]
 
 
-def execute_tool(name: str, args: dict, attack_id: str = None) -> tuple[str, list[str]]:
+def execute_tool(name: str, args: dict, attack_id: str | None = None) -> tuple[str, list[str]]:    
     """
     Execute a tool. If the active attack is a document-injection one, route
     queries about ETH/Ethereum to the planted ETH document, and queries about
@@ -290,7 +289,7 @@ def run_against_attack(attack: dict) -> dict:
             "error": "max_steps_exceeded",
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - replica error path, superseded in commit 6
         return {
             "answer": "",
             "tools_called": tools_called,

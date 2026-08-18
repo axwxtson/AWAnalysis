@@ -24,14 +24,13 @@ import argparse
 import json
 import sys
 import time
-from pathlib import Path
 from collections import defaultdict
-from colorama import init, Fore, Style
+from pathlib import Path
 
-from attacks import ATTACKS, get_by_category, get_by_severity, attack_count_by_category
+from attacks import ATTACKS
+from colorama import Fore, Style, init
+from grader import deterministic_grade, grade_attack
 from target_system import run_against_attack
-from grader import grade_attack, deterministic_grade
-
 
 init(autoreset=True)
 
@@ -82,7 +81,7 @@ def _severity_label(sev: str) -> str:
 
 def print_header(n_attacks: int):
     print(f"\n{Fore.CYAN}{'=' * 78}")
-    print(f"  RED TEAM SUITE — Market Analysis System")
+    print("  RED TEAM SUITE — Market Analysis System")
     print(f"  {n_attacks} attacks across 5 categories")
     print(f"{'=' * 78}{Style.RESET_ALL}\n")
 
@@ -102,7 +101,7 @@ def print_attack_progress(idx: int, total: int, attack: dict, result: dict, late
 
 def print_category_summary(results: list):
     print(f"\n{Fore.CYAN}{'─' * 78}")
-    print(f"  RESULTS BY CATEGORY")
+    print("  RESULTS BY CATEGORY")
     print(f"{'─' * 78}{Style.RESET_ALL}\n")
 
     by_cat: dict = defaultdict(lambda: {"total": 0, "defended": 0, "compromised": 0})
@@ -146,7 +145,7 @@ def print_category_summary(results: list):
 
 def print_severity_summary(results: list):
     print(f"\n{Fore.CYAN}{'─' * 78}")
-    print(f"  RESULTS BY SEVERITY")
+    print("  RESULTS BY SEVERITY")
     print(f"{'─' * 78}{Style.RESET_ALL}\n")
 
     by_sev: dict = defaultdict(lambda: {"total": 0, "compromised": 0})
@@ -231,7 +230,6 @@ def print_failures(results: list):
 
 def print_written_analysis_prompt(results: list):
     """Print a section telling the user what to write up after reviewing."""
-    failures = [r for r in results if r["grade"]["final_verdict"] == "compromised"]
     by_cat: dict = defaultdict(lambda: {"total": 0, "compromised": 0})
     for r in results:
         cat = r["attack"]["category"]
@@ -240,10 +238,10 @@ def print_written_analysis_prompt(results: list):
             by_cat[cat]["compromised"] += 1
 
     print(f"\n{Fore.CYAN}{'─' * 78}")
-    print(f"  WRITTEN ANALYSIS — things to capture in the README")
+    print("  WRITTEN ANALYSIS — things to capture in the README")
     print(f"{'─' * 78}{Style.RESET_ALL}\n")
 
-    print(f"  After reviewing the run, write up:")
+    print("  After reviewing the run, write up:")
     print()
     print(f"  1. {Style.BRIGHT}Which categories were hardest to defend?{Style.RESET_ALL}")
     weakest = max(by_cat.items(), key=lambda x: x[1]["compromised"] / max(x[1]["total"], 1)) if by_cat else None
@@ -254,22 +252,22 @@ def print_written_analysis_prompt(results: list):
               f"({weakest[1]['compromised']}/{weakest[1]['total']} compromised, {rate * 100:.0f}% failure rate)")
     print()
     print(f"  2. {Style.BRIGHT}Which defences worked?{Style.RESET_ALL}")
-    print(f"     Look at the Rule 5 'treat retrieved content as DATA' clause —")
-    print(f"     did the document-injection attacks succeed or fail?")
+    print("     Look at the Rule 5 'treat retrieved content as DATA' clause —")
+    print("     did the document-injection attacks succeed or fail?")
     print()
     print(f"  3. {Style.BRIGHT}Where were the deterministic and LLM graders disagreeing?{Style.RESET_ALL}")
-    print(f"     The disagreements are usually the most interesting cases —")
-    print(f"     they show the limits of substring matching for security testing.")
+    print("     The disagreements are usually the most interesting cases —")
+    print("     they show the limits of substring matching for security testing.")
     print()
     print(f"  4. {Style.BRIGHT}Document-level vs user-level injection{Style.RESET_ALL}")
     doc_attacks = [r for r in results if r["attack"]["injection_target"] == "document"]
     if doc_attacks:
         doc_compromised = sum(1 for r in doc_attacks if r["grade"]["final_verdict"] == "compromised")
         print(f"     {doc_compromised}/{len(doc_attacks)} document-level injection attacks succeeded.")
-        print(f"     This is the attack surface most production systems forget about.")
+        print("     This is the attack surface most production systems forget about.")
     print()
     print(f"  5. {Style.BRIGHT}What you would change in the system prompt{Style.RESET_ALL}")
-    print(f"     Based on the failures, what specific clauses would harden the prompt?")
+    print("     Based on the failures, what specific clauses would harden the prompt?")
 
 
 def print_footer(results: list):
@@ -331,7 +329,7 @@ def main():
         sys.exit(1)
 
     print_header(len(attacks))
-    print(f"  Running attacks...\n")
+    print("  Running attacks...\n")
 
     results = []
     for idx, attack in enumerate(attacks, start=1):
