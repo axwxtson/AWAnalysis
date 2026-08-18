@@ -70,17 +70,6 @@ despite the "earnings" framing: one sub-query, `intent=news`,
 `symbols=['NVIDIA']`, `classes=['equities']`, `action=auto`,
 `forced_tool=None`.
 
-### No committed current baseline
-
-`evals/results/` was gitignored until Block 1.2. The three tracked files
-inside it predate the per-asset-class split and report `total: 24`,
-which is the crypto dataset before `refusal_msft_stock` was migrated to
-equities as `price_msft`. They are historical records, not a baseline
-for the current 39-case set.
-
-**Resolution.** Block 1.7 re-runs both suites against the post-`1453796`
-code and commits the artefacts.
-
 ### `2.3.0-broken` is not the ablation its docstring claims
 
 The module docstring says the prompt is "lifted from the v2.2.0 builder
@@ -172,21 +161,21 @@ Files touched during Block 1 were linted and fixed in scope; the rest is
 untouched and deliberate.
 
 
-### Effectively no unit test coverage
+### Thin unit test coverage on the tools and grader layers
 
-27 tests: 3 observability smoke tests and 24 on the client retry layer
-(Block 3). Nothing covers the agent, decomposer, routing, retrieval,
-tools, graders or the MCP server. The original cause was import-time
-settings, fixed in Block 1.2 — `obs/` was the only subtree importable
-without an API key. That constraint is gone, and Block 3 demonstrated
-the pattern the rest should follow: injected dependencies, a fake that
-records rather than performs, no wall-clock and no credentials.
+123 tests after Block 4. Covered: the client retry layer, observability
+smoke, `decide_route` across all eight branches, the forced-tool chain
+from `RouteDecision` through `tool_choice`, symbol resolution, the
+retriever score inversion and wiring, and the decomposer output
+contract including its silent fallback.
 
-**Resolution.** Block 4, targeting the pure functions where a bug is
-silent and the eval suite would not catch it: `decide_route` across all
-eight branches, forced-tool forwarding through `send → _run_loop`, the
-retriever score inversion, decomposer `_parse_plan` error paths, and
-`AssetRegistry.resolve_deterministic`.
+Still uncovered: `tools/` beyond the registry dispatch exercised
+incidentally, the eval graders, and the MCP server. The graders are the
+notable gap, because Block 6's experiment is measured with them.
+
+**Resolution.** Not scheduled. Block 5 ports the red-team suite and
+fixes the grader substring short-circuit, which will need grader tests
+as a precondition rather than as a separate effort.
 
 ### `v2_3_0_broken` ships in the installed package
 
@@ -197,6 +186,26 @@ importable from the library.
 
 **No action planned.** Documented so the choice is visible.
 
+
+### `is_single_intent` docstring overclaims
+
+`QueryPlan.is_single_intent` is documented as true iff there is exactly
+one sub-query whose text equals the original user message. The code is
+`len(self.sub_queries) == 1` with no text comparison. The property gates
+the fast path that skips synthesis, and a single sub-query with
+rewritten text taking that path is almost certainly correct, so the code
+looks right and the docstring overclaims. Block 4 pins the code.
+
+**Resolution.** Correct the docstring. Not urgent, no behavioural
+consequence.
+
+### `META` appears in both `EQUITY_SYMBOLS` and `EQUITY_NAMES`
+
+Within-class duplicate, so resolution is unaffected and the keyspace
+disjointness canary in `tests/test_asset_registry.py` still passes. It
+is untidy, not a defect.
+
+**No action.**
 
 ### `Tool` is an ABC where it should be a Protocol
 
@@ -254,7 +263,7 @@ and anyone cloning the repo hits the same wall.
 
 ## Testing
 
-### `test_decomposer.py` collects zero tests
+### `test_decomposer.py` collects zero tests — reconciled, closed in Block 4
 
 The file moved out of `tests/` into `evals/calibration/` in
 `dc04749` (*Move decomposer calibration out of tests/ into
@@ -326,6 +335,35 @@ Retry attempts are visible in the trace: `IterationUsage` carries
 `retries` and `retry_wait_ms`, surfaced as Langfuse generation
 metadata. `duration_ms` includes the retry sleeps, so without this a
 retried iteration was indistinguishable from a slow one.
+
+### No committed current baseline — resolved 12 August 2026 (Block 1.7)
+
+`evals/results/` was gitignored until Block 1.2. The three tracked files
+inside it predate the per-asset-class split and report `total: 24`,
+which is the crypto dataset before `refusal_msft_stock` was migrated to
+equities as `price_msft`. They are historical records, not a baseline
+for the current 39-case set.
+
+Both suites were re-run against the post-`1453796` code on 12 August
+and committed:
+`evals/results/crypto/v2.5.0_20260812T134610.json` (23/23) and
+`evals/results/equities/v2.5.0_20260812T193743.json` (16/16). Those two
+files are the current baseline.
+
+**Do not confuse the two 16/16 equities runs.** Three equities runs are
+committed at v2.5.0 and two of them read 16/16, on opposite sides of the
+forced-tool fix:
+
+| Run | Date | Result | Forced-tool path |
+|---|---|---|---|
+| `20260608T212517` | 8 Jun | 16/16 | severed |
+| `20260609T224418` | 9 Jun | 14/16 | severed |
+| `20260812T193743` | 12 Aug | 16/16 | live |
+
+The baseline is the August run, so it already describes a system with
+enforcement working. Before/after claims resting on it do not require
+re-locking the suite. Block 4 additionally pins the mechanism itself in
+`tests/test_agent_conversation.py`.
 
 ### No CI — resolved 14 August 2026 (Block 2)
 
