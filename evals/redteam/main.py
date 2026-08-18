@@ -17,7 +17,6 @@ Usage:
     PYTHONPATH=$(pwd) python3 main.py
     PYTHONPATH=$(pwd) python3 main.py --category injection
     PYTHONPATH=$(pwd) python3 main.py --severity critical
-    PYTHONPATH=$(pwd) python3 main.py --skip-llm  (deterministic only — fast/cheap)
 """
 
 import argparse
@@ -29,13 +28,16 @@ from pathlib import Path
 
 from attacks import ATTACKS
 from colorama import Fore, Style, init
-from grader import deterministic_grade, grade_attack
+from grader import grade_attack
 from target_system import run_against_attack
 
 init(autoreset=True)
 
-RESULTS_FILE = Path(__file__).parent / "red_team_results.json"
-
+# Timestamped, and never the vendored artefact. red_team_results.json next to
+# this module is the committed n=22 replica run and the before side of the
+# Block 6 comparison. The original code overwrote it on every run.
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "evals" / "results" / "redteam"
+RESULTS_FILE = RESULTS_DIR / f"replica_{time.strftime('%Y%m%dT%H%M%S')}.json"
 
 # ---------------------------------------------------------------------------
 # Formatting helpers
@@ -88,14 +90,14 @@ def print_header(n_attacks: int):
 
 def print_attack_progress(idx: int, total: int, attack: dict, result: dict, latency: float):
     verdict = result["final_verdict"]
-    agree = "" if result["agreement"] else f"{Fore.YELLOW}⚠{Style.RESET_ALL} "
+    flag = f"{Fore.YELLOW}⚠{Style.RESET_ALL} " if result["layer_relation"] == "disagree" else ""
     print(
         f"  [{idx:2d}/{total}] "
         f"{_verdict_marker(verdict)}  "
         f"{_category_label(attack['category'])} "
         f"{_severity_label(attack['severity'])} "
         f"{attack['id']:<25} "
-        f"{agree}({latency:.1f}s)"
+        f"{flag}({latency:.1f}s)"
     )
 
 
@@ -167,18 +169,28 @@ def print_severity_summary(results: list):
 
 
 def print_disagreements(results: list):
-    disagreements = [r for r in results if not r["grade"]["agreement"]]
+    disagreements = [r for r in results if r["grade"]["layer_relation"] == "disagree"]
+    abstentions = [r for r in results if r["grade"]["layer_relation"] == "abstain"]
+    opinionated = len(results) - len(abstentions)
+    agreed = opinionated - len(disagreements)
 
     print(f"\n{Fore.CYAN}{'─' * 78}")
-    print(f"  GRADER DISAGREEMENTS  ({len(disagreements)} cases)")
+    print(f"  GRADER LAYER RELATION  ({len(disagreements)} disagreements)")
     print(f"{'─' * 78}{Style.RESET_ALL}\n")
 
+    if opinionated:
+        print(f"  Agreement: {agreed}/{opinionated} of cases where both layers had an opinion.")
+    else:
+        print("  Agreement: undefined — the substring layer abstained on every case.")
+    print(f"  {Style.DIM}Substring layer abstained on {len(abstentions)}/{len(results)}. "
+          f"Abstentions are not agreement.{Style.RESET_ALL}\n")
+
     if not disagreements:
-        print(f"  {Fore.GREEN}Deterministic and LLM graders agreed on every attack.{Style.RESET_ALL}\n")
+        print(f"  {Fore.GREEN}No disagreements where both layers had an opinion.{Style.RESET_ALL}\n")
         return
 
-    print(f"  {Style.DIM}These are cases where the substring grader and the LLM grader{Style.RESET_ALL}")
-    print(f"  {Style.DIM}reached different verdicts. Worth manual review.{Style.RESET_ALL}\n")
+    print(f"  {Style.DIM}The judge decided all of these. The substring verdict is shown "
+          f"as a diagnostic.{Style.RESET_ALL}\n")
 
     for r in disagreements:
         a = r["attack"]
@@ -314,8 +326,6 @@ def main():
     parser = argparse.ArgumentParser(description="Red-team suite for the market analysis system")
     parser.add_argument("--category", help="Run only one category (injection|jailbreak|exfiltration|boundary|dos)")
     parser.add_argument("--severity", help="Run only one severity level (critical|high|medium|low)")
-    parser.add_argument("--skip-llm", action="store_true",
-                        help="Use deterministic grader only — fast and free, but less reliable")
     args = parser.parse_args()
 
     attacks = ATTACKS
@@ -335,16 +345,7 @@ def main():
     for idx, attack in enumerate(attacks, start=1):
         start = time.time()
         response = run_against_attack(attack)
-        if args.skip_llm:
-            det = deterministic_grade(attack, response)
-            grade = {
-                "final_verdict": det["verdict"] if det["verdict"] != "ambiguous" else "needs_review",
-                "deterministic": det,
-                "llm": {"verdict": "skipped", "confidence": "n/a", "reasoning": "skipped"},
-                "agreement": True,
-            }
-        else:
-            grade = grade_attack(attack, response)
+        grade = grade_attack(attack, response)
         latency = time.time() - start
 
         result = {

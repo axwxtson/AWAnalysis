@@ -115,7 +115,7 @@ ignore = [
 
 # main.py is the course CLI. It imports its siblings flat, so it cannot
 # run from this repo until the reporting layer and imports are rewritten
-# in Block 5 commit 3. Wrapping sixteen print statements in a file that
+# in Block 5 commit 6. Wrapping sixteen print statements in a file that
 # cannot execute is churn. Remove this line when that rewrite lands.
 "evals/redteam/main.py" = ["E501"]
 
