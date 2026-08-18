@@ -5,7 +5,7 @@ states what is wrong, how confident the diagnosis is, and what would
 resolve it. Items are removed only when the resolution is committed and
 verified.
 
-Last reviewed: 11.8.26  
+Last reviewed: 18.8.26  
 
 ---
 
@@ -171,28 +171,22 @@ goes green.
 Files touched during Block 1 were linted and fixed in scope; the rest is
 untouched and deliberate.
 
-### No retry or backoff in the hot path
-
-`AnthropicClient` has only `create` and `count_tokens`. Every rate-limit
-handling in the repo is `time.sleep()` inside `evals/runner/run.py`. A
-429 or 529 during a live run is an unhandled failure.
-
-**Resolution.** Block 3 of the work programme: retry with backoff and
-jitter inside `AnthropicClient`, policy injected rather than hardcoded,
-and the eval runner's sleeps removed once it lands.
-
-
 
 ### Effectively no unit test coverage
 
-Three tests, all observability smoke tests. Nothing covers the agent,
-decomposer, routing, retrieval, tools, graders or the MCP server. This
-was a consequence of import-time settings (fixed in Block 1.2), not of
-choice: `obs/` was the only subtree that could be imported without an
-API key. Now enforced by CI, which means the three tests run on every push. That
-makes the gap visible rather than fixing it.
+27 tests: 3 observability smoke tests and 24 on the client retry layer
+(Block 3). Nothing covers the agent, decomposer, routing, retrieval,
+tools, graders or the MCP server. The original cause was import-time
+settings, fixed in Block 1.2 — `obs/` was the only subtree importable
+without an API key. That constraint is gone, and Block 3 demonstrated
+the pattern the rest should follow: injected dependencies, a fake that
+records rather than performs, no wall-clock and no credentials.
 
-**Resolution.** Block 4.
+**Resolution.** Block 4, targeting the pure functions where a bug is
+silent and the eval suite would not catch it: `decide_route` across all
+eight branches, forced-tool forwarding through `send → _run_loop`, the
+retriever score inversion, decomposer `_parse_plan` error paths, and
+`AssetRegistry.resolve_deterministic`.
 
 ### `v2_3_0_broken` ships in the installed package
 
@@ -292,6 +286,46 @@ point.
 ---
 
 ## Resolved
+
+### No retry or backoff in the hot path — resolved 18 August 2026 (Block 3)
+
+`AnthropicClient` now owns retry. `client/retry.py` holds the decisions
+as pure functions: `is_retryable` classifies by status code, and
+`compute_delay` is exponential with a cap and fractional jitter.
+`RetryPolicy` is frozen and injected per entry point, with `sleep`
+injectable so tests record waits instead of serving them.
+
+The original entry was wrong on a load-bearing point, which is worth
+recording rather than quietly correcting. There was no retry *code* in
+this repo, but the Anthropic SDK defaults `max_retries=2` with jittered
+backoff capped at 8s, so all eight call sites had been retrying twice
+since day one, and the eval runner's own loop sat on top of that: up to
+nine HTTP calls per logical send. The SDK layer offers no observability
+hook, no injectable sleep, and a cap too short to clear a per-minute
+rate window, so ownership moved into the client and the SDK's retry was
+disabled with `max_retries=0`. A test asserts the effective attribute
+rather than the constructor argument, so the compounding cannot return
+silently.
+
+The eval runner's two retry loops are gone, taking a bug with them: the
+handler around `conversation.send` contained two consecutive
+`time.sleep(30.0)` calls, giving 60s per retry rather than the 30s its
+comment described. The layer count is now one, down from the two that
+existed before the block started.
+
+Classification is by status code, not exception type, because the SDK
+maps 529 to `OverloadedError`, which is unexported and does not
+subclass `InternalServerError` — a tuple of public exception types
+silently misses the overload case.
+
+`count_tokens` gets `NO_RETRY`. Its only caller discards failures and
+proceeds without summarisation, so retrying would block the hot path
+for seconds to produce a discarded result.
+
+Retry attempts are visible in the trace: `IterationUsage` carries
+`retries` and `retry_wait_ms`, surfaced as Langfuse generation
+metadata. `duration_ms` includes the retry sleeps, so without this a
+retried iteration was indistinguishable from a slow one.
 
 ### No CI — resolved 14 August 2026 (Block 2)
 
