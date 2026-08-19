@@ -7,8 +7,13 @@ Usage:
     PYTHONPATH=$(pwd) .venv/bin/python evals/redteam/main.py
     PYTHONPATH=$(pwd) .venv/bin/python evals/redteam/main.py --category injection
     PYTHONPATH=$(pwd) .venv/bin/python evals/redteam/main.py --severity critical
+    PYTHONPATH=$(pwd) .venv/bin/python evals/redteam/main.py \\
+        --attack exf_04_markdown_dump --attack bnd_04_off_topic --repeat 5
 
-This costs money: one agent turn plus one judge call per attack.
+This costs money: one agent turn plus one judge call per attack, so the
+bill scales with attacks times repeat. Replicates are cycled rather than
+blocked; see build_run_plan for why that is not an implementation
+detail.
 """
 
 from __future__ import annotations
@@ -67,6 +72,49 @@ def _severity(sev: str) -> str:
     return f"[{SEVERITY_COLOURS.get(sev, 'white')}]{sev:<8}[/]"
 
 
+def build_run_plan(
+    attacks: list,
+    *,
+    category: str | None = None,
+    severity: str | None = None,
+    ids: list[str] | None = None,
+    repeat: int = 1,
+) -> list[tuple[dict, int]]:
+    """Expand the filters and a repeat count into an ordered run plan.
+
+    Pure, so selection can be checked without paying for a run. Returns
+    (attack, replicate) pairs with replicate 1-based.
+
+    Replicates are cycled, not blocked: the whole selected set runs once,
+    then again, rather than one attack five times in a row. Blocking
+    would land every replicate of an attack inside the same few minutes,
+    so a transient condition in that window — a rate-limit backoff, a
+    degraded search, model-side variation — would read as a property of
+    that attack instead of as noise. Cycling spreads each attack's
+    replicates across the run so a transient hits everything equally.
+
+    Unknown ids are checked against the unfiltered list. An id that
+    exists but loses to another filter yields an empty selection, which
+    the caller already handles; only an unrecognised id raises.
+    """
+    if repeat < 1:
+        raise ValueError(f"repeat must be at least 1, got {repeat}")
+
+    selected = list(attacks)
+    if category:
+        selected = [a for a in selected if a["category"] == category]
+    if severity:
+        selected = [a for a in selected if a["severity"] == severity]
+    if ids:
+        unknown = sorted(set(ids) - {a["id"] for a in attacks})
+        if unknown:
+            raise ValueError(f"unknown attack id(s): {', '.join(unknown)}")
+        wanted = set(ids)
+        selected = [a for a in selected if a["id"] in wanted]
+
+    return [(a, r) for r in range(1, repeat + 1) for a in selected]
+
+
 def measured(results: list) -> list:
     """Results that actually tested the system.
 
@@ -87,6 +135,40 @@ def print_progress(idx: int, total: int, attack: dict, grade: dict, latency: flo
         f"{_category(attack['category'])} {_severity(attack['severity'])} "
         f"{attack['id']:<28} {flag}({latency:.1f}s)"
     )
+
+
+def print_replicates(results: list) -> None:
+    """Per-attack verdicts for a replicated run.
+
+    Replaces the category, severity and footer tables when repeat > 1.
+    Those compute rates over results, so under replication the
+    denominator silently becomes replicate-observations rather than
+    attacks, and the footer would print a headline defence rate for a run
+    of five attacks. The unit of a replicated run is the attack.
+
+    A split result is flagged because it is the outcome a single run
+    would have reported as a clean win or a clean loss.
+    """
+    console.print(f"\n[cyan]{'─' * 78}[/]")
+    console.print("  REPLICATES")
+    console.print(f"[cyan]{'─' * 78}[/]\n")
+
+    tally: dict = defaultdict(lambda: {"n": 0, "defended": 0})
+    for r in measured(results):
+        t = tally[r["attack"]["id"]]
+        t["n"] += 1
+        if r["grade"]["final_verdict"] == "defended":
+            t["defended"] += 1
+
+    for attack_id, t in tally.items():
+        if t["defended"] == t["n"]:
+            colour = "green"
+        elif t["defended"] == 0:
+            colour = "red"
+        else:
+            colour = "yellow"
+        flag = "" if t["defended"] in (0, t["n"]) else "  [yellow]split[/]"
+        console.print(f"  {attack_id:<32} [{colour}]{t['defended']}/{t['n']} defended[/]{flag}")
 
 
 def print_by_category(results: list) -> None:
@@ -243,6 +325,12 @@ def print_footer(results: list) -> None:
 
 
 def save_results(results: list) -> None:
+    """Write the run artefact.
+    replicate is emitted on every record, including single runs, so five
+    records sharing an attack_id are distinguishable from a run that
+    wrote the same result five times. Artefacts committed before Block 6
+    lack the field; read its absence as 1.
+    """
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_FILE.write_text(
         json.dumps(
@@ -254,6 +342,7 @@ def save_results(results: list) -> None:
                     "attack_description": r["attack"]["description"],
                     "attack_payload": r["attack"]["payload"],
                     "attack_target": r["attack"]["injection_target"],
+                    "replicate": r["replicate"],
                     "response": r["response"],
                     "grade": r["grade"],
                     "latency_seconds": r["latency"],
@@ -269,40 +358,70 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Red-team suite for AW Analysis")
     parser.add_argument("--category", help="injection|jailbreak|exfiltration|boundary|dos")
     parser.add_argument("--severity", help="critical|high|medium|low")
+    parser.add_argument(
+        "--attack",
+        action="append",
+        dest="ids",
+        help="attack id; repeatable, e.g. --attack exf_04_markdown_dump",
+    )
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="run each selected attack N times, cycled rather than blocked",
+    )
     args = parser.parse_args()
 
-    attacks = ATTACKS
-    if args.category:
-        attacks = [a for a in attacks if a["category"] == args.category]
-    if args.severity:
-        attacks = [a for a in attacks if a["severity"] == args.severity]
+    try:
+        plan = build_run_plan(
+            ATTACKS,
+            category=args.category,
+            severity=args.severity,
+            ids=args.ids,
+            repeat=args.repeat,
+        )
+    except ValueError as exc:
+        console.print(f"[red]{escape(str(exc))}[/]")
+        sys.exit(1)
 
-    if not attacks:
+    if not plan:
         console.print("[red]No attacks match the filters.[/]")
         sys.exit(1)
 
+    n_attacks = len(plan) // args.repeat
     console.print(f"\n[cyan]{'=' * 78}[/]")
     console.print(f"  RED TEAM SUITE — AW Analysis, prompt {ACTIVE_PROMPT_VERSION}")
-    console.print(f"  {len(attacks)} attacks")
+    console.print(f"  {n_attacks} attacks x {args.repeat} = {len(plan)} turns")
     console.print(f"[cyan]{'=' * 78}[/]\n")
 
     results = []
-    for idx, attack in enumerate(attacks, start=1):
+    for idx, (attack, replicate) in enumerate(plan, start=1):
         start = time.time()
         response = run_against_attack(attack)
         grade = grade_attack(attack, response)
         latency = time.time() - start
         results.append(
-            {"attack": attack, "response": response, "grade": grade, "latency": latency}
+            {
+                "attack": attack,
+                "replicate": replicate,
+                "response": response,
+                "grade": grade,
+                "latency": latency,
+            }
         )
-        print_progress(idx, len(attacks), attack, grade, latency)
+        print_progress(idx, len(plan), attack, grade, latency)
 
+    replicated = args.repeat > 1
     save_results(results)
-    print_by_category(results)
-    print_by_severity(results)
+    if replicated:
+        print_replicates(results)
+    else:
+        print_by_category(results)
+        print_by_severity(results)
     print_layer_relation(results)
     print_failures(results)
-    print_footer(results)
+    if not replicated:
+        print_footer(results)
 
     critical = sum(
         1
