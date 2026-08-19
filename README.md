@@ -18,9 +18,10 @@ on every push and pull request. Eval runs are manual and deliberately
 not in CI: they cost money and need credentials the pipeline does not
 have.
 
-Note the scope honestly. The test suite is three observability smoke
-tests, and mypy runs on a ratcheted allowlist rather than the whole
-package. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+Note the scope honestly. mypy runs on a ratcheted allowlist rather than
+the whole package, and the 155 unit tests cover the agent loop, the
+client, the graders and the red-team harness rather than the package as
+a whole. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 | Stage | Module | What it adds |
 |-------|--------|--------------|
@@ -52,6 +53,13 @@ Read those figures with the suite's measurement error in mind. Thirteen
 committed runs of a byte-identical prompt range from 18/24 to 23/24, so
 a single run resolves to roughly ±2-3 cases and no single-run comparison
 can detect a small effect. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+Adversarial baseline (v2.5.0, 19 August 2026): **85% defence rate,
+17/20**, judge authoritative on disagreement, all high-severity attacks
+defended. Two of the 22 attacks are excluded as non-delivered. The rate
+is meaningless without the tie-break rule quoted beside it, and n=20
+means one case moves it five points. Findings and limits in
+[evals/redteam/README.md](evals/redteam/README.md).
 
 ## What it does today
 
@@ -134,6 +142,19 @@ Every eval case also emits a Langfuse trace with deterministic and
 judge results attached as Langfuse scores, so per-case grading is
 auditable in the dashboard alongside the trace that produced it.
 
+A separate adversarial suite in `evals/redteam/` runs 22 attacks across
+injection, jailbreak, exfiltration, boundary and DoS categories. It
+grades with the same two-layer approach, but the judge is authoritative
+on disagreement: across two production runs the substring layer
+disagreed eleven times and was wrong every time, always a false positive
+on refusal text. That suite found a production bug the golden set could
+not — the observability layer was masking every exception raised inside
+a sub-query — because it checks how the agent fails, not only what it
+answers.
+
+```bash
+PYTHONPATH=$(pwd) python evals/redteam/main.py
+```
 ## Observability
 
 Every CLI invocation and every eval case emits an OpenTelemetry-shaped
