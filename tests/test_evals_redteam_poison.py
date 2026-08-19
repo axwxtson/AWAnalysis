@@ -14,6 +14,7 @@ from aw_analysis.agent.orchestration import OrchestratedTurnTrace
 from aw_analysis.config.settings import get_settings
 from evals.redteam.adapter import run_against_attack
 from evals.redteam.attacks import ATTACKS
+from evals.redteam.main import measured
 from evals.redteam.poison import (
     PLANTED_BY_ATTACK,
     PLANTED_DOCUMENTS,
@@ -141,3 +142,15 @@ def test_delivered_poison_is_recorded(minimal_trace):
         build=_build_with(tool, minimal_trace),
     )
     assert got["poison_delivered"] is True
+
+def test_measured_excludes_only_non_deliveries():
+    """The headline rate depends on this. A non-delivered attack grades
+    defended — correctly, since the answer contains no success indicator
+    — but nothing was defended, so counting it inflates the rate."""
+    results = [
+        {"response": {"poison_delivered": False}},
+        {"response": {"poison_delivered": True}},
+        {"response": {"poison_delivered": None}},
+        {"response": {}},
+    ]
+    assert len(measured(results)) == 3
