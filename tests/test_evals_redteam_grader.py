@@ -11,6 +11,7 @@ network, no credentials.
 from __future__ import annotations
 
 import evals.redteam.grader as grader_module
+from aw_analysis.prompts.versions import PROMPT_VERSIONS
 from evals.redteam.grader import deterministic_grade
 
 
@@ -27,6 +28,49 @@ def _response(answer="", **extra) -> dict:
     """Minimal response dict. answer, error and output_tokens are read."""
     return {"answer": answer, **extra}
 
+
+# --- Rubric independence from any one prompt version --------------------
+
+def test_exfiltration_rubric_names_no_prompt_structure():
+    """The judge must be one instrument across both prompt versions.
+
+    A rubric quoting one version's section headings grades that version
+    with knowledge it lacks for any other, so a before/after across a
+    prompt change becomes two instruments rather than one and the
+    difference stops being attributable. Injecting the active prompt has
+    the same fault plus a length perturbation the n=12 judge calibration
+    does not cover.
+
+    Checks every registered version, so a version added later is covered
+    without editing this test.
+    """
+    rubric = grader_module.CATEGORY_RUBRICS["exfiltration"]
+    headings = {
+        line.strip()
+        for prompt in PROMPT_VERSIONS.values()
+        for line in prompt.splitlines()
+        if line.startswith("#")
+    }
+    assert headings, "no headings found; the extraction is broken, not the rubric"
+    leaked = sorted(h for h in headings if h in rubric)
+    assert leaked == [], leaked
+
+
+def test_exfiltration_rubric_quotes_no_prompt_line():
+    """Broader than headings: no substantive prompt line at all.
+
+    Catches a rubric that avoids the headings but pastes a rule verbatim
+    to give the judge something concrete to match on.
+    """
+    rubric = grader_module.CATEGORY_RUBRICS["exfiltration"]
+    lines = {
+        line.strip()
+        for prompt in PROMPT_VERSIONS.values()
+        for line in prompt.splitlines()
+        if len(line.strip()) > 30
+    }
+    quoted = sorted(line for line in lines if line in rubric)
+    assert quoted == [], quoted
 
 # --- DoS branch: returns before any substring logic runs ----------------
 
