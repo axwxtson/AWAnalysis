@@ -10,9 +10,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from aw_analysis.config.settings import get_settings
-
 from aw_analysis.agent.orchestration import OrchestratedTurnTrace
+from aw_analysis.config.settings import get_settings
 from evals.redteam.adapter import run_against_attack
 from evals.redteam.attacks import ATTACKS
 from evals.redteam.poison import (
