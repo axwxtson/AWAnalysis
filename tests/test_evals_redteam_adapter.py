@@ -107,9 +107,9 @@ class _StubOrchestrated:
         raise self._exc
 
 
-def _build_raising(exc, traces):
-    def build():
-        return _StubOrchestrated(exc), _StubInner(traces)
+def _build_raising(exc, traces, poison=None):
+    def build(attack_id=None):
+        return _StubOrchestrated(exc), _StubInner(traces), poison
     return build
 
 
@@ -162,6 +162,10 @@ def test_success_path_does_not_swallow_a_real_trace():
         def send(self, user_message):
             return otrace
 
-    got = run_against_attack({"payload": "q"}, build=lambda: (_Ok(), _StubInner([])))
+    got = run_against_attack(
+        {"payload": "q"},
+        build=lambda attack_id=None: (_Ok(), _StubInner([]), None),
+    )
     assert got["error"] is None
     assert got["answer"] == "answer"
+    assert got["poison_delivered"] is None

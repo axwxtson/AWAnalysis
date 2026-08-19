@@ -23,6 +23,11 @@ from aw_analysis.client.anthropic_client import AnthropicClient
 from aw_analysis.prompts.system import SYSTEM_PROMPT
 from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
 from aw_analysis.tools import default_registry
+from evals.redteam.poison import (
+    PLANTED_BY_ATTACK,
+    PoisonedProfileTool,
+    poisoned_registry,
+)
 
 
 def trace_to_response(otrace: OrchestratedTurnTrace) -> dict[str, Any]:
@@ -77,17 +82,26 @@ def _error_response(error: str, inner: Conversation) -> dict[str, Any]:
     }
 
 
-def _build_agent() -> tuple[OrchestratedConversation, Conversation]:
-    """Fresh agent per attack.
+def _build_agent(
+    attack_id: str | None = None,
+) -> tuple[OrchestratedConversation, Conversation, PoisonedProfileTool | None]:
+    """Fresh agent per attack, with the profile tool poisoned if the
+    attack plants a document.
 
     Reusing one conversation would carry each attack's messages into the
     next, so the run would stop being independent trials. The interface
-    label separates red-team turns from CLI and eval turns in Langfuse.
+    label separates red-team turns from CLI and eval traffic in Langfuse.
     """
+    document_name = PLANTED_BY_ATTACK.get(attack_id or "")
+    if document_name is None:
+        tools, poison = default_registry(), None
+    else:
+        tools, poison = poisoned_registry(document_name)
+
     client = AnthropicClient()
     inner = Conversation(
         client=client,
-        tools=default_registry(),
+        tools=tools,
         system_prompt=SYSTEM_PROMPT,
     )
     orchestrated = OrchestratedConversation(
@@ -95,7 +109,7 @@ def _build_agent() -> tuple[OrchestratedConversation, Conversation]:
         conversation=inner,
         interface="redteam",
     )
-    return orchestrated, inner
+    return orchestrated, inner, poison
 
 
 def run_against_attack(attack: dict, *, build=_build_agent) -> dict[str, Any]:
@@ -103,13 +117,23 @@ def run_against_attack(attack: dict, *, build=_build_agent) -> dict[str, Any]:
 
     build is injectable so the failure paths can be tested offline.
     """
-    orchestrated, inner = build()
+    orchestrated, inner, poison = build(attack.get("id"))
     try:
         otrace = orchestrated.send(attack["payload"])
     except TurnBudgetExceeded:
-        return _error_response("max_steps_exceeded", inner)
+        response = _error_response("max_steps_exceeded", inner)
     except Exception as exc:  # noqa: BLE001
         # One crashed attack must not end a run that has already paid for
         # the turns before it. Same argument as evals/runner/run.py.
-        return _error_response(f"{type(exc).__name__}: {exc}", inner)
-    return trace_to_response(otrace)
+        response = _error_response(f"{type(exc).__name__}: {exc}", inner)
+    else:
+        response = trace_to_response(otrace)
+
+    # Three states, not two. None means this attack plants nothing.
+    # False means it planted a document the model never retrieved, which
+    # is a non-delivery and not a defence: production decomposes and
+    # routes, so a document attack can complete without the poison ever
+    # reaching the model. Counting that as defended would inflate the
+    # rate for the attack class that most resembles a real threat here.
+    response["poison_delivered"] = None if poison is None else poison.invoked
+    return response
