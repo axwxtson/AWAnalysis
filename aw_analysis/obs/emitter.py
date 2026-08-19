@@ -289,7 +289,7 @@ def sub_query(
         yield SubQuery(span=None)
         return
     try:
-        with client.start_as_current_observation(
+        cm = client.start_as_current_observation(
             as_type="span",
             name=f"sub_query[{index}]",
             input={"text": text},
@@ -298,10 +298,20 @@ def sub_query(
                 A.SUB_QUERY_TEXT: text,
                 A.SUB_QUERY_INDEX: index,
             },
-        ) as sq_span:
-            yield SubQuery(span=sq_span)
+        )
     except Exception:
+        # Only span creation is guarded. The previous form wrapped the
+        # yield too, so an exception thrown into this generator at the
+        # yield point was caught and the generator yielded a second
+        # time — a protocol violation that Python reports as
+        # "generator didn't stop after throw()", replacing the real
+        # exception. TurnBudgetExceeded never reached its callers.
+        # Same failure turn() documents at the top of this module.
         yield SubQuery(span=None)
+        return
+
+    with cm as sq_span:
+        yield SubQuery(span=sq_span)
 
 
 # ── Iteration (LLM call inside the agent loop) ──────────────────────
