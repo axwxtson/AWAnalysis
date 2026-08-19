@@ -113,11 +113,11 @@ ignore = [
 "evals/redteam/attacks.py" = ["E501"]
 "evals/redteam/grader.py" = ["E501"]
 
-# main.py is the course CLI. It imports its siblings flat, so it cannot
-# run from this repo until the reporting layer and imports are rewritten
-# in Block 5 commit 6. Wrapping sixteen print statements in a file that
-# cannot execute is churn. Remove this line when that rewrite lands.
-"evals/redteam/main.py" = ["E501"]
+# main.py is ANSI-heavy terminal formatting. Its long lines are long in
+# source, not on screen: a single Fore.CYAN or Style.RESET_ALL costs
+# around thirty source characters and zero columns. E501 counts source
+# characters as a proxy for readable width, and that proxy does not hold
+# here. Permanent, and a different argument from the two above.
 
 # count_tokens and the debug block formatter are both informational: if
 # they fail the correct behaviour is to carry on without summarisation
