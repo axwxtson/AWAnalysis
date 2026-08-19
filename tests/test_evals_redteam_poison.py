@@ -6,8 +6,11 @@ Real registry, real tool objects. No network, no credentials.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 
 import pytest
+
+from aw_analysis.config.settings import get_settings
 
 from aw_analysis.agent.orchestration import OrchestratedTurnTrace
 from evals.redteam.adapter import run_against_attack
@@ -18,6 +21,20 @@ from evals.redteam.poison import (
     PoisonedProfileTool,
     poisoned_registry,
 )
+
+
+@pytest.fixture(autouse=True)
+def _fake_credentials(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """poisoned_registry calls default_registry(), which constructs tools
+    that read settings and demand an API key. Locally .env supplies one,
+    so this only failed in CI. Same shape as test_client_retry.py:
+    get_settings is lru_cached, so the cache is cleared on both sides or
+    a fake-key Settings survives into the next test file.
+    """
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-never-sent")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture
