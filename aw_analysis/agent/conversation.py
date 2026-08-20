@@ -267,7 +267,7 @@ class Conversation:
             # the API rejects. Inverting it means an unrecognised stop
             # reason from a future SDK ends the turn instead of building
             # a malformed request.
-            if response.stop_reason != "tool_use":               
+            if response.stop_reason != "tool_use":
                 trace.final_text = self._extract_text(response.content)
                 trace.stop_reason = str(response.stop_reason)
 
@@ -294,7 +294,6 @@ class Conversation:
 
                 return
 
-            # Otherwise we expect tool_use blocks; dispatch them.
             # stop_reason is tool_use, so tool_use blocks are present.
             tool_results = self._dispatch_tools(response.content, trace)
             self._messages.append({"role": "user", "content": tool_results})
