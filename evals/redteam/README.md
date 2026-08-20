@@ -144,10 +144,73 @@ breath, as judge calibration is always quoted with n=12.
   correct verdict, per finding 1.
 
 ## Running it
-PYTHONPATH=$(pwd) .venv/bin/python evals/redteam/main.py
-PYTHONPATH=$(pwd) .venv/bin/python evals/redteam/main.py --category injection
 
-Costs roughly $0.55: one agent turn plus one judge call per attack.
-Results are written to `evals/results/redteam/<prompt-version>_<ts>.json`.
-`red_team_results.json` in this directory is the committed replica run
-and is never overwritten.
+Full suite, filtered runs, and repeated named attacks are all invoked
+through `evals/redteam/main.py`. See the module docstring for the exact
+command lines; they are not repeated here, because a README that
+contains runnable command lines is a README that gets executed when it
+is pasted somewhere.
+
+`--repeat` cycles the selected set rather than blocking it, so each
+attack's replicates are spread across the run. Blocking would land all
+five inside the same few minutes, and a transient in that window would
+read as a property of that attack rather than as noise.
+
+Costs roughly $0.025 per attack: one agent turn plus one judge call. The
+bill scales with attacks times repeat.
+
+Results are written to `evals/results/redteam/<prompt-version>_<ts>.json`,
+except where renamed by hand, per below. `red_team_results.json` in this
+directory is the committed replica run and is never overwritten.
+
+## Committed artefacts
+
+Several `v2.5.0_*` files exist and they are not interchangeable.
+
+**`v2.5.0_20260819T130613.json`, `v2.5.0_20260819T134234.json`.** Two
+production runs an hour apart on 19 August, 22 attacks each, single
+observations. Graded by the pre-`fbe8ff6` exfiltration rubric, which
+described v2.5.0's section headings and told the judge the prompt
+contained no rule against self-disclosure. They are records of an
+instrument the repo no longer contains and must not be paired against a
+v2.6.0 run. The 85% and 17/20 quoted above come from these.
+
+**`v2.5.0_sealed_full_20260820T125114.json`.** 25 attacks, single
+observations, 20 August. The paired baseline for the full suite.
+
+**`v2.5.0_sealed_replicates_20260820T130317.json`.** 5 attacks at 5
+replicates each, 25 turns, 20 August. The paired baseline for
+`exf_04_markdown_dump`, `bnd_04_off_topic`, `bnd_06_asset_wrapped_task`,
+`bnd_07_concept_plus_artefact` and `exf_05_boundary_enumeration`.
+
+All runs from 20 August postdate `45bfb35` (stop-reason branching in the
+agent loop), `8e4e0af` (stop reasons recorded per turn), `fbe8ff6`
+(version-independent exfiltration rubric) and `8ecc2a4` (truncated turns
+graded rather than excluded). The 19 August pair predates all four. The
+renaming is deliberate: the plain `<version>_<ts>` shape cannot express
+which of several same-version files pairs with which.
+
+## The blind, and how it ended
+
+The two sealed runs were executed with stdout redirected to a gitignored
+log and committed unread, so that the v2.6.0 prompt could not be written
+against the outcomes of the three attacks added in `024af41`.
+
+That blind was then broken by accident, before v2.6.0 was written, when
+a draft of this section containing example command lines was pasted into
+a shell and executed the suite. Every v2.5.0 verdict printed to the
+terminal.
+
+The consequence is recorded rather than worked around. The three attacks
+added in `024af41` are not a hold-out and Block 6 has no held-out
+component from that cohort. They retain the weaker property the commit
+ordering does guarantee: their text was written and pushed before the
+rule existed, so they are not tuned to it.
+
+Ordering constrains what could be fitted, not what was known. Even
+unbroken, the blind would not have made those attacks independent: the
+same person wrote them and the rule they probe.
+
+Any hold-out claim in Block 6 rests instead on a second cohort written
+after v2.6.0 is committed, against a prompt already immutable in pushed
+history.
