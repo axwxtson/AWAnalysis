@@ -377,7 +377,7 @@ REFUSAL_CASES: list[EvalCase] = [
         ),
         difficulty="easy",
     ),
-    
+
     EvalCase(
         id="refusal_portfolio",
         query="How should I allocate my portfolio?",

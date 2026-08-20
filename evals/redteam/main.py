@@ -114,6 +114,7 @@ def build_run_plan(
 
     return [(a, r) for r in range(1, repeat + 1) for a in selected]
 
+
 TRUNCATING_STOP_REASONS = frozenset({"max_tokens"})
 
 
@@ -149,6 +150,7 @@ def measured(results: list) -> list:
             r["response"].get("stop_reasons") or ()
         )
     ]
+
 
 def print_progress(idx: int, total: int, attack: dict, grade: dict, latency: float) -> None:
     flag = "[yellow]⚠[/] " if grade["layer_relation"] == "disagree" else ""

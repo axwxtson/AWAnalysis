@@ -569,7 +569,7 @@ class Conversation:
         for cited, title, url in snippets:
             source = f"{title} ({url})" if title else url
             lines.append(f"[{source}] {cited}")
-        return "\n".join(lines)            
+        return "\n".join(lines)
 
     @staticmethod
     def _render_server_tool_result(block: Any) -> str:

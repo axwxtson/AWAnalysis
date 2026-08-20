@@ -148,7 +148,7 @@ def test_measured_tolerates_artefacts_written_before_stop_reasons():
     assert len(measured([_result("old", error=None)])) == 1
 
 
-def test_block_six_replicate_set_resolves_against_real_attacks():    
+def test_block_six_replicate_set_resolves_against_real_attacks():
     """Couples the replicate set to the attack data.
 
     A renamed or mistyped id would otherwise surface as a short paid run.

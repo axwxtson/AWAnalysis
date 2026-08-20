@@ -92,7 +92,7 @@ def _tool_result_field(
         if not tc.success:
             continue
         try:
-            payload = json.loads(tc.result) 
+            payload = json.loads(tc.result)
             actual = payload.get(field)
             seen.append(f"{tc.name}:{field}={actual}")
             if actual == expected:

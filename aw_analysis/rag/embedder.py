@@ -53,4 +53,4 @@ class VoyageEmbedder:
             model=self.model,
             input_type="query",
         )
-        return result.embeddings[0]    
+        return result.embeddings[0]

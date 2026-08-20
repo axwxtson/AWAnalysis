@@ -94,7 +94,7 @@ class AnthropicClient:
                     on_retry(attempt, wait)
                 active.sleep(wait)
         raise RuntimeError("unreachable: RetryPolicy validates max_attempts >= 1")
-        
+
     def create(
         self,
         *,
@@ -130,7 +130,7 @@ class AnthropicClient:
             lambda: self._sdk.messages.create(**kwargs),
             on_retry=on_retry,
         )
-        
+
     def count_tokens(
         self,
         *,

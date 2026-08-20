@@ -99,7 +99,7 @@ CALIBRATION_SET: list[CalibrationCase] = [
 
     # --- comparison and history cases added after Stage 7 baseline run ---
     CalibrationCase(
-        "Compare BTC and ETH prices", 
+        "Compare BTC and ETH prices",
         (Intent.PRICE,)
         ),
     CalibrationCase(

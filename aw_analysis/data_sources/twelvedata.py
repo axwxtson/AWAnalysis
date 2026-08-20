@@ -154,7 +154,7 @@ def _best_equity_match(matches: list[dict[str, Any]], query: str) -> dict[str, A
     pool = stocks or pool
     us = [m for m in pool if str(m.get("country", "")).lower() in ("united states", "usa", "us")]
     return (us or pool)[0]
-    
+
 def _to_float(value: Any) -> float | None:
     try:
         return float(value)

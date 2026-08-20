@@ -44,6 +44,8 @@ target-version = "py311"
 # silently changes the gate. Chosen, not inherited.
 select = [
     "E",      # pycodestyle errors
+    "W291",   # trailing whitespace
+    "W293",   # blank line with whitespace
     "F",      # pyflakes — unused imports, undefined names
     "I",      # isort — import ordering
     "UP",     # pyupgrade — modern syntax for the target version
@@ -55,6 +57,16 @@ select = [
     "BLE",    # blind except
     "PYI",    # type annotation style
 ]
+
+# W291 and W293 only, not the whole W group. W292 fires on 81 of 86
+# files, since not ending files with a newline is the existing house
+# style here, and enabling it would be an 81-file churn commit.
+#
+# The blank-line rules that would catch a constant or a function
+# separated by one line instead of two are E301 to E306, which ruff
+# implements under --preview only. Pinning the gate to a preview flag
+# trades one source of drift for another, so those stay off and blank
+# line counts stay a review matter.
 
 ignore = [
     # StrEnum would be the modern form, but str+Enum stringification
@@ -93,6 +105,17 @@ ignore = [
 
 # ❯ is a deliberate prompt glyph in the CLI, not an ambiguous typo.
 "aw_analysis/cli/main.py" = ["RUF001"]
+
+# Prompt bodies are model input and rendered bytes, not code. Stripping
+# whitespace inside a version's string literal changes that version's
+# rendered prompt, and prompt versions are immutable audit artefacts.
+# Concretely: the Block 6 comparison pairs a sealed v2.5.0 run against a
+# v2.6.0 run, and both must be measured against identical v2.5.0 text.
+# One of the two offenders is the documented _tool_selection paste
+# artefact, a shell prompt that ended up inside the prompt string. It is
+# preserved deliberately. Same argument as the judge rubrics and attack
+# payloads below.
+"aw_analysis/prompts/system.py" = ["W291", "W293"]
 
 # pytest's entire idiom is bare assert; S101 exists because -O strips
 # them, which does not apply to a test run.
