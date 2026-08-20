@@ -1,4 +1,4 @@
-"""Unit tests for forced-tool forwarding, from RouteDecision to tool_choice.
+"""Unit tests for the agent loop: forced-tool forwarding, then stop reasons.
 
 The Stage 9 regression, in full: Conversation.send accepted forced_tool
 and never passed it to _run_loop. Fixed in 1453796, one line. tool_choice
@@ -103,12 +103,18 @@ class _RecordingClient:
     def __init__(self, *responses: Any) -> None:
         self._responses = list(responses)
         self.tool_choices: list[Any] = []
+        self.message_lists: list[list[Any]] = []
 
     def count_tokens(self, **_: Any) -> int:
         return 0
 
     def create(self, **kwargs: Any) -> Any:
         self.tool_choices.append(kwargs.get("tool_choice"))
+        # Copied, not referenced. Conversation mutates one message list
+        # in place across iterations, so recording the reference would
+        # give every entry the final state and the pause_turn assertion
+        # would hold for the wrong reason.
+        self.message_lists.append(list(kwargs.get("messages") or []))
         index = min(len(self.tool_choices) - 1, len(self._responses) - 1)
         return self._responses[index]
 
@@ -163,6 +169,69 @@ def test_unforced_send_never_sets_tool_choice() -> None:
     _conversation(client).send(PRICE_QUERY)
 
     assert client.tool_choices == [None, None]
+
+
+# --- stop-reason dispatch ---------------------------------------------
+#
+# The loop terminated on end_turn and stop_sequence and sent everything
+# else to tool dispatch. _dispatch_tools skips non-tool_use blocks, so a
+# response carrying neither appended {"role": "user", "content": []} and
+# the next call returned 400 invalid_request_error, messages.N must have
+# non-empty content. Reached in a red-team run on max_tokens; pause_turn
+# is the same trap on the main path, since web_search is a server tool
+# and pausing is what server tools do.
+
+
+def _stopped(reason: str, text: str = "partial") -> _Response:
+    return _Response(reason, [_Block(type="text", text=text, citations=None)])
+
+
+def test_max_tokens_ends_the_turn_and_keeps_the_partial_text() -> None:
+    """Truncation is an answer, not a failure. The model hit the output
+    ceiling mid-sentence; the text it produced is real and the turn is
+    over. A second call is the bug: it only happens if the loop went to
+    dispatch and appended an empty message."""
+    client = _RecordingClient(_stopped("max_tokens", "half an ans"), _text_response())
+
+    trace = _conversation(client).send(PRICE_QUERY)
+
+    assert len(client.tool_choices) == 1
+    assert trace.stop_reason == "max_tokens"
+    assert trace.final_text == "half an ans"
+
+
+def test_refusal_ends_the_turn() -> None:
+    client = _RecordingClient(_stopped("refusal", ""), _text_response())
+
+    trace = _conversation(client).send(PRICE_QUERY)
+
+    assert len(client.tool_choices) == 1
+    assert trace.stop_reason == "refusal"
+
+
+def test_pause_turn_continues_with_no_user_message_appended() -> None:
+    """The one stop reason where continuing is correct. The SDK
+    documents sending the response back as-is, and as-is means the
+    assistant message and nothing after it."""
+    client = _RecordingClient(_stopped("pause_turn", "thinking"), _text_response())
+
+    _conversation(client).send(PRICE_QUERY)
+
+    assert len(client.message_lists) == 2
+    second = client.message_lists[1]
+    assert [m["role"] for m in second] == ["user", "assistant"]
+    assert all(m["content"] for m in second)
+
+
+def test_unrecognised_stop_reason_ends_the_turn() -> None:
+    """Fail closed. A value added to the SDK's StopReason union after
+    this was written must not reach tool dispatch."""
+    client = _RecordingClient(_stopped("some_future_reason"), _text_response())
+
+    trace = _conversation(client).send(PRICE_QUERY)
+
+    assert len(client.tool_choices) == 1
+    assert trace.stop_reason == "some_future_reason"
 
 
 # --- decide_route -> _run_sub_query -> send ---------------------------

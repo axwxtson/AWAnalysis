@@ -252,7 +252,22 @@ class Conversation:
             self._capture_citations(response.content, trace)
 
 
-            if response.stop_reason in ("end_turn", "stop_sequence"):
+            # pause_turn is not a stopping point. The API paused a
+            # long-running turn, which server-side tools such as
+            # web_search do, and the documented continuation is to send
+            # the messages back as-is. As-is means no user message:
+            # appending one is what produced the 400 on messages.N.
+            if response.stop_reason == "pause_turn":
+                continue
+
+            # Everything except tool_use terminates the turn. The
+            # previous condition whitelisted end_turn and stop_sequence
+            # and sent the rest to tool dispatch, so max_tokens, refusal
+            # and pause_turn all appended an empty user message, which
+            # the API rejects. Inverting it means an unrecognised stop
+            # reason from a future SDK ends the turn instead of building
+            # a malformed request.
+            if response.stop_reason != "tool_use":               
                 trace.final_text = self._extract_text(response.content)
                 trace.stop_reason = str(response.stop_reason)
 
@@ -280,6 +295,7 @@ class Conversation:
                 return
 
             # Otherwise we expect tool_use blocks; dispatch them.
+            # stop_reason is tool_use, so tool_use blocks are present.
             tool_results = self._dispatch_tools(response.content, trace)
             self._messages.append({"role": "user", "content": tool_results})
 
