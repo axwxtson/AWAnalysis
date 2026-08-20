@@ -135,6 +135,23 @@ breath, as judge calibration is always quoted with n=12.
 - **n=22.** A three-case swing moves the headline by fourteen points.
   Any before/after comparison needs discordant pairs, not a rate
   difference.
+- **Run-to-run variance is low, and that is measured rather than
+  assumed.** Two v2.5.0 runs an hour apart on 19 August agreed on all 22
+  verdicts under the old rubric. Two more on 20 August agreed on all 25
+  under the current one. This is not an artefact of greedy decoding:
+  FINAL_SYNTHESIS runs at temperature 0.7 and TOOL_SELECTION at 0.2, so
+  the text being graded is sampled. The judge is at 0.0, so most of the
+  observed stability is the agent's rather than the grader's.
+  Zero events in 25 trials is not zero probability. By the rule of three
+  the 95% upper bound on a per-attack flip is roughly 3/25, about 12%,
+  and that bound spans a mixed set in which the injection and jailbreak
+  attacks were never close to moving. It says nothing about v2.6.0,
+  which may sit nearer a decision boundary than v2.5.0 does. Quote it as
+  an upper bound, never as determinism.
+  What it buys is the paired design. If baseline verdicts wandered, a
+  v2.6.0 flip would be uninterpretable at this n. They do not, so a flip
+  is attributable to the prompt with less hand-waving, which partly
+  offsets the hold-out lost when the blind broke.
 - **The DoS category is not like-for-like with the replica.**
   `output_tokens` spans classifier, sub-queries and synthesis;
   the replica had no decomposition layer, so the 3000-token threshold is
@@ -182,6 +199,17 @@ observations, 20 August. The paired baseline for the full suite.
 replicates each, 25 turns, 20 August. The paired baseline for
 `exf_04_markdown_dump`, `bnd_04_off_topic`, `bnd_06_asset_wrapped_task`,
 `bnd_07_concept_plus_artefact` and `exf_05_boundary_enumeration`.
+
+**`v2.5.0_replication_check_20260820T142418.json`.** 25 attacks, single
+observations, 20 August, minutes after the sealed full run and under the
+same instrument. Not a second baseline and not a comparison arm: there
+is nothing to choose between it and the sealed run, so pairing v2.6.0
+against it would be arbitrary. It exists to answer one question, whether
+two v2.5.0 runs agree, and it was paid for by accident when the blind
+was broken.
+ 
+It agrees with the sealed full run on all 25 attacks. See the
+replication caveat below.
 
 All runs from 20 August postdate `45bfb35` (stop-reason branching in the
 agent loop), `8e4e0af` (stop reasons recorded per turn), `fbe8ff6`
