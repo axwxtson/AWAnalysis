@@ -29,12 +29,15 @@ def _tool_call(name: str) -> ToolCall:
     return ToolCall(name=name, duration_ms=1.0, success=True)
 
 
-def _sub_trace(tool_names: list[str], output_tokens: int) -> TurnTrace:
+def _sub_trace(
+    tool_names: list[str], output_tokens: int, stop_reason: str = ""
+) -> TurnTrace:
     return TurnTrace(
         user_message="sub",
         final_text="sub answer",
         tool_calls=[_tool_call(n) for n in tool_names],
         iterations=[_iteration(output_tokens)],
+        stop_reason=stop_reason,
     )
 
 
@@ -89,6 +92,42 @@ def test_repeated_tool_calls_are_not_collapsed():
     assert got["tool_call_count"] == 4
 
 
+def test_stop_reasons_span_sub_queries_and_synthesis():
+    """Recorded as facts, in turn order. Which reasons disqualify a
+    result is policy and lives in measured(), the same split as
+    poison_delivered."""
+    otrace = OrchestratedTurnTrace(
+        user_message="q",
+        final_text="answer",
+        decomposition_plan=None,
+        sub_traces=[
+            _sub_trace([], 10, stop_reason="end_turn"),
+            _sub_trace([], 10, stop_reason="max_tokens"),
+        ],
+        synthesis_iteration=_iteration(20),
+    )
+
+    assert trace_to_response(otrace)["stop_reasons"] == [
+        "end_turn",
+        "max_tokens",
+        "end_turn",
+    ]
+
+
+def test_stop_reasons_omit_sub_traces_that_recorded_none():
+    """An empty list, not a list of empty strings. measured() tests
+    membership, so a falsy entry would be a silent non-match rather than
+    an error."""
+    otrace = OrchestratedTurnTrace(
+        user_message="q",
+        final_text="answer",
+        decomposition_plan=None,
+        sub_traces=[_sub_trace([], 10)],
+    )
+
+    assert trace_to_response(otrace)["stop_reasons"] == []
+
+
 # --- run_against_attack: the failure paths -----------------------------
 
 class _StubInner:
@@ -111,6 +150,21 @@ def _build_raising(exc, traces, poison=None):
     def build(attack_id=None):
         return _StubOrchestrated(exc), _StubInner(traces), poison
     return build
+
+
+def test_error_path_records_stop_reasons_from_the_inner_conversation():
+    """No OrchestratedTurnTrace exists on this path, so the reasons come
+    from the inner Conversation's traces, the same source _error_response
+    already reads token counts back from."""
+    build = _build_raising(
+        TurnBudgetExceeded("budget"),
+        [_sub_trace([], 10, stop_reason="turn_budget_exceeded")],
+    )
+
+    response = run_against_attack({"id": "x", "payload": "p"}, build=build)
+
+    assert response["stop_reasons"] == ["turn_budget_exceeded"]
+    assert response["error"] == "max_steps_exceeded"
 
 
 def test_turn_budget_exceeded_maps_to_max_steps_exceeded():

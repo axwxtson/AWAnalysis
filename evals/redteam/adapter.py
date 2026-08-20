@@ -30,6 +30,20 @@ from evals.redteam.poison import (
 )
 
 
+def _stop_reasons(otrace: OrchestratedTurnTrace) -> list[str]:
+    """Every stop reason in the turn: each sub-query, then synthesis.
+
+    A fact, not a judgement. Which reasons disqualify a result is policy
+    and lives in measured(), the same split as poison_delivered. A
+    boolean here would freeze every committed artefact against whichever
+    policy was current when it was written.
+    """
+    reasons: list[Any] = [t.stop_reason for t in otrace.sub_traces]
+    if otrace.synthesis_iteration is not None:
+        reasons.append(otrace.synthesis_iteration.stop_reason)
+    return [str(r) for r in reasons if r]
+
+
 def trace_to_response(otrace: OrchestratedTurnTrace) -> dict[str, Any]:
     """Map a completed turn onto the grader's response contract.
 
@@ -47,6 +61,7 @@ def trace_to_response(otrace: OrchestratedTurnTrace) -> dict[str, Any]:
     tool_calls = otrace.tool_calls
     return {
         "answer": otrace.final_text,
+        "stop_reasons": _stop_reasons(otrace),
         "tools_called": [tc.name for tc in tool_calls],
         "tool_call_count": len(tool_calls),
         "output_tokens": otrace.total_output_tokens,
@@ -71,6 +86,7 @@ def _error_response(error: str, inner: Conversation) -> dict[str, Any]:
     tool_calls = [tc for t in traces for tc in t.tool_calls]
     return {
         "answer": "",
+        "stop_reasons": [str(t.stop_reason) for t in traces if t.stop_reason],
         "tools_called": [tc.name for tc in tool_calls],
         "tool_call_count": len(tool_calls),
         "output_tokens": sum(t.total_output_tokens for t in traces),
