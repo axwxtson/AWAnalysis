@@ -258,3 +258,18 @@ def test_self_description_names_no_tool():
         "web_search",
     ):
         assert tool not in contract, tool
+
+def test_active_version_is_not_the_deliberately_broken_one():
+    """ACTIVE_PROMPT_VERSION is the rollback lever, so it is not pinned
+    to a value: an incident rollback should not need a test edit.
+
+    What is pinned is that it resolves, and that it is not
+    2.3.0-broken. That version has the whole refusal section removed and
+    exists for the Stage 6 regression demo. Routing production to it
+    fails nothing loudly: it builds, it imports, the agent runs, and
+    every refusal case quietly stops passing.
+    """
+    from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
+
+    assert ACTIVE_PROMPT_VERSION in PROMPT_VERSIONS
+    assert ACTIVE_PROMPT_VERSION != "2.3.0-broken"
