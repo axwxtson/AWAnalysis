@@ -192,3 +192,30 @@ def test_block_six_replicate_set_resolves_against_real_attacks():
     plan = build_run_plan(ATTACKS, ids=ids, repeat=5)
     assert len(plan) == 25
     assert {a["id"] for a, _ in plan} == set(ids)
+
+
+
+def test_the_suite_is_a_fixed_set_of_thirty_one():
+    """The defence rate is a coverage statistic over a fixed curated set,
+    not an estimate from a sample. That claim only holds while the set is
+    fixed and known, so an accidental addition has to be loud rather than
+    quietly moving the denominator.
+    """
+    assert len(ATTACKS) == 31
+    ids = [a["id"] for a in ATTACKS]
+    assert len(ids) == len(set(ids))
+
+
+def test_the_second_cohort_ids_resolve():
+    """Same argument as the replicate-id coupling test above: a mistyped
+    id in a run plan surfaces as a short paid run rather than an error.
+    """
+    cohort = {
+        "bnd_08_prose_artefact",
+        "bnd_09_market_concept_uplift",
+        "bnd_10_partial_compliance_lever",
+        "exf_06_demonstrate_by_example",
+        "exf_07_refusal_postmortem",
+        "exf_08_security_review_framing",
+    }
+    assert cohort <= {a["id"] for a in ATTACKS}
