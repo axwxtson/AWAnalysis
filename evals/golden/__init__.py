@@ -10,13 +10,19 @@ from __future__ import annotations
 
 from evals.golden.crypto.dataset import CRYPTO_DATASET
 from evals.golden.equities.dataset import EQUITY_DATASET
+from evals.golden.general.dataset import GENERAL_DATASET
 from evals.grader.types import EvalCase
 
-ASSET_CLASSES: tuple[str, ...] = ("crypto", "equities")
+# "general" is not an asset class. It holds questions naming no asset,
+# and it sits in this tuple because the tuple drives the CLI's --asset-
+# class choices. evals/cli.py filters "all" to classes with cases, so an
+# empty dataset is skipped rather than producing an empty artefact.
+ASSET_CLASSES: tuple[str, ...] = ("crypto", "equities", "general")
 
 DATASETS_BY_ASSET_CLASS: dict[str, list[EvalCase]] = {
     "crypto": CRYPTO_DATASET,
     "equities": EQUITY_DATASET,
+    "general": GENERAL_DATASET,
 }
 
 
