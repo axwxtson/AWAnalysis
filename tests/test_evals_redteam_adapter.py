@@ -131,8 +131,12 @@ def test_stop_reasons_omit_sub_traces_that_recorded_none():
 # --- run_against_attack: the failure paths -----------------------------
 
 class _StubInner:
-    def __init__(self, traces):
+    def __init__(self, traces, system_prompt="stub-prompt"):
         self._traces = traces
+        # run_against_attack digests the prompt off the live Conversation
+        # on every path, including the error paths this stub exercises.
+        # Defaulted so existing call sites stay unchanged.
+        self.system_prompt = system_prompt
 
     def traces(self):
         return self._traces

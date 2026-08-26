@@ -104,6 +104,12 @@ def test_dispatch_through_the_registry_marks_delivery():
 # --- the three-state delivery flag on the response ---------------------
 
 class _StubInner:
+    def __init__(self, system_prompt="stub-prompt"):
+        # run_against_attack digests the prompt off the live Conversation
+        # on every path. Second definition of this stub; the adapter test
+        # has its own. Housekeeping, not this commit.
+        self.system_prompt = system_prompt
+
     def traces(self):
         return []
 

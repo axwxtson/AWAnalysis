@@ -402,6 +402,7 @@ def save_results(results: list) -> None:
                     "attack_payload": r["attack"]["payload"],
                     "attack_target": r["attack"]["injection_target"],
                     "replicate": r["replicate"],
+                    "prompt_sha256": r["response"].get("prompt_sha256"),
                     "response": r["response"],
                     "grade": r["grade"],
                     "latency_seconds": r["latency"],

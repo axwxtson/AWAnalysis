@@ -21,7 +21,7 @@ from aw_analysis.agent.orchestration import (
 )
 from aw_analysis.client.anthropic_client import AnthropicClient
 from aw_analysis.prompts.system import SYSTEM_PROMPT
-from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
+from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION, prompt_digest
 from aw_analysis.tools import default_registry
 from evals.redteam.poison import (
     PLANTED_BY_ATTACK,
@@ -152,4 +152,11 @@ def run_against_attack(attack: dict, *, build=_build_agent) -> dict[str, Any]:
     # reaching the model. Counting that as defended would inflate the
     # rate for the attack class that most resembles a real threat here.
     response["poison_delivered"] = None if poison is None else poison.invoked
+    # Read off the Conversation that actually served the turn, not from
+    # the module constant. adapter.py has no --prompt-version override, so
+    # today every record in a run necessarily shares one prompt. That is
+    # an assumption, and the digest exists to stop trusting this class of
+    # assumption on assertion. Widening _build_agent's tuple return would
+    # break every caller; the object already holds the value.
+    response["prompt_sha256"] = prompt_digest(inner.system_prompt)
     return response
