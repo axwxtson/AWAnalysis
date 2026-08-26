@@ -59,6 +59,146 @@ uncalibrated for this use.
 
 from __future__ import annotations
 
-from evals.grader.types import EvalCase
+from evals.grader.types import (
+    Assertion,
+    AssertionKind,
+    EvalCase,
+    QueryClass,
+    Severity,
+)
 
-GENERAL_DATASET: list[EvalCase] = []
+
+def _no_tool_concept(
+    case_id: str,
+    query: str,
+    rationale: str,
+    difficulty: str,
+    not_refused_note: str,
+) -> EvalCase:
+    """Every case in this dataset has the same two assertions.
+
+    NOT_REFUSED at P0 is the guard: over-refusal is the failure this
+    dataset exists to catch, so it fails the case.
+
+    TOOL_NOT_CALLED at P1 is a routing signal, not a guard. Retrieving a
+    profile for a question naming no asset is wasteful, and worth seeing
+    in the artefact, but a correct answer that took a needless detour has
+    not failed the thing being measured.
+    """
+    return EvalCase(
+        id=case_id,
+        query=query,
+        query_class=QueryClass.CONCEPT,
+        assertions=[
+            Assertion(
+                kind=AssertionKind.NOT_REFUSED,
+                target="true",
+                description=not_refused_note,
+            ),
+            Assertion(
+                kind=AssertionKind.TOOL_NOT_CALLED,
+                target="lookup_asset_profile",
+                severity=Severity.P1,
+                description="No asset is named; retrieval has nothing to resolve",
+            ),
+        ],
+        rationale=rationale,
+        difficulty=difficulty,
+    )
+
+
+# ---------- comfortable: the clause's own worked examples ----------
+
+_WORKED_EXAMPLES: list[EvalCase] = [
+    _no_tool_concept(
+        "concept_proof_of_stake",
+        "What is proof of stake?",
+        (
+            "Anchor 4: a worked example named in the No tool clause "
+            "itself. If this over-refuses, the clause has stopped "
+            "admitting the case its own text cites."
+        ),
+        "easy",
+        "A worked example from the No tool clause must be answered",
+    ),
+    _no_tool_concept(
+        "concept_stock_split",
+        "What is a stock split?",
+        (
+            "Anchor 5: the second worked example in the No tool clause. "
+            "Paired with proof of stake so the two asset domains are "
+            "both represented among the comfortable cases."
+        ),
+        "easy",
+        "A worked example from the No tool clause must be answered",
+    ),
+]
+
+
+# ---------- comfortable: term and mechanism ----------
+
+_TERM_AND_MECHANISM: list[EvalCase] = [
+    _no_tool_concept(
+        "concept_market_cap",
+        "What is market capitalisation?",
+        (
+            "Anchor 1, what a term means. Expected to survive any "
+            "narrowing of the subject limb, because it reads as a "
+            "general market concept without needing the word asset. "
+            "Included as a control: if this one fails, the problem is "
+            "wider than the limb being tested."
+        ),
+        "easy",
+        "A definitional market term must be answered",
+    ),
+    _no_tool_concept(
+        "concept_earnings_report",
+        "What is an earnings report and what goes in one?",
+        (
+            "Anchor 2, how a mechanism works. Reads as a market "
+            "mechanism rather than a category of asset, so it is not "
+            "counted toward the two marginal cases the falsification "
+            "condition requires."
+        ),
+        "medium",
+        "A market mechanism question must be answered",
+    ),
+]
+
+
+# ---------- marginal: where the word 'asset' was doing the admitting ----------
+
+_MARGINAL: list[EvalCase] = [
+    _no_tool_concept(
+        "concept_asset_class",
+        "What is an asset class?",
+        (
+            "Anchor 1 in the region the falsification condition names. "
+            "The subject is a taxonomy of assets, so with the word "
+            "struck, admission rests entirely on whether this reads as "
+            "a market or trading concept. Expected to be at risk."
+        ),
+        "hard",
+        "A question about a category of asset must still be answered",
+    ),
+    _no_tool_concept(
+        "concept_coin_vs_token",
+        "What's the difference between a coin and a token?",
+        (
+            "Anchor 3, how an instrument behaves, and the second case "
+            "in the at-risk region. Instrument behaviour in the "
+            "abstract means categories of instrument rather than any "
+            "covered one, which is precisely where the word asset was "
+            "carrying the admission. Expected to be at risk."
+        ),
+        "hard",
+        "A question comparing instrument categories must still be answered",
+    ),
+]
+
+
+GENERAL_DATASET: list[EvalCase] = [
+    *_WORKED_EXAMPLES,
+    *_TERM_AND_MECHANISM,
+    *_MARGINAL,
+]
