@@ -17,7 +17,11 @@ from pathlib import Path
 from aw_analysis.agent.conversation import Conversation
 from aw_analysis.agent.orchestration import OrchestratedConversation
 from aw_analysis.client import AnthropicClient, RetryPolicy
-from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION, PROMPT_VERSIONS
+from aw_analysis.prompts.versions import (
+    ACTIVE_PROMPT_VERSION,
+    PROMPT_VERSIONS,
+    prompt_digest,
+)
 from aw_analysis.tools import default_registry  # see CLI for current factory
 from evals.golden import cases_for
 from evals.grader.deterministic import grade_deterministic
@@ -45,6 +49,10 @@ class RunReport:
     run_id: str
     prompt_version: str
     judge_rubric_version: str
+    # sha256 of the prompt string actually passed to the API, not of
+    # PROMPT_VERSIONS[prompt_version]. The two can differ: the label is a
+    # claim, this is evidence. Block 7, after 8026830.
+    prompt_sha256: str
     asset_class: str = "crypto"
     cases: list[EvalResult] = field(default_factory=list)
     # Stage 8: optional Langfuse project URL for clickable links in
@@ -96,6 +104,7 @@ def run_eval(
     report = RunReport(
         run_id=run_id,
         prompt_version=prompt_version,
+        prompt_sha256=prompt_digest(system_prompt),
         judge_rubric_version=JUDGE_RUBRIC_VERSION,
         asset_class=asset_class,
         langfuse_project_url=os.environ.get("LANGFUSE_PROJECT_URL"),
@@ -510,6 +519,7 @@ def report_to_dict(report: RunReport) -> dict:
     return {
         "run_id": report.run_id,
         "prompt_version": report.prompt_version,
+        "prompt_sha256": report.prompt_sha256,
         "asset_class": report.asset_class,
         "judge_rubric_version": report.judge_rubric_version,
         "langfuse_project_url": report.langfuse_project_url,  # Stage 8
