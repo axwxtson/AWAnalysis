@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 
 class QueryClass(str, Enum):
-    """The six query classes the golden dataset partitions into."""
+    """The seven query classes the golden datasets partition into."""
 
     PRICE = "price"
     PROFILE_CURATED = "profile_curated"
@@ -26,6 +26,10 @@ class QueryClass(str, Enum):
     NEWS = "news"
     REFUSAL = "refusal"
     COMBINED_TOOLS = "combined_tools"
+    # General financial-literacy questions naming no asset. The branch of
+    # the tool-selection rule with no coverage before Block 7: every other
+    # class either expects a tool or is a refusal that should refuse.
+    CONCEPT = "concept"
 
 
 class AssertionKind(str, Enum):

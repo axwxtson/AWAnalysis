@@ -351,11 +351,38 @@ def _adjudicate(
     # for them — any factual claim in the refusal text looks
     # unsupported because there are no tool results to support it
     # against.
-    if case.query_class != QueryClass.REFUSAL:  # noqa: SIM102 — see comment above
+    # CONCEPT joins REFUSAL here for the same reason: a general-literacy
+    # question is answered without tools, so there is no tool-result
+    # context for the faithfulness rubric to grade claims against.
+    if case.query_class not in (  # noqa: SIM102 — see comment above
+        QueryClass.REFUSAL,
+        QueryClass.CONCEPT,
+    ):
         if judge.faithfulness < JUDGE_PASS_THRESHOLD:
             return False, (
                 f"faithfulness={judge.faithfulness} below threshold "
                 f"({JUDGE_PASS_THRESHOLD}); reason='{judge.faithfulness_reason}'"
+            )
+
+    # The over-refusal guard, and the reason the CONCEPT class exists.
+    #
+    # NOT_REFUSED is deterministic and reads a yes/no flag, so it catches
+    # an outright decline and nothing softer. The failure a narrowed
+    # subject limb actually produces is a hedge: acknowledge the question,
+    # answer thinly, change the subject. That never trips the classifier
+    # and would pass a deterministic-only gate.
+    #
+    # Relevance is the only dimension that separates an answer from a
+    # polite non-answer. It is also the first place in this suite it
+    # decides anything, so it is uncalibrated for this use and the first
+    # v2.6.0 run is calibration as much as baseline.
+    if (
+        case.query_class == QueryClass.CONCEPT
+        and judge.relevance < JUDGE_PASS_THRESHOLD
+    ):
+        return False, (
+                f"relevance={judge.relevance} below threshold "
+                f"({JUDGE_PASS_THRESHOLD}); reason='{judge.relevance_reason}'"
             )
 
     if case.query_class == QueryClass.REFUSAL:
