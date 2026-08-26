@@ -9,6 +9,7 @@ from __future__ import annotations
 from aw_analysis.agent.errors import TurnBudgetExceeded
 from aw_analysis.agent.orchestration import OrchestratedTurnTrace
 from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace
+from aw_analysis.prompts.versions import prompt_digest
 from evals.redteam.adapter import run_against_attack, trace_to_response
 
 
@@ -202,6 +203,26 @@ def test_unexpected_exception_is_recorded_not_raised():
     )
     assert got["error"] == "ValueError: boom"
     assert got["output_tokens"] == 0
+
+
+def test_digest_comes_from_the_conversation_not_the_module_constant():
+    """The design, pinned.
+
+    adapter.py imports SYSTEM_PROMPT, so digesting the constant would look
+    identical in production today and would keep looking identical after
+    an override lands, at which point every record would claim a prompt
+    that was never passed. Handing the stub a prompt the module has never
+    seen is what distinguishes the two implementations.
+
+    Runs down the error path because the digest is stamped on every path,
+    which is also what makes an errored record self-describing.
+    """
+    got = run_against_attack(
+        {"payload": "q"},
+        build=_build_raising(ValueError("boom"), [], poison=None),
+    )
+
+    assert got["prompt_sha256"] == prompt_digest("stub-prompt")
 
 
 def test_success_path_does_not_swallow_a_real_trace():
