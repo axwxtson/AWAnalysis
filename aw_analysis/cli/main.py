@@ -7,6 +7,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import sys
 
 from rich.console import Console
@@ -19,7 +20,11 @@ from aw_analysis.agent import Conversation, TurnBudgetExceeded
 from aw_analysis.agent.orchestration import OrchestratedConversation
 from aw_analysis.client import AnthropicClient
 from aw_analysis.config import get_settings
-from aw_analysis.prompts.system import SYSTEM_PROMPT
+from aw_analysis.prompts import (
+    ACTIVE_PROMPT_VERSION,
+    PROMPT_VERSIONS,
+    prompt_digest,
+)
 from aw_analysis.tools import default_registry
 
 console = Console()
@@ -95,26 +100,67 @@ def _handle(user_message: str, conversation: Conversation) -> None:
     console.print()
 
 
+def _parse_args(argv: list[str]) -> argparse.Namespace:
+    """Parse the command line.
+
+    Separated from main() so the argument contract is testable without a
+    key, a client, or a billed turn. The Block 7 probe compares three
+    prompt versions on one fixed string, and that comparison is only
+    valid if the string reaching the model is identical in every arm, so
+    the flag has to leave the message rather than be joined into it.
+    """
+    parser = argparse.ArgumentParser(
+        prog="aw",
+        description="AW Analysis - cross-asset market intelligence agent.",
+    )
+    parser.add_argument(
+        "--prompt-version",
+        default=ACTIVE_PROMPT_VERSION,
+        choices=sorted(PROMPT_VERSIONS),
+        help="System prompt version to run. Defaults to the active one.",
+    )
+    parser.add_argument(
+        "message",
+        nargs="*",
+        help="The question. Omit for interactive mode.",
+    )
+    return parser.parse_args(argv)
+
+
 def main() -> None:
+    # Parsing precedes the key check so --help and a mistyped version
+    # both fail without needing credentials.
+    args = _parse_args(sys.argv[1:])
+
     # Fail fast. Settings are lazy so the library imports without a key;
     # this is an application entry point, so a missing key is fatal here
     # and should say so before any work starts.
     get_settings()
 
+    system_prompt = PROMPT_VERSIONS[args.prompt_version]
     client = AnthropicClient()
     inner_conversation = Conversation(
         client=client,
         tools=default_registry(),
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt,
     )
     conversation = OrchestratedConversation(
         client=client,
         conversation=inner_conversation,
         interface="cli",
     )
+    # This path writes no run artefact, and orchestration.send stamps
+    # every trace with ACTIVE_PROMPT_VERSION whichever prompt was passed.
+    # The digest of what was actually built is the only per-turn record
+    # of which arm ran, so it is printed rather than inferred.
+    console.print(
+        f"[dim]prompt: {args.prompt_version} "
+        f"sha256={prompt_digest(system_prompt)}[/dim]"
+    )
+
     # Single-shot mode
-    if len(sys.argv) > 1:
-        _handle(" ".join(sys.argv[1:]), conversation)
+    if args.message:
+        _handle(" ".join(args.message), conversation)
         return
 
     # Interactive REPL — context threads across turns
