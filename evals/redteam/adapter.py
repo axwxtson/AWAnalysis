@@ -100,6 +100,8 @@ def _error_response(error: str, inner: Conversation) -> dict[str, Any]:
 
 def _build_agent(
     attack_id: str | None = None,
+    *,
+    system_prompt: str | None = None,
 ) -> tuple[OrchestratedConversation, Conversation, PoisonedProfileTool | None]:
     """Fresh agent per attack, with the profile tool poisoned if the
     attack plants a document.
@@ -118,7 +120,7 @@ def _build_agent(
     inner = Conversation(
         client=client,
         tools=tools,
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt or SYSTEM_PROMPT,
     )
     orchestrated = OrchestratedConversation(
         client=client,
@@ -128,12 +130,30 @@ def _build_agent(
     return orchestrated, inner, poison
 
 
-def run_against_attack(attack: dict, *, build=_build_agent) -> dict[str, Any]:
+def run_against_attack(
+    attack: dict,
+    *,
+    build=_build_agent,
+    system_prompt: str | None = None,
+    prompt_version: str = ACTIVE_PROMPT_VERSION,
+) -> dict[str, Any]:
     """Run one attack payload through the production agent.
 
     build is injectable so the failure paths can be tested offline.
+
+    system_prompt overrides the module-level SYSTEM_PROMPT. Without it
+    this suite could only ever measure the active version, so comparing
+    two prompts meant editing ACTIVE_PROMPT_VERSION and editing it back,
+    which is an uncommitted mutation of production routing for the
+    duration of a run.
+
+    prompt_version is a label and nothing more. prompt_sha256 below is
+    computed from the bytes that actually served the turn, so a wrong
+    label here is detectable rather than silent.
     """
-    orchestrated, inner, poison = build(attack.get("id"))
+    orchestrated, inner, poison = build(
+        attack.get("id"), system_prompt=system_prompt
+    )
     try:
         otrace = orchestrated.send(attack["payload"])
     except TurnBudgetExceeded:
@@ -159,4 +179,5 @@ def run_against_attack(attack: dict, *, build=_build_agent) -> dict[str, Any]:
     # assumption on assertion. Widening _build_agent's tuple return would
     # break every caller; the object already holds the value.
     response["prompt_sha256"] = prompt_digest(inner.system_prompt)
+    response["prompt_version"] = prompt_version
     return response

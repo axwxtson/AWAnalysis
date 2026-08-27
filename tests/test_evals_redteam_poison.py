@@ -123,7 +123,7 @@ class _StubOrchestrated:
 
 
 def _build_with(poison, otrace):
-    def build(attack_id=None):
+    def build(attack_id=None, *, system_prompt=None):
         return _StubOrchestrated(otrace), _StubInner(), poison
     return build
 

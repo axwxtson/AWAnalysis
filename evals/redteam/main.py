@@ -28,7 +28,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.markup import escape
 
-from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION
+from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION, PROMPT_VERSIONS
 from evals.redteam.adapter import run_against_attack
 from evals.redteam.attacks import ATTACKS
 from evals.redteam.grader import grade_attack
@@ -40,7 +40,19 @@ console = Console()
 # committed n=22 replica run and the before side of the Block 6
 # comparison. The original code overwrote it on every invocation.
 RESULTS_DIR = Path(__file__).resolve().parents[2] / "evals" / "results" / "redteam"
-RESULTS_FILE = RESULTS_DIR / f"{ACTIVE_PROMPT_VERSION}_{time.strftime('%Y%m%dT%H%M%S')}.json"
+
+
+def results_file(prompt_version: str) -> Path:
+    """Artefact path for one run, named after the prompt that served it.
+
+    Was a module constant computed at import from ACTIVE_PROMPT_VERSION,
+    which meant every artefact carried the active version's name whatever
+    prompt actually ran, and the standing instruction was to rename each
+    file by hand immediately afterwards. With --prompt-version that name
+    would be wrong rather than merely stale, so the timestamp and the
+    version are both resolved once the run is known.
+    """
+    return RESULTS_DIR / f"{prompt_version}_{time.strftime('%Y%m%dT%H%M%S')}.json"
 
 CATEGORY_COLOURS = {
     "injection": "magenta",
@@ -329,7 +341,7 @@ def print_failures(results: list) -> None:
         console.print()
 
 
-def print_footer(results: list) -> None:
+def print_footer(results: list, prompt_version: str, out_path: Path) -> None:
     scored = measured(results)
     total = len(scored)
     compromised = sum(1 for r in scored if r["grade"]["final_verdict"] == "compromised")
@@ -379,11 +391,11 @@ def print_footer(results: list) -> None:
             f"defaulted to defended. The rate above is provisional.[/]\n"
         )
 
-    console.print(f"  Prompt version: {ACTIVE_PROMPT_VERSION}")
-    console.print(f"  Results: {RESULTS_FILE}\n")
+    console.print(f"  Prompt version: {prompt_version}")
+    console.print(f"  Results: {out_path}\n")
 
 
-def save_results(results: list) -> None:
+def save_results(results: list, out_path: Path) -> None:
     """Write the run artefact.
     replicate is emitted on every record, including single runs, so five
     records sharing an attack_id are distinguishable from a run that
@@ -391,7 +403,7 @@ def save_results(results: list) -> None:
     lack the field; read its absence as 1.
     """
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    RESULTS_FILE.write_text(
+    out_path.write_text(
         json.dumps(
             [
                 {
@@ -430,7 +442,14 @@ def main() -> None:
         default=1,
         help="run each selected attack N times, cycled rather than blocked",
     )
+    parser.add_argument(
+        "--prompt-version",
+        default=ACTIVE_PROMPT_VERSION,
+        choices=sorted(PROMPT_VERSIONS),
+        help="prompt version to attack; defaults to the active one",
+    )
     args = parser.parse_args()
+    system_prompt = PROMPT_VERSIONS[args.prompt_version]
 
     try:
         plan = build_run_plan(
@@ -450,14 +469,18 @@ def main() -> None:
 
     n_attacks = len(plan) // args.repeat
     console.print(f"\n[cyan]{'=' * 78}[/]")
-    console.print(f"  RED TEAM SUITE — AW Analysis, prompt {ACTIVE_PROMPT_VERSION}")
+    console.print(f"  RED TEAM SUITE — AW Analysis, prompt {args.prompt_version}")
     console.print(f"  {n_attacks} attacks x {args.repeat} = {len(plan)} turns")
     console.print(f"[cyan]{'=' * 78}[/]\n")
 
     results = []
     for idx, (attack, replicate) in enumerate(plan, start=1):
         start = time.time()
-        response = run_against_attack(attack)
+        response = run_against_attack(
+            attack,
+            system_prompt=system_prompt,
+            prompt_version=args.prompt_version,
+        )
         grade = grade_attack(attack, response)
         latency = time.time() - start
         results.append(
@@ -472,7 +495,8 @@ def main() -> None:
         print_progress(idx, len(plan), attack, grade, latency)
 
     replicated = args.repeat > 1
-    save_results(results)
+    out_path = results_file(args.prompt_version)
+    save_results(results, out_path)
     if replicated:
         print_replicates(results)
     else:
@@ -481,8 +505,7 @@ def main() -> None:
     print_layer_relation(results)
     print_failures(results)
     if not replicated:
-        print_footer(results)
-
+        print_footer(results, args.prompt_version, out_path)
     critical = sum(
         1
         for r in results

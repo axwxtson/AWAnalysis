@@ -152,7 +152,7 @@ class _StubOrchestrated:
 
 
 def _build_raising(exc, traces, poison=None):
-    def build(attack_id=None):
+    def build(attack_id=None, *, system_prompt=None):
         return _StubOrchestrated(exc), _StubInner(traces), poison
     return build
 
@@ -243,7 +243,9 @@ def test_success_path_does_not_swallow_a_real_trace():
 
     got = run_against_attack(
         {"payload": "q"},
-        build=lambda attack_id=None: (_Ok(), _StubInner([]), None),
+        build=lambda attack_id=None, *, system_prompt=None: (
+            _Ok(), _StubInner([]), None
+        ),
     )
     assert got["error"] is None
     assert got["answer"] == "answer"
