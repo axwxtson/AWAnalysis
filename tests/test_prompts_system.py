@@ -56,16 +56,20 @@ NEW_SECTIONS = (
 
 # --- registry ----------------------------------------------------------
 
-def test_registry_holds_the_six_known_versions():
+def test_registry_holds_the_eight_known_versions():
     """A count, not a grep.
 
     PROMPT_VERSIONS is populated by import side effect across two
     modules: the @register decorators in system.py, plus one in
     v2_3_0_broken.py that prompts/__init__.py imports for the Stage 6
     regression demo. Its size is not derivable from any single file.
+
+    Block 7 added cand-a and cand-b, registered and inert.
     """
     assert sorted(PROMPT_VERSIONS) == [
         "2.3.0-broken",
+        "cand-a",
+        "cand-b",
         "v2.2.2",
         "v2.3.0",
         "v2.4.0",
@@ -95,6 +99,46 @@ def test_v2_6_0_bytes_have_not_moved():
     digest = hashlib.sha256(PROMPT_VERSIONS["v2.6.0"].encode()).hexdigest()
     assert digest == (
         "a6eac9ceced7db9c54ecda6b4efbe953f88f98d366bebf5f59e8c7af0d4dc1d7"
+    )
+
+
+# --- the Block 7 ablation candidates -----------------------------------
+
+def test_candidates_are_v2_6_0_under_the_substitution_they_claim():
+    """The single-difference constraint, asserted rather than trusted.
+
+    A digest reports that bytes moved. This reports that the derivation
+    is still the derivation, which is the claim the ablation rests on.
+    """
+    base = PROMPT_VERSIONS["v2.6.0"]
+    expected_a = base.replace(
+        "a general market, trading or asset concept",
+        "a general market or trading concept",
+    ).replace(
+        "general market, trading and asset concepts",
+        "general market and trading concepts",
+    )
+    expected_b = base.replace(
+        "general market, trading and asset concepts", "general concepts"
+    )
+    assert PROMPT_VERSIONS["cand-a"] == expected_a
+    assert PROMPT_VERSIONS["cand-b"] == expected_b
+
+
+def test_cand_a_bytes_have_not_moved():
+    """Pinned before the probe runs, so an arm cannot be relabelled after
+    a result is seen."""
+    digest = hashlib.sha256(PROMPT_VERSIONS["cand-a"].encode()).hexdigest()
+    assert digest == (
+        "2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458"
+    )
+
+
+def test_cand_b_bytes_have_not_moved():
+    """Same argument, other candidate."""
+    digest = hashlib.sha256(PROMPT_VERSIONS["cand-b"].encode()).hexdigest()
+    assert digest == (
+        "76b1615ec6a074c7e3178af497d52d7e3469236b4d76b350aa52ed1933e09d3d"
     )
 
 
