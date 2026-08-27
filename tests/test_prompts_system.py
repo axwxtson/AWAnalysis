@@ -56,7 +56,7 @@ NEW_SECTIONS = (
 
 # --- registry ----------------------------------------------------------
 
-def test_registry_holds_the_eight_known_versions():
+def test_registry_holds_the_nine_known_versions():
     """A count, not a grep.
 
     PROMPT_VERSIONS is populated by import side effect across two
@@ -64,7 +64,8 @@ def test_registry_holds_the_eight_known_versions():
     v2_3_0_broken.py that prompts/__init__.py imports for the Stage 6
     regression demo. Its size is not derivable from any single file.
 
-    Block 7 added cand-a and cand-b, registered and inert.
+    Block 7 added cand-a and cand-b, then v2.7.0 promoting cand-a. All
+    three are registered and inert; ACTIVE_PROMPT_VERSION is unchanged.
     """
     assert sorted(PROMPT_VERSIONS) == [
         "2.3.0-broken",
@@ -75,6 +76,7 @@ def test_registry_holds_the_eight_known_versions():
         "v2.4.0",
         "v2.5.0",
         "v2.6.0",
+        "v2.7.0",
     ]
 
 
@@ -139,6 +141,25 @@ def test_cand_b_bytes_have_not_moved():
     digest = hashlib.sha256(PROMPT_VERSIONS["cand-b"].encode()).hexdigest()
     assert digest == (
         "76b1615ec6a074c7e3178af497d52d7e3469236b4d76b350aa52ed1933e09d3d"
+    )
+
+
+def test_v2_7_0_is_byte_identical_to_the_arm_that_was_measured():
+    """v2.7.0 aliases cand-a, and the alias is asserted, not assumed.
+
+    Every result licensing this version was measured under the key
+    cand-a. If the two ever render different bytes, the evidence and the
+    shipped prompt have come apart, which is the 8026830 failure.
+    """
+    assert PROMPT_VERSIONS["v2.7.0"] == PROMPT_VERSIONS["cand-a"]
+
+
+def test_v2_7_0_bytes_have_not_moved():
+    """Same digest as cand-a, spelled out rather than derived, so this
+    test fails independently of the identity assertion above."""
+    digest = hashlib.sha256(PROMPT_VERSIONS["v2.7.0"].encode()).hexdigest()
+    assert digest == (
+        "2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458"
     )
 
 

@@ -652,5 +652,26 @@ def _build_cand_b() -> str:
         _build_v2_6_0(), _NO_TOOL_LIST_V2_6_0, "general concepts"
     )
 
+@register("v2.7.0")
+def _build_v2_7_0() -> str:
+    """Block 7: the routing regression fix. Design A, promoted.
+
+    Aliases cand-a rather than re-deriving from v2.6.0, following the
+    v2.3.0 and v2.4.0 precedent. Re-deriving would create a second
+    definition that could drift from the arm that was measured; an
+    alias cannot. The digest is pinned anyway, since an alias is a
+    claim about identity and a claim is worth an assertion.
+
+    MINOR, not PATCH. versions.py reserves PATCH for fixes that do not
+    change observable behaviour, and the whole justification here is a
+    measured behaviour change: lookup_asset_profile fires on "What is
+    Bitcoin?" 10 times in 10 against a v2.6.0 control of 1 in 5 fresh
+    and 2 in 7 historical, Fisher's exact p = 0.0034.
+
+    Not active. ACTIVE_PROMPT_VERSION moves only after confirmation by
+    suite.
+    """
+    return PROMPT_VERSIONS["cand-a"]
+
 
 SYSTEM_PROMPT = PROMPT_VERSIONS[ACTIVE_PROMPT_VERSION]
