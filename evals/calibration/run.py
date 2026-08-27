@@ -2,7 +2,7 @@
 
 Two passes:
   1. Reference-set agreement: how often does the judge agree with the
-     human grades on the 12 hand-graded reference pairs?
+     human grades on the 16 hand-graded reference pairs?
   2. Bias tests: position bias and length bias.
 
 Either pass can fail. The runner returns a structured report; the CLI
