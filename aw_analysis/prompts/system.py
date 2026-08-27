@@ -599,4 +599,58 @@ def _build_v2_6_0() -> str:
     return "\n\n".join(s for s in sections if s)
 
 
+# --- Block 7 ablation candidates ---------------------------------------
+#
+# Derived from v2.6.0 by substitution, not hand-copied. The
+# single-difference constraint is then structural: nothing outside the
+# substituted substring can have moved. Neither is active. If one wins
+# and ships as a numbered version, it gets written out in full then.
+
+_SCOPE_SUBJECT_V2_6_0 = "a general market, trading or asset concept"
+_NO_TOOL_LIST_V2_6_0 = "general market, trading and asset concepts"
+
+
+def _substitute_once(text: str, old: str, new: str) -> str:
+    """Replace exactly one occurrence, or fail loudly.
+
+    str.replace on a miss returns its input unchanged, which would
+    register a candidate byte-identical to its own control and make the
+    ablation silently vacuous.
+    """
+    if text.count(old) != 1:
+        raise ValueError(f"expected exactly one occurrence of: {old}")
+    return text.replace(old, new)
+
+
+@register("cand-a")
+def _build_cand_a() -> str:
+    """Design A: strike "asset" at both sites, change nothing else.
+
+    Tests the lexical hypothesis. Leaves the residual category list
+    ("market and trading") and the appended product sentence standing,
+    so a null result here refutes the word and not the widening.
+    """
+    built = _substitute_once(
+        _build_v2_6_0(),
+        _SCOPE_SUBJECT_V2_6_0,
+        "a general market or trading concept",
+    )
+    return _substitute_once(
+        built, _NO_TOOL_LIST_V2_6_0, "general market and trading concepts"
+    )
+
+
+@register("cand-b")
+def _build_cand_b() -> str:
+    """Design B: revert the No tool category list to v2.5.0's wording.
+
+    Tests whether the widened list as a whole, rather than the word
+    alone, suppresses retrieval. The scope test keeps "asset", so this
+    candidate carries no over-refusal exposure on the subject limb.
+    """
+    return _substitute_once(
+        _build_v2_6_0(), _NO_TOOL_LIST_V2_6_0, "general concepts"
+    )
+
+
 SYSTEM_PROMPT = PROMPT_VERSIONS[ACTIVE_PROMPT_VERSION]
