@@ -1,0 +1,109 @@
+prompt: v2.6.0 sha256=a6eac9ceced7db9c54ecda6b4efbe953f88f98d366bebf5f59e8c7af0d4dc1d7
+
+> What is Bitcoin?
+
+tools: (none) | tokens: in=5446 out=334 | cost: $0.0210 | cfg=intent_classification→tool_selection
+Bitcoin is a decentralized digital currency that operates without a central bank or single administrator. Created in 2009 by an anonymous person or group using the pseudonym Satoshi Nakamoto, it was  
+the first cryptocurrency and remains the largest by market capitalization.                                                                                                                              
+
+Key characteristics:                                                                                                                                                                                    
+
+ • Decentralized network: Bitcoin runs on a peer-to-peer network of computers (nodes) that validate and record transactions on a public ledger called the blockchain.                                   
+ • Proof of Work consensus: Miners compete to solve complex cryptographic puzzles to add new blocks of transactions to the blockchain, securing the network and earning newly minted bitcoin as a       
+   reward.                                                                                                                                                                                              
+ • Fixed supply: Only 21 million bitcoin will ever exist, making it deflationary by design. New bitcoin are created through mining, with the issuance rate halving approximately every four years.      
+ • Permissionless: Anyone can send, receive, or hold bitcoin without needing approval from a financial institution or government.                                                                       
+ • Pseudonymous: Transactions are recorded on the public blockchain with wallet addresses rather than personal identities, though the ledger itself is transparent.                                     
+
+Bitcoin is used as both a store of value (often called "digital gold") and a medium of exchange. It sparked the creation of thousands of other cryptocurrencies and introduced blockchain technology to 
+the world.                                                                                                                                                                                              
+
+Would you like to know Bitcoin's current price or recent market developments?                                                                                                                           
+
+prompt: v2.6.0 sha256=a6eac9ceced7db9c54ecda6b4efbe953f88f98d366bebf5f59e8c7af0d4dc1d7
+
+> What is Bitcoin?
+
+tools: (none) | tokens: in=5446 out=335 | cost: $0.0211 | cfg=intent_classification→tool_selection
+Bitcoin is a decentralized digital currency that operates without a central bank or single administrator. Created in 2009 by an anonymous person or group using the pseudonym Satoshi Nakamoto, it was  
+the first cryptocurrency and remains the largest by market capitalization.                                                                                                                              
+
+Key characteristics:                                                                                                                                                                                    
+
+ • Decentralized network: Bitcoin runs on a peer-to-peer network of computers (nodes) that validate and record transactions on a public ledger called the blockchain.                                   
+ • Proof of Work consensus: Miners compete to solve complex cryptographic puzzles to add new blocks of transactions to the blockchain, securing the network and earning newly minted bitcoin as a       
+   reward.                                                                                                                                                                                              
+ • Fixed supply: Only 21 million bitcoin will ever exist, making it deflationary by design. New bitcoin are created through mining, with the issuance rate halving approximately every four years.      
+ • Permissionless: Anyone can send, receive, or hold bitcoin without needing approval from a financial institution or government.                                                                       
+ • Pseudonymous: Transactions are recorded on the public blockchain with wallet addresses rather than real-world identities, though the transaction history is transparent.                             
+
+Bitcoin is used as both a store of value (often called "digital gold") and a medium of exchange. It sparked the creation of thousands of other cryptocurrencies and introduced blockchain technology to 
+the world.                                                                                                                                                                                              
+
+Would you like to know Bitcoin's current price or recent market developments?                                                                                                                           
+
+prompt: v2.6.0 sha256=a6eac9ceced7db9c54ecda6b4efbe953f88f98d366bebf5f59e8c7af0d4dc1d7
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (470.7857920002425ms) | tokens: in=11524 out=392 | cost: $0.0401 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and is widely regarded as a digital store 
+of value.                                                                                                                                                                                               
+
+Bitcoin is a peer-to-peer digital cash system that runs on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through a proof-of-work    
+consensus mechanism in which miners expend computational energy to validate blocks.                                                                                                                     
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply: Capped at 21 million BTC                                                                                                                                                                     
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving: Every 210,000 blocks (~4 years), reducing the block reward                                                                                                                                  
+ • Founder: Satoshi Nakamoto (identity unknown)                                                                                                                                                         
+ • Genesis block: 3 January 2009                                                                                                                                                                        
+
+Bitcoin's price history has been marked by sharp cycles tied to halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include the launch
+of CME futures in 2017 and the approval of US spot Bitcoin ETFs in January 2024. Bitcoin is the deepest, most liquid crypto market and tends to lead price action across the broader crypto sector.     
+
+prompt: v2.6.0 sha256=a6eac9ceced7db9c54ecda6b4efbe953f88f98d366bebf5f59e8c7af0d4dc1d7
+
+> What is Bitcoin?
+
+tools: (none) | tokens: in=5446 out=308 | cost: $0.0206 | cfg=intent_classification→tool_selection
+Bitcoin is a decentralized digital currency that operates without a central bank or single administrator. Created in 2009 by an anonymous person or group using the pseudonym Satoshi Nakamoto, it was  
+the first cryptocurrency and remains the largest by market capitalization.                                                                                                                              
+
+Key characteristics:                                                                                                                                                                                    
+
+ • Decentralized network: Bitcoin runs on a peer-to-peer network of computers (nodes) that validate and record transactions on a public ledger called the blockchain.                                   
+ • Proof of Work consensus: Miners compete to solve complex cryptographic puzzles to add new blocks of transactions to the blockchain, securing the network and earning newly minted bitcoin as a       
+   reward.                                                                                                                                                                                              
+ • Fixed supply: Only 21 million bitcoin will ever exist. This scarcity is built into the protocol, with new issuance halving approximately every four years (the "halving").                           
+ • Permissionless: Anyone can send, receive, or hold bitcoin without needing approval from a financial institution or government.                                                                       
+
+Use cases: Bitcoin is used as a store of value (often called "digital gold"), a medium of exchange, and a hedge against inflation. It's also the foundation for the broader cryptocurrency ecosystem.   
+
+If you'd like current price data or recent news about Bitcoin, I'm happy to pull that for you.                                                                                                          
+
+prompt: v2.6.0 sha256=a6eac9ceced7db9c54ecda6b4efbe953f88f98d366bebf5f59e8c7af0d4dc1d7
+
+> What is Bitcoin?
+
+tools: (none) | tokens: in=5446 out=334 | cost: $0.0210 | cfg=intent_classification→tool_selection
+Bitcoin is a decentralized digital currency that operates without a central bank or single administrator. Created in 2009 by an anonymous person or group using the pseudonym Satoshi Nakamoto, it was  
+the first cryptocurrency and remains the largest by market capitalization.                                                                                                                              
+
+Key characteristics:                                                                                                                                                                                    
+
+ • Decentralized network: Bitcoin runs on a peer-to-peer network of computers (nodes) that validate and record transactions on a public ledger called the blockchain.                                   
+ • Proof of Work consensus: Miners compete to solve complex cryptographic puzzles to add new blocks of transactions to the blockchain, securing the network and earning newly minted bitcoin as a       
+   reward.                                                                                                                                                                                              
+ • Fixed supply: Only 21 million bitcoin will ever exist, making it deflationary by design. New bitcoin are created through mining, with the issuance rate halving approximately every four years.      
+ • Permissionless: Anyone can send, receive, or hold bitcoin without needing approval from a financial institution or government.                                                                       
+ • Pseudonymous: Transactions are recorded on the public blockchain with wallet addresses rather than real names, though the transaction history is transparent.                                        
+
+Bitcoin is used as both a store of value (often called "digital gold") and a medium of exchange. It sparked the creation of thousands of other cryptocurrencies and introduced blockchain technology to 
+the world.                                                                                                                                                                                              
+
+Happy to pull up Bitcoin's current price or recent news if you'd like.                                                                                                                                  
+

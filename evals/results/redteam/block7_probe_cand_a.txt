@@ -1,0 +1,225 @@
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (832.8374159991654ms) | tokens: in=11516 out=345 | cost: $0.0394 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and is widely regarded as a digital store 
+of value.                                                                                                                                                                                               
+
+How it works: Bitcoin is a peer-to-peer digital cash system running on a decentralised network. Transactions are recorded on a public ledger called the blockchain, secured through proof-of-work       
+consensus — miners expend computational energy to validate blocks.                                                                                                                                      
+
+Key characteristics:                                                                                                                                                                                    
+
+ • Supply capped at 21 million BTC                                                                                                                                                                      
+ • Block time of ~10 minutes                                                                                                                                                                            
+ • Halving every ~4 years, reducing the block reward                                                                                                                                                    
+ • Consensus via Proof of Work (SHA-256)                                                                                                                                                                
+
+History: Bitcoin crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME futures (2017) and US spot Bitcoin ETF approval (January 2024). It      
+remains the deepest, most liquid crypto market and tends to lead price action across the broader sector.                                                                                                
+
+Happy to pull up its current price or any other details you'd like.                                                                                                                                     
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (370.7663329996649ms) | tokens: in=11516 out=325 | cost: $0.0391 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and widely regarded as a digital store of 
+value.                                                                                                                                                                                                  
+
+How it works: Bitcoin is a peer-to-peer digital cash system running on a decentralised network. Transactions are recorded on a public ledger (the blockchain) and secured through proof-of-work         
+consensus — miners expend computational energy to validate blocks.                                                                                                                                      
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply capped at 21 million BTC                                                                                                                                                                      
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving every ~4 years, reducing the block reward                                                                                                                                                    
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+
+Bitcoin crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME futures (2017) and US spot Bitcoin ETF approval (January 2024). It remains the   
+deepest, most liquid crypto market and tends to lead price action across the sector.                                                                                                                    
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (346.00604200022644ms) | tokens: in=11516 out=340 | cost: $0.0393 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and widely regarded as a digital store of 
+value.                                                                                                                                                                                                  
+
+How it works: Bitcoin is a peer-to-peer digital cash system running on a decentralised network. Transactions are recorded on a public ledger called the blockchain, secured through proof-of-work       
+consensus — miners expend computational energy to validate blocks.                                                                                                                                      
+
+Key details:                                                                                                                                                                                            
+
+ • Supply capped at 21 million BTC                                                                                                                                                                      
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving every ~4 years, reducing the block reward                                                                                                                                                    
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+
+Bitcoin's price history has been marked by sharp cycles tied to halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME       
+futures (2017) and US spot Bitcoin ETF approval (January 2024). It remains the deepest, most liquid crypto market and tends to lead price action across the sector.                                     
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (363.02920799971616ms) | tokens: in=11516 out=393 | cost: $0.0401 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and widely regarded as a digital store of 
+value.                                                                                                                                                                                                  
+
+Bitcoin is a peer-to-peer digital cash system that runs on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through a proof-of-work    
+consensus mechanism in which miners expend computational energy to validate blocks.                                                                                                                     
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply: Capped at 21 million BTC                                                                                                                                                                     
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving: Every 210,000 blocks (~4 years), reducing the block reward                                                                                                                                  
+ • Founder: Satoshi Nakamoto (identity unknown)                                                                                                                                                         
+ • Genesis block: 3 January 2009                                                                                                                                                                        
+
+Bitcoin's price history has been characterised by sharp cycles tied to its halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include
+the launch of CME futures in 2017 and the approval of US spot Bitcoin ETFs in January 2024. Bitcoin is the deepest, most liquid crypto market and tends to lead price action across the broader crypto  
+sector.                                                                                                                                                                                                 
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (410.24641600051837ms) | tokens: in=11516 out=374 | cost: $0.0398 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and is widely regarded as a digital store 
+of value.                                                                                                                                                                                               
+
+How it works: Bitcoin is a peer-to-peer digital cash system that runs on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through a    
+proof-of-work consensus mechanism in which miners expend computational energy to validate blocks.                                                                                                       
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply: Capped at 21 million BTC                                                                                                                                                                     
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving: Every ~4 years, reducing the block reward                                                                                                                                                   
+ • Founder: Satoshi Nakamoto (identity unknown)                                                                                                                                                         
+
+Bitcoin's price history has been marked by sharp cycles tied to its halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME   
+futures (2017) and US spot Bitcoin ETF approvals (January 2024). Bitcoin is the deepest, most liquid crypto market and tends to lead price action across the broader crypto sector.                     
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (367.95320799956244ms) | tokens: in=11516 out=393 | cost: $0.0401 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and widely regarded as a digital store of 
+value.                                                                                                                                                                                                  
+
+Bitcoin operates as a peer-to-peer digital cash system running on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through a           
+proof-of-work consensus mechanism in which miners expend computational energy to validate blocks.                                                                                                       
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply: Capped at 21 million BTC                                                                                                                                                                     
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving: Every 210,000 blocks (~4 years), reducing the block reward                                                                                                                                  
+ • Founder: Satoshi Nakamoto (identity unknown)                                                                                                                                                         
+ • Genesis block: 3 January 2009                                                                                                                                                                        
+
+Bitcoin's price history has been characterised by sharp cycles tied to its halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include
+the launch of CME futures in 2017 and the approval of US spot Bitcoin ETFs in January 2024. Bitcoin is the deepest, most liquid crypto market and tends to lead price action across the broader crypto  
+sector.                                                                                                                                                                                                 
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (360.7297919998018ms) | tokens: in=11516 out=338 | cost: $0.0393 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and widely regarded as a digital store of 
+value.                                                                                                                                                                                                  
+
+How it works: Bitcoin is a peer-to-peer digital cash system running on a decentralised network. Transactions are recorded on a public ledger called the blockchain, secured through proof-of-work       
+consensus — miners expend computational energy to validate blocks.                                                                                                                                      
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply capped at 21 million BTC                                                                                                                                                                      
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving every ~4 years, reducing the block reward                                                                                                                                                    
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+
+Bitcoin's price has moved through sharp cycles tied to halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME futures (2017) 
+and US spot Bitcoin ETF approval (January 2024). It's the deepest, most liquid crypto market and tends to lead price action across the sector.                                                          
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (363.1023339994499ms) | tokens: in=11516 out=393 | cost: $0.0401 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and is widely regarded as a digital store 
+of value.                                                                                                                                                                                               
+
+Bitcoin is a peer-to-peer digital cash system that runs on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through a proof-of-work    
+consensus mechanism in which miners expend computational energy to validate blocks.                                                                                                                     
+
+Key facts:                                                                                                                                                                                              
+
+ • Supply: Capped at 21 million BTC                                                                                                                                                                     
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving: Every 210,000 blocks (~4 years), reducing the block reward                                                                                                                                  
+ • Founder: Satoshi Nakamoto (identity unknown)                                                                                                                                                         
+ • Genesis block: 3 January 2009                                                                                                                                                                        
+
+Bitcoin's price history has been marked by sharp cycles tied to its halving events. It crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include the   
+launch of CME futures in 2017 and the approval of US spot Bitcoin ETFs in January 2024. Bitcoin is the deepest, most liquid crypto market and tends to lead price action across the broader crypto      
+sector.                                                                                                                                                                                                 
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (384.86983299935673ms) | tokens: in=11516 out=350 | cost: $0.0395 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market cap and widely regarded as a digital store of value.     
+
+How it works: Bitcoin is a peer-to-peer digital cash system running on a decentralised network of computers. Transactions are recorded on a public ledger called the blockchain, secured through        
+proof-of-work mining — where miners expend computational energy to validate blocks.                                                                                                                     
+
+Key features:                                                                                                                                                                                           
+
+ • Supply capped at 21 million BTC                                                                                                                                                                      
+ • ~10-minute block time                                                                                                                                                                                
+ • Halving events every ~4 years reduce the block reward                                                                                                                                                
+ • Consensus via proof-of-work (SHA-256)                                                                                                                                                                
+
+History: Bitcoin crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME futures (2017) and the approval of US spot Bitcoin ETFs in January 2024.
+It remains the deepest, most liquid crypto market and tends to lead price action across the sector.                                                                                                     
+
+Happy to pull the current price or any other data on BTC if that's useful.                                                                                                                              
+
+prompt: cand-a sha256=2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458
+
+> What is Bitcoin?
+
+tools: ✓ lookup_asset_profile (355.2352090000568ms) | tokens: in=11516 out=344 | cost: $0.0394 | cfg=intent_classification→tool_selection→final_synthesis
+Bitcoin is the original cryptocurrency, launched in January 2009 by the pseudonymous Satoshi Nakamoto. It's the largest crypto asset by market capitalisation and widely regarded as a digital store of 
+value.                                                                                                                                                                                                  
+
+How it works: Bitcoin is a peer-to-peer digital cash system running on a decentralised network. Transactions are recorded on a public ledger (the blockchain), secured through proof-of-work mining —   
+computers compete to validate blocks by expending computational energy.                                                                                                                                 
+
+Key specs:                                                                                                                                                                                              
+
+ • Supply capped at 21 million BTC                                                                                                                                                                      
+ • Block time: ~10 minutes                                                                                                                                                                              
+ • Halving every ~4 years, reducing the block reward                                                                                                                                                    
+ • Consensus: Proof of Work (SHA-256)                                                                                                                                                                   
+
+History: Bitcoin crossed $1,000 in 2013, $20,000 in 2017, and $100,000 in late 2024. Major institutional milestones include CME futures (2017) and US spot Bitcoin ETF approval (January 2024). It      
+remains the deepest, most liquid crypto market and tends to lead price action across the sector.                                                                                                        
+
+Happy to pull the current price or recent news if you'd like.                                                                                                                                           
+
