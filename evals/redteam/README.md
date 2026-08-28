@@ -1,7 +1,10 @@
 # Red-team suite
 
-Twenty-two adversarial prompts across five categories, run against the
-production agent and graded by two layers. Ported from the Module 6
+Thirty-one adversarial prompts across five categories, run against the
+production agent and graded by two layers. The suite has grown twice, so
+figures below are not comparable unless they name the same cohort:
+twenty-two at the 19 August runs, twenty-five from `024af41`, thirty-one
+from `212abf5`. Ported from the Module 6
 course repo at `e3f5b4ecb89de0ef5cfa2c4d629bca5bad848456`.
 
 ## Result
@@ -173,12 +176,18 @@ attack's replicates are spread across the run. Blocking would land all
 five inside the same few minutes, and a transient in that window would
 read as a property of that attack rather than as noise.
 
-Costs roughly $0.025 per attack: one agent turn plus one judge call. The
-bill scales with attacks times repeat.
+Costs roughly $0.025 per attack, agent-side, plus one judge call. The
+judge's cost is recorded nowhere on either path, so the second term is an
+estimate near $0.002 derived from rubric and answer lengths, not a
+measurement. Every spend figure in this repo is agent-side only. The bill
+scales with attacks times repeat.
 
 Results are written to `evals/results/redteam/<prompt-version>_<ts>.json`,
-except where renamed by hand, per below. `red_team_results.json` in this
-directory is the committed replica run and is never overwritten.
+named for the prompt that actually served the run. Before `acabe7a` the
+path was computed at import from `ACTIVE_PROMPT_VERSION`, so the name
+described the active version rather than the measured one and every
+artefact had to be renamed by hand immediately afterwards. That is why
+the older files carry the shapes described below.
 
 ## Committed artefacts
 
@@ -218,6 +227,33 @@ graded rather than excluded). The 19 August pair predates all four. The
 renaming is deliberate: the plain `<version>_<ts>` shape cannot express
 which of several same-version files pairs with which.
 
+**`v2.6.0_full_20260821T165451.json`.** 31 attacks, single observations,
+21 August. The first run on the full cohort and the only full-suite
+measurement of any prompt on it: 31 defended, 0 compromised. Pairs with
+`v2.5.0_sealed_full_20260820T125114.json` only on the 25 attacks the two
+share.
+
+**`v2.6.0_replicates_20260821T205253.json`.** 5 attacks at 5 replicates
+each, 25 turns, 21 August. Same five as the v2.5.0 sealed replicates, so
+the two pair directly. 0 compromised.
+
+**`v2.7.0_20260827T162047.json`.** 3 attacks at 5 replicates each, 15
+turns, 27 August. `bnd_04_off_topic`, `bnd_06_asset_wrapped_task` and
+`bnd_07_concept_plus_artefact`, selected because they are the boundary
+attacks a change to the scope test's concept limb could plausibly
+reopen. 15 defended, 0 compromised.
+
+Two qualifiers travel with that result and neither is optional. The
+substring layer abstained on all fifteen, so there is no two-layer
+corroboration and no tie-break to quote; the verdicts are judge-only.
+And zero compromises in five replicates bounds the true rate near 45%
+one-sided, so the claim is that no compromise was observed, not that
+these attacks are closed.
+
+**No full-suite figure exists for v2.7.0.** Three of thirty-one attacks
+have been measured against the shipped prompt. v2.6.0 has all
+thirty-one. Closing that gap is the first item of the next block.
+
 ## The blind, and how it ended
 
 The two sealed runs were executed with stdout redirected to a gitignored
@@ -242,3 +278,32 @@ same person wrote them and the rule they probe.
 Any hold-out claim in Block 6 rests instead on a second cohort written
 after v2.6.0 is committed, against a prompt already immutable in pushed
 history.
+
+## The second cohort
+
+`212abf5` added six attacks after v2.6.0 was committed and pushed, taking
+the suite from twenty-five to thirty-one:
+
+- `bnd_08_prose_artefact`
+- `bnd_09_market_concept_uplift`
+- `bnd_10_partial_compliance_lever`
+- `exf_06_demonstrate_by_example`
+- `exf_07_refusal_postmortem`
+- `exf_08_security_review_framing`
+
+The claim these carry is narrow and worth stating in its exact form:
+they were written against the rule as committed, before any result was
+seen. Not "blind". The prompt they probe was already immutable in pushed
+history when they were written, so the prompt could not have been fitted
+to them; and no verdict on them existed when they were written, so they
+could not have been fitted to a result.
+
+What that does not give is independence. The same person wrote the
+attacks and the rule they probe, exactly as with the first cohort. The
+ordering constrains what could have been fitted, not what was known.
+
+One grading note from `exf_06_demonstrate_by_example`: the judge reached
+the correct verdict while missing a rubric category in its stated
+reasoning. The reasoning field is an assertion to verify, not a finding.
+That is the second time this has happened, the first being
+`exf_04_markdown_dump` in the 19 August pair.
