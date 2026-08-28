@@ -5,7 +5,7 @@ states what is wrong, how confident the diagnosis is, and what would
 resolve it. Items are removed only when the resolution is committed and
 verified.
 
-Last reviewed: 18.8.26  
+Last reviewed: 27.8.26
 
 ---
 
@@ -153,6 +153,43 @@ case across two runs where it contributed something the judge did not.
 
 Read judge reasoning as an assertion to verify, not as a finding.
 
+### Run artefacts record tool names, not tool results or arguments
+
+`sub_traces[].tool_calls` holds a list of tool names. The payload each
+tool returned, and the arguments it was called with, are recorded
+nowhere. Confirmed at `7cafaf5`: a curated BTC profile case stores
+`["get_crypto_price"]` and nothing else.
+
+This blocked three separate diagnoses in one session on 27 August. The
+judge's cost could only be estimated rather than derived, because the
+faithfulness rubric's context size is unreconstructible. The
+`profile_pepe_fallback` failure needed three live turns to distinguish a
+CoinGecko miss from a prompt change, because the artefact could not say
+which of two branches emitted `source=none`. The `news_tesla`
+faithfulness failure needed six, because the judge's reasoning quotes
+snippets that nothing else records.
+
+Roughly $0.47 of live turns to work around a field that is not written.
+That is the strongest argument on this list for a change that is
+otherwise easy to file as tidiness.
+
+**Resolution:** record tool results and arguments per call in the trace,
+at the same seam the cost ledger wants. Size is the open question; a
+truncation policy is probably needed rather than storing payloads whole.
+
+### The crypto set holds 23 cases and two places say 24
+
+`evals/golden/crypto/dataset.py` opens with "24 cases". `README.md:51`
+quotes thirteen committed runs ranging from 18/24 to 23/24. The set has
+held 23 since Block 1.7.
+
+One error in two files, so it is one item. Fixing either alone would
+split it. The run figures themselves are correct and come from committed
+artefacts; only the denominator is wrong.
+
+**Resolution:** correct both in the same commit, and check whether any
+session summary carries the same denominator before closing.
+
 ---
 
 ## Code
@@ -250,6 +287,28 @@ looks right and the docstring overclaims. Block 4 pins the code.
 
 **Resolution.** Correct the docstring. Not urgent, no behavioural
 consequence.
+
+### No retry or backoff on the CoinGecko client
+
+`aw_analysis/data_sources/coingecko.py` has no retry policy.
+`EVAL_RETRY_POLICY` and the custom logic in `client/retry.py` cover the
+Anthropic client only. Any `httpx` failure, and any empty search result,
+raises `CoinGeckoError`, which `asset_profile.py` converts into a
+payload with `source=none` by design.
+
+The consequence is that a transient and a genuine miss are
+indistinguishable downstream. `profile_pepe_fallback` asserts on
+`source=coingecko` and misses roughly one time in three, measured over
+three fresh turns on 27 August. It had passed in four prior runs, which
+under that rate has probability about 0.20, so the four passes were
+never evidence of stability.
+
+The same shape exists on the Twelve Data path for equities fallback.
+
+**Resolution:** a bounded retry with backoff at the data-source seam,
+mirroring `client/retry.py`. Note that landing it changes the code state,
+so any suite comparison spanning the change needs both sides
+re-baselined; that is why it did not land inside Block 7.
 
 ### `META` appears in both `EQUITY_SYMBOLS` and `EQUITY_NAMES`
 
