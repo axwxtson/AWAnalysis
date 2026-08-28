@@ -19,7 +19,7 @@ not in CI: they cost money and need credentials the pipeline does not
 have.
 
 Note the scope honestly. mypy runs on a ratcheted allowlist rather than
-the whole package, and the 155 unit tests cover the agent loop, the
+the whole package, and the 224 unit tests cover the agent loop, the
 client, the graders and the red-team harness rather than the package as
 a whole. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
@@ -45,21 +45,42 @@ combined-tools) are shared across both. The cross-asset comparison case
 (`price_compare_apple_btc`) is a permanent guard that a single mixed-class
 query fires both class price tools in one turn.
 
-Current baseline (v2.5.0, 12 August 2026): **crypto 23/23, equities
-16/16**. Committed run artefacts under `evals/results/` are the source
+Current baseline (v2.7.0, 27 August 2026): **crypto 22/23, equities
+15/16**. Committed run artefacts under `evals/results/` are the source
 of truth for every figure quoted here.
+
+Both single failures were investigated and neither was adjusted.
+`profile_pepe_fallback` asserts on a CoinGecko `source` field and misses
+roughly one time in three, measured over three fresh turns; the tool has
+no retry, so a transient becomes `source=none` by design. `news_tesla`
+fails on faithfulness because the answer states Q2 2026 consensus
+estimates as realised results. Three turns per prompt against the same
+news window show the identical fabrication under v2.6.0 and v2.7.0, so
+that defect predates the version and is not a regression.
+
+The previous v2.5.0 baseline of crypto 23/23 and equities 16/16 stands
+as the record of those runs. It is not the current figure and the two
+must not be pooled.
 
 Read those figures with the suite's measurement error in mind. Thirteen
 committed runs of a byte-identical prompt range from 18/24 to 23/24, so
 a single run resolves to roughly ±2-3 cases and no single-run comparison
 can detect a small effect. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
-Adversarial baseline (v2.5.0, 19 August 2026): **85% defence rate,
-17/20**, judge authoritative on disagreement, all high-severity attacks
-defended. Two of the 22 attacks are excluded as non-delivered. The rate
-is meaningless without the tie-break rule quoted beside it, and n=20
-means one case moves it five points. Findings and limits in
-[evals/redteam/README.md](evals/redteam/README.md).
+Adversarial baseline (v2.6.0, 21 August 2026): **31 attacks, 31
+defended, 0 compromised**, judge authoritative on disagreement. That is
+the only full-suite measurement of any prompt on the current cohort.
+
+v2.7.0 has not had a full-suite run. Three boundary attacks were checked
+at five replicates each on 27 August, 15 defended, with the substring
+layer abstaining on all fifteen, so those verdicts are judge-only. Zero
+in five bounds the true compromise rate near 45% one-sided. Closing that
+gap is the first item of the next block.
+
+The earlier v2.5.0 figure of 85%, 17 of 20, was measured on a
+twenty-two-attack cohort with two excluded as non-delivered. The suite
+has grown twice since, so it is not comparable with the numbers above.
+Any rate is meaningless without the tie-break rule quoted beside it.
 
 ## What it does today
 
@@ -142,7 +163,7 @@ Every eval case also emits a Langfuse trace with deterministic and
 judge results attached as Langfuse scores, so per-case grading is
 auditable in the dashboard alongside the trace that produced it.
 
-A separate adversarial suite in `evals/redteam/` runs 22 attacks across
+A separate adversarial suite in `evals/redteam/` runs 31 attacks across
 injection, jailbreak, exfiltration, boundary and DoS categories. It
 grades with the same two-layer approach, but the judge is authoritative
 on disagreement: across two production runs the substring layer
@@ -235,7 +256,7 @@ flowchart TD
   (Voyage AI, asymmetric query/document), vector store (ChromaDB,
   cosine), retriever, ingest pipeline
 - **`aw_analysis/prompts/`** — six-section system prompt, version
-  registry (v2.5.0 active; cross-asset scope), few-shot examples
+  registry (v2.7.0 active; cross-asset scope), few-shot examples
 - **`aw_analysis/obs/`** — Langfuse emitter facade; no other module
   imports `langfuse` directly
 - **`aw_analysis/mcp_server.py`** — MCP server (FastMCP, stdio). Exposes
