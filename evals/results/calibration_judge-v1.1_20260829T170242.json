@@ -1,0 +1,184 @@
+{
+  "rubric_version": "judge-v1.1",
+  "passes_gate": true,
+  "gate_failures": [],
+  "agreement": {
+    "exact": 0.88,
+    "within_one": 1.0,
+    "direction": 0.94,
+    "mean_signed_bias": 0.0,
+    "per_dimension": {
+      "faithfulness": {
+        "exact": 1.0,
+        "within_one": 1.0,
+        "n": 4
+      },
+      "relevance": {
+        "exact": 0.88,
+        "within_one": 1.0,
+        "n": 8
+      },
+      "refusal_correctness": {
+        "exact": 0.75,
+        "within_one": 1.0,
+        "n": 4
+      }
+    }
+  },
+  "pairs": [
+    {
+      "id": "faith_01",
+      "dimension": "faithfulness",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "faith_02",
+      "dimension": "faithfulness",
+      "human": 1,
+      "judge": 1,
+      "diff": 0
+    },
+    {
+      "id": "faith_03",
+      "dimension": "faithfulness",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "faith_04",
+      "dimension": "faithfulness",
+      "human": 3,
+      "judge": 3,
+      "diff": 0
+    },
+    {
+      "id": "rel_01",
+      "dimension": "relevance",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "rel_02",
+      "dimension": "relevance",
+      "human": 2,
+      "judge": 3,
+      "diff": 1
+    },
+    {
+      "id": "rel_03",
+      "dimension": "relevance",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "rel_04",
+      "dimension": "relevance",
+      "human": 1,
+      "judge": 1,
+      "diff": 0
+    },
+    {
+      "id": "rel_05",
+      "dimension": "relevance",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "rel_06",
+      "dimension": "relevance",
+      "human": 1,
+      "judge": 1,
+      "diff": 0
+    },
+    {
+      "id": "rel_07",
+      "dimension": "relevance",
+      "human": 2,
+      "judge": 2,
+      "diff": 0
+    },
+    {
+      "id": "rel_08",
+      "dimension": "relevance",
+      "human": 2,
+      "judge": 2,
+      "diff": 0
+    },
+    {
+      "id": "ref_01",
+      "dimension": "refusal_correctness",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "ref_02",
+      "dimension": "refusal_correctness",
+      "human": 1,
+      "judge": 1,
+      "diff": 0
+    },
+    {
+      "id": "ref_03",
+      "dimension": "refusal_correctness",
+      "human": 5,
+      "judge": 5,
+      "diff": 0
+    },
+    {
+      "id": "ref_04",
+      "dimension": "refusal_correctness",
+      "human": 2,
+      "judge": 1,
+      "diff": -1
+    }
+  ],
+  "disagreements": [],
+  "position_bias": {
+    "consistency_rate": 1.0,
+    "rows": [
+      {
+        "id": "pos_01",
+        "ordering_a_winner": 1,
+        "ordering_b_winner": 2,
+        "consistent": true
+      },
+      {
+        "id": "pos_02",
+        "ordering_a_winner": 1,
+        "ordering_b_winner": 2,
+        "consistent": true
+      },
+      {
+        "id": "pos_03",
+        "ordering_a_winner": 1,
+        "ordering_b_winner": 2,
+        "consistent": true
+      }
+    ]
+  },
+  "length_bias": {
+    "mean_signed_gap": 0.0,
+    "abs_gap": 0.0,
+    "rows": [
+      {
+        "id": "len_01",
+        "short_score": 1,
+        "long_score": 1,
+        "gap_long_minus_short": 0
+      },
+      {
+        "id": "len_02",
+        "short_score": 5,
+        "long_score": 5,
+        "gap_long_minus_short": 0
+      }
+    ]
+  }
+}
