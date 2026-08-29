@@ -8,6 +8,13 @@ Two passes:
 Either pass can fail. The runner returns a structured report; the CLI
 prints it; the eval runner is gated on the calibration passing its
 thresholds.
+
+Pre-registered 29 August 2026, before the first run that populates the
+pairs field. The n=16 figures on record are exact 0.88, within-one 1.00,
+direction 0.94, signed bias +0.00. Judge scoring is not deterministic, so
+a re-run may return lower. Whatever it returns is the figure that gets
+recorded. The prior artefact stays where it is and the two are not
+pooled.
 """
 
 from __future__ import annotations
