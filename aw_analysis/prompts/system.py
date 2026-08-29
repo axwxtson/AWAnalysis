@@ -668,8 +668,9 @@ def _build_v2_7_0() -> str:
     Bitcoin?" 10 times in 10 against a v2.6.0 control of 1 in 5 fresh
     and 2 in 7 historical, Fisher's exact p = 0.0034.
 
-    Not active. ACTIVE_PROMPT_VERSION moves only after confirmation by
-    suite.
+    Active since 27 August 2026, promoted after confirmation by suite:
+    crypto 22/23, equities 15/16, general 6/6. The constant itself is
+    versions.py:53.
     """
     return PROMPT_VERSIONS["cand-a"]
 
