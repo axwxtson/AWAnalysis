@@ -5,11 +5,31 @@ states what is wrong, how confident the diagnosis is, and what would
 resolve it. Items are removed only when the resolution is committed and
 verified.
 
-Last reviewed: 27.8.26
+Last reviewed: 29.8.26
 
 ---
 
 ## Evaluation
+
+### Relevance agreement is 0.88 and the one miss straddles the gate
+
+`evals/results/calibration_judge-v1.1_20260829T170242.json` records every
+reference pair for the first time. On `rel_02` the human score is 2 and
+the judge scored 3. `evals/runner/run.py:42` sets `JUDGE_PASS_THRESHOLD`
+to 3 and line 381 fails a CONCEPT case on `relevance < 3`, so on that
+pair the human fails the case and the judge passes it.
+
+Within-one agreement of 1.00 therefore does not support the CONCEPT gate.
+On a binary threshold an off-by-one at the boundary is a verdict flip,
+not a near miss. The defensible figures for relevance are exact 0.88 over
+n=8, with one boundary-crossing disagreement.
+
+This was invisible until the `pairs` field landed, because the report
+recorded a pair only at a gap of 2 or more.
+
+**Resolution:** unresolved. Either add reference pairs near the boundary
+and measure how often it flips, or stop gating on a single scalar. Until
+then, do not quote within-one agreement in support of the gate.
 
 ### `profile_shopify_fallback` — passes, but relevance 2
 
@@ -38,6 +58,7 @@ description source for equity fallbacks so there is something to ground
 against; and decide whether the pass gate should consider relevance, or
 whether a faithful non-answer is an acceptable pass. The second is a
 policy question about what the suite is measuring.
+
 ### Document injection is unmeasured, and the reason is a grounding gap
 
 `inj_05_doc_payload` and `inj_06_doc_exfil` plant a poisoned document in
@@ -176,19 +197,6 @@ otherwise easy to file as tidiness.
 **Resolution:** record tool results and arguments per call in the trace,
 at the same seam the cost ledger wants. Size is the open question; a
 truncation policy is probably needed rather than storing payloads whole.
-
-### The crypto set holds 23 cases and two places say 24
-
-`evals/golden/crypto/dataset.py` opens with "24 cases". `README.md:51`
-quotes thirteen committed runs ranging from 18/24 to 23/24. The set has
-held 23 since Block 1.7.
-
-One error in two files, so it is one item. Fixing either alone would
-split it. The run figures themselves are correct and come from committed
-artefacts; only the denominator is wrong.
-
-**Resolution:** correct both in the same commit, and check whether any
-session summary carries the same denominator before closing.
 
 ---
 
@@ -406,6 +414,19 @@ point.
 ---
 
 ## Resolved
+
+### The crypto denominator said 24 — resolved 29 August 2026 (Block 8)
+
+`evals/golden/crypto/dataset.py:3` said "24 cases" and `README.md:66`
+quoted thirteen committed runs ranging from 18/24 to 23/24. The set has
+held 23 since Block 1.7. Both corrected in `74daa83`, one commit, because
+one error in two files is one item.
+
+No case was removed and no numerator changed. The run figures come from
+committed artefacts and were always correct, so the corrected range is
+18/23 to 23/23, which is slightly better than the README had been
+claiming. Session summaries carrying the old denominator are not repo
+artefacts and are left unamended.
 
 ### No retry or backoff in the hot path — resolved 18 August 2026 (Block 3)
 
