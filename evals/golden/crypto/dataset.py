@@ -1,6 +1,6 @@
 """The AW Analysis golden dataset.
 
-24 cases across 6 query classes. Module 6 reference: under-30 datasets
+23 cases across 6 query classes. Module 6 reference: under-30 datasets
 are qualitative, not statistical. Every case earns its place by name —
 the rationale field is mandatory.
 

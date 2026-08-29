@@ -63,7 +63,7 @@ as the record of those runs. It is not the current figure and the two
 must not be pooled.
 
 Read those figures with the suite's measurement error in mind. Thirteen
-committed runs of a byte-identical prompt range from 18/24 to 23/24, so
+committed runs of a byte-identical prompt range from 18/23 to 23/23, so
 a single run resolves to roughly ±2-3 cases and no single-run comparison
 can detect a small effect. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
