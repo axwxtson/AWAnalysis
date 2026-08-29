@@ -46,6 +46,7 @@ class CalibrationReport:
     direction_agreement: float = 0.0
     mean_signed_bias: float = 0.0
     per_dimension: dict[str, dict[str, float]] = field(default_factory=dict)
+    pairs: list[dict] = field(default_factory=list)
     disagreements: list[dict] = field(default_factory=list)
     position_bias: dict = field(default_factory=dict)
     length_bias: dict = field(default_factory=dict)
@@ -134,6 +135,7 @@ def _agreement_report(scored: list[tuple[ReferencePair, int]]) -> CalibrationRep
     bias_sum = 0.0
     by_dim: dict[str, list[tuple[int, int]]] = {}
     disagreements: list[dict] = []
+    pairs: list[dict] = []
 
     for pair, judge in scored:
         diff = judge - pair.human_score
@@ -150,6 +152,15 @@ def _agreement_report(scored: list[tuple[ReferencePair, int]]) -> CalibrationRep
         ):
             direction += 1
         by_dim.setdefault(pair.dimension, []).append((pair.human_score, judge))
+        pairs.append(
+            {
+                "id": pair.id,
+                "dimension": pair.dimension,
+                "human": pair.human_score,
+                "judge": judge,
+                "diff": diff,
+            }
+        )
         if abs(diff) >= 2:
             disagreements.append(
                 {
@@ -178,6 +189,7 @@ def _agreement_report(scored: list[tuple[ReferencePair, int]]) -> CalibrationRep
         direction_agreement=round(direction / n, 2) if n else 0.0,
         mean_signed_bias=round(bias_sum / n, 2) if n else 0.0,
         per_dimension=per_dim,
+        pairs=pairs,
         disagreements=disagreements,
     )
 
@@ -194,6 +206,7 @@ def _calibration_to_dict(report: CalibrationReport) -> dict:
             "mean_signed_bias": report.mean_signed_bias,
             "per_dimension": report.per_dimension,
         },
+        "pairs": report.pairs,
         "disagreements": report.disagreements,
         "position_bias": report.position_bias,
         "length_bias": report.length_bias,
