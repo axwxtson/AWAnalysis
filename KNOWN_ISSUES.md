@@ -202,6 +202,31 @@ truncation policy is probably needed rather than storing payloads whole.
 
 ## Code
 
+### Response streaming and prompt caching are both unbuilt
+
+Neither `stream` nor `cache_control` appears anywhere in
+`aw_analysis/client/` or `aw_analysis/agent/`. Every call is a blocking
+request and the system prompt is re-sent uncached on each one. Until now
+this was disclaimed only in working notes, not in the repo, so a reader
+had no way to see that the gap was known rather than missed.
+
+The two are not one item and carry different risk.
+
+Prompt caching is behaviour-neutral in a way that is checkable: a cache
+breakpoint does not change the rendered prompt string, so `prompt_sha256`
+is unchanged and no suite re-baseline is licensed or needed. It also
+carries a measurable claim, since a routing turn issues several calls
+each re-sending the full system prompt.
+
+Streaming changes how the response is assembled, so it touches the
+tool-use loop and the digest line `bin/aw` prints. Any suite comparison
+spanning it needs both sides re-baselined, the same constraint as the
+CoinGecko retry entry.
+
+**Resolution:** caching first, on its own, with a before-and-after cost
+figure on an existing suite. Streaming after, scoped to `bin/aw`. Do not
+claim either in a README or a walkthrough until it is built.
+
 ### `market_news` tool is named `web_search`, and that is required
 
 `MarketNewsTool.name` is `"web_search"`. This is not an accidental
