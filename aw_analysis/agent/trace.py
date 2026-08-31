@@ -11,13 +11,21 @@ British English throughout.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
 class ToolCall:
     """One tool invocation inside a turn.
 
-    Unchanged from Stage 3; included here for context.
+    `arguments` holds the tool input as the model emitted it. A result is
+    only interpretable against the input that produced it: a profile
+    lookup returning `source=none` means one thing for a symbol that is
+    in the curated corpus and another for a symbol that never was, and
+    the tool name alone cannot separate those.
+
+    Last in the field order and defaulted, so positional construction and
+    every existing call site are unaffected.
     """
 
     name: str
@@ -25,7 +33,7 @@ class ToolCall:
     success: bool
     error: str | None = None
     result: str = ""
-
+    arguments: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

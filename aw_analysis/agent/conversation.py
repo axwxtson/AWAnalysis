@@ -451,6 +451,7 @@ class Conversation:
                     success=tool_result.success,
                     error=tool_result.error,
                     result=tool_result.content,
+                    arguments=dict(block.input),
                 )
             )
             results.append(
@@ -497,6 +498,7 @@ class Conversation:
                         success=True,
                         error=None,
                         result=result_payload,
+                        arguments=dict(getattr(pending_server_use, "input", {}) or {}),
                     )
                 )
                 pending_server_use = None
