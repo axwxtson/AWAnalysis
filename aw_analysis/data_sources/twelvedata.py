@@ -16,7 +16,9 @@ from typing import Any
 
 import httpx
 
+from aw_analysis.client.retry import RetryPolicy
 from aw_analysis.config import get_settings
+from aw_analysis.data_sources.retry import request_json
 
 TWELVEDATA_BASE = "https://api.twelvedata.com"
 
@@ -41,7 +43,12 @@ class TwelveDataClient:
     actually invoked (mirrors the lazy-credential pattern elsewhere).
     """
 
-    def __init__(self, api_key: str | None = None, timeout: float = 10.0) -> None:
+    def __init__(
+        self,
+        api_key: str | None = None,
+        timeout: float = 10.0,
+        retry: RetryPolicy | None = None,
+    ) -> None:
         self._api_key = (
             api_key if api_key is not None else get_settings().twelvedata_api_key
         )
@@ -50,6 +57,10 @@ class TwelveDataClient:
             timeout=timeout,
             headers={"Accept": "application/json"},
         )
+        # None resolves to DATA_SOURCE_RETRY inside request_json. Held
+        # rather than read from the module, for the reasons given on the
+        # CoinGecko client.
+        self._retry = retry
 
     def get_quote(self, ticker: str) -> dict[str, Any]:
         """Get the current quote for an equity ticker.
@@ -74,11 +85,14 @@ class TwelveDataClient:
 
         ticker = ticker.strip().upper()
         params = {"symbol": ticker, "apikey": self._api_key}
-        try:
-            resp = self._client.get("/quote", params=params)
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise TwelveDataError(f"Twelve Data request failed: {exc}") from exc
+        resp = request_json(
+            self._client,
+            "/quote",
+            params,
+            error=TwelveDataError,
+            context="Twelve Data request failed",
+            policy=self._retry,
+        )
 
         data = resp.json()
         self._raise_on_api_error(data, ticker)
@@ -104,11 +118,14 @@ class TwelveDataClient:
 
         q = query.strip()
         params = {"symbol": q, "apikey": self._api_key}
-        try:
-            resp = self._client.get("/symbol_search", params=params)
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise TwelveDataError(f"Twelve Data request failed: {exc}") from exc
+        resp = request_json(
+            self._client,
+            "/symbol_search",
+            params,
+            error=TwelveDataError,
+            context="Twelve Data request failed",
+            policy=self._retry,
+        )
 
         data = resp.json()
         self._raise_on_api_error(data, q)

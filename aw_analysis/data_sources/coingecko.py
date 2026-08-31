@@ -10,6 +10,9 @@ from typing import Any
 
 import httpx
 
+from aw_analysis.client.retry import RetryPolicy
+from aw_analysis.data_sources.retry import request_json
+
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
 # Map common tickers to CoinGecko IDs. CoinGecko uses long-form IDs
@@ -45,12 +48,19 @@ class CoinGeckoClient:
     later without changing the tool surface.
     """
 
-    def __init__(self, timeout: float = 10.0) -> None:
+    def __init__(
+        self, timeout: float = 10.0, retry: RetryPolicy | None = None
+    ) -> None:
         self._client = httpx.Client(
             base_url=COINGECKO_BASE,
             timeout=timeout,
             headers={"Accept": "application/json"},
         )
+        # None resolves to DATA_SOURCE_RETRY inside request_json. Held
+        # rather than read from the module so a caller with a latency
+        # budget can size its own from the bound RetryPolicy documents,
+        # and so a test can substitute a recording sleep for a real one.
+        self._retry = retry
 
     def get_price(self, ticker: str, vs_currency: str = "usd") -> dict[str, Any]:
         """Get current price and 24h change for a ticker.
@@ -82,11 +92,14 @@ class CoinGeckoClient:
             "include_24hr_vol": "true",
             "include_24hr_change": "true",
         }
-        try:
-            resp = self._client.get("/simple/price", params=params)
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise CoinGeckoError(f"CoinGecko request failed: {exc}") from exc
+        resp = request_json(
+            self._client,
+            "/simple/price",
+            params,
+            error=CoinGeckoError,
+            context="CoinGecko request failed",
+            policy=self._retry,
+        )
 
         data = resp.json().get(coin_id)
         if not data:
@@ -122,20 +135,20 @@ class CoinGeckoClient:
         # Resolve query → coin id via search endpoint
         coin_id = self._resolve_coin_id(query)
 
-        try:
-            resp = self._client.get(
-                f"/coins/{coin_id}",
-                params={
-                    "localization": "false",
-                    "tickers": "false",
-                    "market_data": "false",
-                    "community_data": "false",
-                    "developer_data": "false",
-                },
-            )
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise CoinGeckoError(f"CoinGecko coin fetch failed: {exc}") from exc
+        resp = request_json(
+            self._client,
+            f"/coins/{coin_id}",
+            {
+                "localization": "false",
+                "tickers": "false",
+                "market_data": "false",
+                "community_data": "false",
+                "developer_data": "false",
+            },
+            error=CoinGeckoError,
+            context="CoinGecko coin fetch failed",
+            policy=self._retry,
+        )
 
         data = resp.json()
         description_html = data.get("description", {}).get("en", "")
@@ -163,11 +176,14 @@ class CoinGeckoClient:
         if upper in TICKER_TO_ID:
             return TICKER_TO_ID[upper]
 
-        try:
-            resp = self._client.get("/search", params={"query": query})
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise CoinGeckoError(f"CoinGecko search failed: {exc}") from exc
+        resp = request_json(
+            self._client,
+            "/search",
+            {"query": query},
+            error=CoinGeckoError,
+            context="CoinGecko search failed",
+            policy=self._retry,
+        )
 
         coins = resp.json().get("coins", [])
         if not coins:
