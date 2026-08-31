@@ -159,7 +159,7 @@ follow_imports = "silent"
 # are read for types but their own errors are not reported. Add modules
 # here as they are cleaned rather than switching the whole package on and
 # living with a permanently red gate.
-files = ["aw_analysis/tools/", "aw_analysis/client/"]
+files = ["aw_analysis/tools/", "aw_analysis/client/", "aw_analysis/data_sources/"]
 
 [[tool.mypy.overrides]]
 # Tool subclasses narrow execute(**kwargs) to named parameters (ticker,
