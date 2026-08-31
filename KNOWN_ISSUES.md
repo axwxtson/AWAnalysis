@@ -205,30 +205,6 @@ case across two runs where it contributed something the judge did not.
 
 Read judge reasoning as an assertion to verify, not as a finding.
 
-### Run artefacts record tool names, not tool results or arguments
-
-`sub_traces[].tool_calls` holds a list of tool names. The payload each
-tool returned, and the arguments it was called with, are recorded
-nowhere. Confirmed at `7cafaf5`: a curated BTC profile case stores
-`["get_crypto_price"]` and nothing else.
-
-This blocked three separate diagnoses in one session on 27 August. The
-judge's cost could only be estimated rather than derived, because the
-faithfulness rubric's context size is unreconstructible. The
-`profile_pepe_fallback` failure needed three live turns to distinguish a
-CoinGecko miss from a prompt change, because the artefact could not say
-which of two branches emitted `source=none`. The `news_tesla`
-faithfulness failure needed six, because the judge's reasoning quotes
-snippets that nothing else records.
-
-Roughly $0.47 of live turns to work around a field that is not written.
-That is the strongest argument on this list for a change that is
-otherwise easy to file as tidiness.
-
-**Resolution:** record tool results and arguments per call in the trace,
-at the same seam the cost ledger wants. Size is the open question; a
-truncation policy is probably needed rather than storing payloads whole.
-
 ---
 
 ## Code
@@ -352,27 +328,22 @@ looks right and the docstring overclaims. Block 4 pins the code.
 **Resolution.** Correct the docstring. Not urgent, no behavioural
 consequence.
 
-### No retry or backoff on the CoinGecko client
+### Data-source retries are recorded nowhere
 
-`aw_analysis/data_sources/coingecko.py` has no retry policy.
-`EVAL_RETRY_POLICY` and the custom logic in `client/retry.py` cover the
-Anthropic client only. Any `httpx` failure, and any empty search result,
-raises `CoinGeckoError`, which `asset_profile.py` converts into a
-payload with `source=none` by design.
+`AnthropicClient._with_retry` takes an `on_retry` callback and feeds
+`IterationUsage.retries` and `retry_wait_ms`, so a retried model call is
+visible in a run artefact. `request_json` has no equivalent. A live turn
+where a 429 fired and the retry saved it is indistinguishable from one
+where nothing went wrong.
 
-The consequence is that a transient and a genuine miss are
-indistinguishable downstream. `profile_pepe_fallback` asserts on
-`source=coingecko` and misses roughly one time in three, measured over
-three fresh turns on 27 August. It had passed in four prior runs, which
-under that rate has probability about 0.20, so the four passes were
-never evidence of stability.
+The consequence is that Stage 3 cannot be evidenced by a live run, and
+that is the reason no miss-rate improvement is claimed for it. The
+instrument that would show the retry firing does not exist, so a suite
+comparison could show an outcome and never the mechanism.
 
-The same shape exists on the Twelve Data path for equities fallback.
-
-**Resolution:** a bounded retry with backoff at the data-source seam,
-mirroring `client/retry.py`. Note that landing it changes the code state,
-so any suite comparison spanning the change needs both sides
-re-baselined; that is why it did not land inside Block 7.
+**Resolution.** Port the `on_retry` hook into `request_json` and surface
+data-source retries on the trace beside the model-call ones. A suite run
+would then carry the evidence rather than needing a separate experiment.
 
 ### `META` appears in both `EQUITY_SYMBOLS` and `EQUITY_NAMES`
 
@@ -470,6 +441,46 @@ point.
 ---
 
 ## Resolved
+
+### Run artefacts record tool names, not tool results or arguments — resolved 31 August 2026 (Block 9)
+
+Tool results were captured on `ToolCall.result` all along and read by the
+judge at `evals/grader/judge.py:159`, then dropped at serialisation. A
+committed faithfulness score therefore could not be reproduced from the
+artefact recording it: the verdict was written down and its evidence was
+not. Arguments were genuinely absent and needed a new field.
+
+`evals/serialise.py` now writes `result`, `arguments`, `success`,
+`error` and `duration_ms`, plus `result_bytes`, `result_sha256` and
+`result_truncated`, at all three write sites. Results are recorded whole.
+`RESULT_CAP` guards against an unbounded payload rather than setting a
+size policy, and when it fires the length and digest still describe the
+full string, so a capped record stays checkable against the original.
+
+`tool_calls` and `tools_called` keep their list-of-names shape because the
+deterministic grader and the DoS rubric read them. Both are now derived
+from the detail records, so no independent traversal exists to drift.
+
+### No retry or backoff on the CoinGecko client — resolved 31 August 2026 (Block 9)
+
+`aw_analysis/data_sources/retry.py` reuses `RetryPolicy`, `compute_delay`
+and `retry_after_seconds` from `client/retry.py` and adds an `httpx`
+classifier. All five call sites across both sources go through
+`request_json`, which runs `raise_for_status` inside the loop so the
+status is intact when the classifier sees it, and builds the domain error
+only once attempts are exhausted.
+
+404 is deliberately not retried. From the search endpoint it means the
+ticker does not exist, so retrying sleeps to reach the same answer.
+
+Two exclusions, both deliberate. Twelve Data signals rate limiting in the
+JSON body with HTTP 200, caught by `_raise_on_api_error` after parsing and
+therefore outside `request_json`, so body-level rate limits are still not
+retried. And no claim is made that the miss rate improved: the one in
+three above was an observation over three turns rather than a
+measurement, and three clean turns after the fix would occur about 30% of
+the time under that rate regardless. The retry is proven by tests at two
+levels, not by a live run.
 
 ### The crypto denominator said 24 — resolved 29 August 2026 (Block 8)
 
