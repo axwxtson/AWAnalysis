@@ -35,6 +35,7 @@ from evals.grader.types import (
     QueryClass,
     Severity,
 )
+from evals.serialise import tool_detail
 
 # Threshold for judge-as-gate. Below this on faithfulness or refusal
 # correctness, a case fails overall. Module 6 reference: "faithfulness
@@ -162,10 +163,16 @@ def _serialise_trace(turn_trace):
 
     Mirrors the shape used for top-level case records so sub-traces are
     inspectable in the same way as the parent case in the eval JSON.
+
+    tool_calls stays a list of names because graders read that shape.
+    tool_details carries the diagnostic record, and the names are derived
+    from it rather than built alongside it, so the two cannot disagree.
     """
+    details = [tool_detail(tc) for tc in turn_trace.tool_calls]
     return {
         "final_text": turn_trace.final_text,
-        "tool_calls": [tc.name for tc in turn_trace.tool_calls],
+        "tool_calls": [d["name"] for d in details],
+        "tool_details": details,
         "was_refusal": turn_trace.was_refusal,
         "stop_reason": turn_trace.stop_reason,
         "total_input_tokens": turn_trace.total_input_tokens,

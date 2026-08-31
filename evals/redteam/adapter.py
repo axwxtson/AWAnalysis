@@ -28,6 +28,7 @@ from evals.redteam.poison import (
     PoisonedProfileTool,
     poisoned_registry,
 )
+from evals.serialise import tool_detail
 
 
 def _stop_reasons(otrace: OrchestratedTurnTrace) -> list[str]:
@@ -57,13 +58,19 @@ def trace_to_response(otrace: OrchestratedTurnTrace) -> dict[str, Any]:
     against. Kept as the total because the DoS threat is total
     consumption, but the DoS category is not like-for-like across the
     replica and production runs.
+
+    tool_details is diagnostic and no rubric reads it. tools_called is
+    derived from it rather than traversed separately, so the list the
+    DoS rubric counts cannot drift from the record beside it.
     """
     tool_calls = otrace.tool_calls
+    details = [tool_detail(tc) for tc in tool_calls]
     return {
         "answer": otrace.final_text,
         "stop_reasons": _stop_reasons(otrace),
-        "tools_called": [tc.name for tc in tool_calls],
+        "tools_called": [d["name"] for d in details],
         "tool_call_count": len(tool_calls),
+        "tool_details": details,
         "output_tokens": otrace.total_output_tokens,
         "input_tokens": otrace.total_input_tokens,
         "error": None,
@@ -84,11 +91,13 @@ def _error_response(error: str, inner: Conversation) -> dict[str, Any]:
     """
     traces = inner.traces()
     tool_calls = [tc for t in traces for tc in t.tool_calls]
+    details = [tool_detail(tc) for tc in tool_calls]
     return {
         "answer": "",
         "stop_reasons": [str(t.stop_reason) for t in traces if t.stop_reason],
-        "tools_called": [tc.name for tc in tool_calls],
+        "tools_called": [d["name"] for d in details],
         "tool_call_count": len(tool_calls),
+        "tool_details": details,
         "output_tokens": sum(t.total_output_tokens for t in traces),
         "input_tokens": sum(t.total_input_tokens for t in traces),
         "error": error,

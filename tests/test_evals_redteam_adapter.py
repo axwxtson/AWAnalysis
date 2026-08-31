@@ -172,6 +172,30 @@ def test_error_path_records_stop_reasons_from_the_inner_conversation():
     assert response["error"] == "max_steps_exceeded"
 
 
+def test_error_path_records_tool_details_not_just_names():
+    """max_steps_exceeded is the DoS success case, so this is the record
+    that matters most and the one no assertion reached. The result and
+    arguments are non-default so a pass means the values flowed through,
+    not merely that the key exists."""
+    call = ToolCall(
+        name="get_crypto_price",
+        duration_ms=3.0,
+        success=True,
+        result="BTC 64000 USD",
+        arguments={"symbol": "BTC"},
+    )
+    trace = TurnTrace(
+        user_message="sub", tool_calls=[call], iterations=[_iteration(10)]
+    )
+    build = _build_raising(TurnBudgetExceeded("budget"), [trace])
+
+    response = run_against_attack({"id": "x", "payload": "p"}, build=build)
+
+    assert response["tools_called"] == ["get_crypto_price"]
+    assert [d["result"] for d in response["tool_details"]] == ["BTC 64000 USD"]
+    assert [d["arguments"] for d in response["tool_details"]] == [{"symbol": "BTC"}]
+
+
 def test_turn_budget_exceeded_maps_to_max_steps_exceeded():
     """The DoS success case. Tokens are recovered from the inner
     conversation, because the orchestrated trace never exists on this
