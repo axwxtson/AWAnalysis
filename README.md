@@ -7,6 +7,14 @@ English; the agent decomposes the query by intent, routes per-intent to the
 appropriate model and tools, answers with explicit attribution, and emits a
 full observability trace to Langfuse.
 
+The agent is the smaller half of this repository. The larger half is a
+calibrated evaluation harness that measures whether it behaves: a golden
+suite partitioned across three asset classes, an adversarial suite spanning
+injection, jailbreak, exfiltration, boundary and DoS, an LLM judge
+calibrated against hand-graded pairs before it is allowed to gate anything,
+and a sha256 of the rendered prompt on every run artefact so a result can
+never drift away from the prompt that produced it.
+
 Built as a portfolio piece, applying patterns from an 8-module AI Systems
 Engineering programme (see [axwxtson/ai-systems-engineering](https://github.com/axwxtson/ai-systems-engineering)).
 
@@ -17,11 +25,6 @@ module. CI runs ruff, mypy, the test suite, and a keyless import check
 on every push and pull request. Eval runs are manual and deliberately
 not in CI: they cost money and need credentials the pipeline does not
 have.
-
-Note the scope honestly. mypy runs on a ratcheted allowlist rather than
-the whole package, and the 224 unit tests cover the agent loop, the
-client, the graders and the red-team harness rather than the package as
-a whole. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 | Stage | Module | What it adds |
 |-------|--------|--------------|
@@ -36,6 +39,12 @@ a whole. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 | 9 | Cross-asset expansion | Equities as a first-class asset class: symbol→class registry, `get_equity_price`, per-`(class,intent)` tool-choice routing, per-asset-class eval suites |
 | 10 | MCP server | The orchestrated agent exposed over Model Context Protocol (FastMCP, stdio): one tool, 20 profile resources, one prompt template |
 
+## What was measured
+
+Current baseline (v2.7.0, 27 August 2026): **crypto 22/23, equities
+15/16, general 6/6**. Committed run artefacts under `evals/results/` are
+the source of truth for every figure quoted here.
+
 The golden set is 39 cases (23 crypto, 16 equities), partitioned by asset
 class under `evals/golden/{crypto,equities}/` and run independently via
 `--asset-class`; results route to `evals/results/<class>/`. Asset-class
@@ -45,9 +54,14 @@ combined-tools) are shared across both. The cross-asset comparison case
 (`price_compare_apple_btc`) is a permanent guard that a single mixed-class
 query fires both class price tools in one turn.
 
-Current baseline (v2.7.0, 27 August 2026): **crypto 22/23, equities
-15/16**. Committed run artefacts under `evals/results/` are the source
-of truth for every figure quoted here.
+A third suite, `evals/golden/general/`, holds six concept cases that name
+no asset. It exercises the system prompt's `No tool` clause, which the two
+asset suites never reach, since every case in them either expects a tool
+or expects a refusal. Each case derives from a named anchor in the scope
+clause as committed at v2.6.0, chosen to span that clause rather than to
+pass it. It is filed as its own dataset rather than as extra crypto cases
+so its count cannot merge with the asset-suite totals by accident.
+`--asset-class all` runs all three suites into three artefacts.
 
 Both single failures were investigated and neither was adjusted.
 `profile_pepe_fallback` asserts on a CoinGecko `source` field and misses
@@ -94,6 +108,11 @@ twenty-two-attack cohort with two excluded as non-delivered. The suite
 has grown twice since, so it is not comparable with the numbers above.
 Any rate is meaningless without the tie-break rule quoted beside it.
 
+Note the scope of the automated checks honestly. mypy runs on a ratcheted
+allowlist rather than the whole package, and the 224 unit tests cover the
+agent loop, the client, the graders and the red-team harness rather than
+the package as a whole. Both are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
 ## What it does today
 
 The agent answers cross-asset market questions — **cryptocurrencies and
@@ -122,8 +141,7 @@ The asset profile tool returns a `source` field in its results
 (`"curated"`, `"coingecko"`, `"twelvedata"`, or `"none"`), and the agent
 attributes provenance accordingly — "from our research" vs. "according to
 CoinGecko" vs. "per Twelve Data's reference data" — rather than presenting
-all sources as equivalent.rding to CoinGecko"
-— rather than presenting all sources as equivalent.
+all sources as equivalent.
 
 For compound queries (e.g. "What's BTC trading at and what's the latest
 news on it?"), a classifier decomposes the query into single-intent
@@ -145,8 +163,8 @@ grade every case in parallel:
   usage). Fast, reproducible, brittle to paraphrase by design.
 - **LLM-as-judge** — faithfulness and relevance scoring of the final
   answer against the tool results captured in the trace. Calibrated
-  against a 12-pair human-graded reference set; bias-tested for
-  position and length effects.
+  against a 16-pair human-graded reference set, every pair recorded
+  individually; bias-tested for position and length effects.
 
 The judge is calibrated before any eval run gates on its scores. The
 calibration pass measures exact agreement, ±1 agreement, direction
@@ -156,7 +174,8 @@ explicit thresholds.
 Golden dataset: per-asset-class suites under `evals/golden/{crypto,equities}/`
 — **23 crypto + 16 equity cases** across six shared query classes (price,
 profile via curated retrieval, profile via fallback, news, refusal,
-combined-tools). Every case has an explicit rationale.
+combined-tools). Every case has an explicit rationale. The third suite of
+concept cases is described under "What was measured".
 
 ```bash
 # Calibrate the judge (required once per rubric version)
@@ -256,7 +275,7 @@ flowchart TD
 
 ## Components
 
- **`aw_analysis/agent/`** — `Conversation` (stateful), `TurnTrace`,
+- **`aw_analysis/agent/`** — `Conversation` (stateful), `TurnTrace`,
   `ToolCall`, agent loop, error types, `OrchestratedConversation`
   (Stage 7), `Decomposer` (Stage 7)
 - **`aw_analysis/client/`** — Anthropic SDK wrapper
