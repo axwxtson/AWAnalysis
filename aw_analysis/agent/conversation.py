@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from aw_analysis.agent.errors import TurnBudgetExceeded
@@ -548,12 +548,13 @@ class Conversation:
         for tc in reversed(trace.tool_calls):
             if tc.name == "web_search":
                 citation_block = self._render_citations(snippets)
-                # ToolCall is frozen; replace it with an updated copy.
-                updated = ToolCall(
-                    name=tc.name,
-                    duration_ms=tc.duration_ms,
-                    success=tc.success,
-                    error=tc.error,
+                # ToolCall is frozen, so this rebuilds it. replace() rather
+                # than naming each field: a field-by-field rebuild silently
+                # drops any field added to ToolCall later, and the drop would
+                # surface as a missing value in a run artefact long after the
+                # commit that caused it.
+                updated = replace(
+                    tc,
                     result=f"{tc.result}\n\n--- Cited snippets ---\n{citation_block}",
                 )
                 idx = trace.tool_calls.index(tc)
