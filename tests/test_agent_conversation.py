@@ -104,12 +104,14 @@ class _RecordingClient:
         self._responses = list(responses)
         self.tool_choices: list[Any] = []
         self.message_lists: list[list[Any]] = []
+        self.systems: list[Any] = []
 
     def count_tokens(self, **_: Any) -> int:
         return 0
 
     def create(self, **kwargs: Any) -> Any:
         self.tool_choices.append(kwargs.get("tool_choice"))
+        self.systems.append(kwargs.get("system"))
         # Copied, not referenced. Conversation mutates one message list
         # in place across iterations, so recording the reference would
         # give every entry the final state and the pause_turn assertion
@@ -144,6 +146,22 @@ def _conversation(client: Any) -> Conversation:
 
 
 # --- send -> _run_loop -> client.create -------------------------------
+
+
+def test_the_system_prompt_is_sent_as_a_cached_block() -> None:
+    """A breakpoint leaves no trace in the response, and an undersized
+    or missing one produces no error, so the outgoing request is the
+    only place this can be checked without spending money.
+    """
+    response = _Response("end_turn", [_Block(type="text", text="d", citations=None)])
+    client = _RecordingClient(response)
+
+    _conversation(client).send(PRICE_QUERY)
+
+    sent = client.systems[0]
+    assert isinstance(sent, list)
+    assert sent[0]["text"] == "system"
+    assert sent[0]["cache_control"] == {"type": "ephemeral"}
 
 
 def test_cache_counts_from_the_usage_block_reach_the_trace() -> None:

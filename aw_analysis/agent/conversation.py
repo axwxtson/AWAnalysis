@@ -35,6 +35,7 @@ from aw_analysis.config import (
     cost_for,
     get_model_config,
 )
+from aw_analysis.prompts.caching import cacheable_system
 from aw_analysis.tools.base import ToolRegistry
 
 # Refusal-pattern detection. We don't try to be smart here; we look
@@ -210,7 +211,7 @@ class Conversation:
             t0 = time.perf_counter()
             response = self.client.create(
                 config=config,
-                system=self.system_prompt,
+                system=cacheable_system(self.system_prompt),
                 messages=self._messages,
                 tools=self.tools.to_anthropic_params(),
                 tool_choice=tool_choice,
