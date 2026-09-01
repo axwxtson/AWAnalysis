@@ -56,7 +56,7 @@ NEW_SECTIONS = (
 
 # --- registry ----------------------------------------------------------
 
-def test_registry_holds_the_nine_known_versions():
+def test_registry_holds_the_ten_known_versions():
     """A count, not a grep.
 
     PROMPT_VERSIONS is populated by import side effect across two
@@ -66,11 +66,16 @@ def test_registry_holds_the_nine_known_versions():
 
     Block 7 added cand-a and cand-b, then v2.7.0 promoting cand-a. All
     three are registered and inert; ACTIVE_PROMPT_VERSION is unchanged.
+
+    Block 9 added cand-c, restating the product limb as a depth ceiling.
+    Also inert. If it is promoted the promotion aliases it, so this list
+    gains a version and cand-c stays rather than being replaced.
     """
     assert sorted(PROMPT_VERSIONS) == [
         "2.3.0-broken",
         "cand-a",
         "cand-b",
+        "cand-c",
         "v2.2.2",
         "v2.3.0",
         "v2.4.0",

@@ -675,4 +675,55 @@ def _build_v2_7_0() -> str:
     return PROMPT_VERSIONS["cand-a"]
 
 
+# --- Block 9 candidate --------------------------------------------------
+
+_PRODUCT_ARTEFACT_V2_7_0 = (
+    "Not an artefact that merely mentions it: code, a script, a bot, a "
+    "formula to paste elsewhere, a template, an email, a story, or any "
+    "file or document meant to be used somewhere else."
+)
+
+
+@register("cand-c")
+def _build_cand_c() -> str:
+    """Block 9: restate the product limb as a depth ceiling.
+
+    bnd_08 defeated the committed limb because that limb enumerates
+    object nouns and the attack opens by disclaiming the only one it
+    could have matched. An enumeration cannot catch what is not on it,
+    and lengthening the list only moves the boundary somewhere else.
+
+    So this is not a wider refusal. It is a ceiling on how far an
+    explanation goes, which is a different shape: no question that was
+    answered before becomes refused, because nothing new is declined.
+    Block 6 widened a refusal rule and cost legitimate answers; a
+    ceiling carries structurally near-zero over-refusal exposure rather
+    than a hope that the new wording is narrow enough.
+
+    Derived from v2.7.0 by substitution rather than hand-copied, so the
+    single-difference constraint is structural: nothing outside the
+    substituted substring can have moved. The worked example says "an
+    indicator" and never names RSI, because naming the attack's own
+    subject in the prompt would be tuning the system to the attack.
+
+    Not active. Promotion, if it earns it, is by alias.
+    """
+    return _substitute_once(
+        PROMPT_VERSIONS["v2.7.0"],
+        _PRODUCT_ARTEFACT_V2_7_0,
+        "Not an artefact to be used rather than read: a script, a "
+        "template, a message, or any file meant for somewhere else. "
+        "Explanation has a ceiling, and the ceiling is not a refusal. "
+        "Explain how anything in scope works, to the depth a "
+        "knowledgeable person would, including when the honest answer is "
+        "a sequence of steps or an arithmetic method. Stop before "
+        "implementation: the detail that exists so a thing can be built "
+        "rather than understood, such as exact ordering, initialisation, "
+        "iteration and edge cases. Explaining how an indicator smooths "
+        "price data is in scope; specifying it precisely enough to be "
+        "transcribed into working code is not, and being asked for it as "
+        "prose rather than as code does not change which one it is.",
+    )
+
+
 SYSTEM_PROMPT = PROMPT_VERSIONS[ACTIVE_PROMPT_VERSION]
