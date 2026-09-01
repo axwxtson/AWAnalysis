@@ -27,7 +27,7 @@ from aw_analysis.agent.recency import (
     has_recency_cue,
     looks_like_news_fabrication,
 )
-from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace
+from aw_analysis.agent.trace import IterationUsage, ToolCall, TurnTrace, cache_tokens
 from aw_analysis.client.anthropic_client import AnthropicClient
 from aw_analysis.config import (
     ModelConfig,
@@ -222,6 +222,7 @@ class Conversation:
             # Record iteration usage on the trace before doing
             # anything else, so even if subsequent code raises we
             # have a record of what happened.
+            cache_created, cache_read = cache_tokens(response.usage)
             trace.iterations.append(
                 IterationUsage(
                     task_type=task_type.value,
@@ -230,6 +231,8 @@ class Conversation:
                     max_tokens=config.max_tokens,
                     input_tokens=response.usage.input_tokens,
                     output_tokens=response.usage.output_tokens,
+                    cache_creation_input_tokens=cache_created,
+                    cache_read_input_tokens=cache_read,
                     stop_reason=response.stop_reason,
                     rationale=config.rationale,
                     duration_ms=elapsed_ms,
@@ -405,6 +408,7 @@ class Conversation:
 
         text = self._extract_text(response.content)
 
+        cache_created, cache_read = cache_tokens(response.usage)
         trace.iterations.append(
             IterationUsage(
                 task_type=TaskType.CONTEXT_SUMMARISATION.value,
@@ -413,6 +417,8 @@ class Conversation:
                 max_tokens=config.max_tokens,
                 input_tokens=int(response.usage.input_tokens),
                 output_tokens=int(response.usage.output_tokens),
+                cache_creation_input_tokens=cache_created,
+                cache_read_input_tokens=cache_read,
                 stop_reason=str(response.stop_reason),
                 rationale=config.rationale,
                 duration_ms=elapsed_ms,

@@ -56,10 +56,32 @@ class IterationUsage:
     duration_ms: int = 0  # Wall-clock time of the model call, populated by Conversation.
     cost_usd: float = 0.0 # Populated by Conversation, summed by TurnTrace
     retries: int = 0  # Client retry attempts for this iteration, 0 on the happy path.
+    # From the API usage block. Zero on an uncached call, and zero on the
+    # intent-classifier iteration, which is reconstructed from an estimate
+    # rather than read from a response and so has no usage block at all.
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
     retry_wait_ms: int = 0  # Time spent sleeping between those attempts.
     # duration_ms includes retry_wait_ms: the sleeps happen inside the
     # client.create call that Conversation times. Subtract to get the
     # real model latency, or a retried iteration reads as a slow one.
+
+
+def cache_tokens(usage: Any) -> tuple[int, int]:
+    """Cache creation and read counts from an API usage block.
+
+    Neither field can be read directly. They are absent on responses from
+    an SDK predating prompt caching, and None rather than 0 on a call
+    that used no cache, so `int(usage.cache_read_input_tokens)` raises on
+    exactly the path that is currently the only path.
+
+    Returned as a pair because recording one without the other says
+    nothing: a read of zero means a miss only if a creation is non-zero,
+    and means caching is off if both are.
+    """
+    created = getattr(usage, "cache_creation_input_tokens", None)
+    read = getattr(usage, "cache_read_input_tokens", None)
+    return int(created or 0), int(read or 0)
 
 
 @dataclass

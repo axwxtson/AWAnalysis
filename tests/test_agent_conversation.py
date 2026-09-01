@@ -146,6 +146,27 @@ def _conversation(client: Any) -> Conversation:
 # --- send -> _run_loop -> client.create -------------------------------
 
 
+def test_cache_counts_from_the_usage_block_reach_the_trace() -> None:
+    """The stub's usage omits both cache fields, which is the uncached
+    case and the only case running today. Setting them here proves the
+    values are read off the response and carried onto the trace, which
+    an assertion of (0, 0) could not: that passes just as well when the
+    fields are never read at all.
+    """
+    response = _Response("end_turn", [_Block(type="text", text="done", citations=None)])
+    response.usage = _Block(
+        input_tokens=1,
+        output_tokens=1,
+        cache_creation_input_tokens=2609,
+        cache_read_input_tokens=0,
+    )
+
+    trace = _conversation(_RecordingClient(response)).send(PRICE_QUERY)
+
+    assert trace.iterations[0].cache_creation_input_tokens == 2609
+    assert trace.iterations[0].cache_read_input_tokens == 0
+
+
 def test_forced_tool_is_sent_on_the_first_call_only() -> None:
     """The severed line, and the reason forcing must stop.
 

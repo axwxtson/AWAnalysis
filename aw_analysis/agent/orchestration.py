@@ -38,7 +38,7 @@ from aw_analysis.agent.decomposer import (
     QueryPlan,
     SubQuery,
 )
-from aw_analysis.agent.trace import IterationUsage, TurnTrace
+from aw_analysis.agent.trace import IterationUsage, TurnTrace, cache_tokens
 from aw_analysis.asset_registry import AssetClass, AssetRegistry, SymbolDisambiguator
 from aw_analysis.client.anthropic_client import AnthropicClient
 from aw_analysis.config import ModelConfig, TaskType, cost_for, get_model_config
@@ -572,6 +572,7 @@ class OrchestratedConversation:
                 break
 
         usage = response.usage
+        cache_created, cache_read = cache_tokens(usage)
         iteration = IterationUsage(
             task_type=config.rationale and TaskType.FINAL_SYNTHESIS.value,
             model=config.model,
@@ -579,6 +580,8 @@ class OrchestratedConversation:
             max_tokens=config.max_tokens,
             input_tokens=usage.input_tokens,
             output_tokens=usage.output_tokens,
+            cache_creation_input_tokens=cache_created,
+            cache_read_input_tokens=cache_read,
             stop_reason=response.stop_reason,
             rationale=config.rationale,
             duration_ms=elapsed_ms,
