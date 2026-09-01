@@ -29,6 +29,19 @@ from aw_analysis.tools import default_registry
 
 console = Console()
 
+def _format_cache(iterations: list) -> str:
+    """Cache creation and read totals across a turn.
+
+    Both are printed even when zero. A read of zero beside a non-zero
+    creation is a miss; both zero means caching is not firing at all.
+    Those are different findings, and a line suppressed when empty would
+    conflate them with each other and with the instrument being absent.
+    """
+    created = sum(i.cache_creation_input_tokens for i in iterations)
+    read = sum(i.cache_read_input_tokens for i in iterations)
+    return f"cache: created={created} read={read}"
+
+
 def _format_tools(tool_calls: list) -> str:
     """Render the per-tool summary fragment of the tool-activity line.
 
@@ -71,7 +84,11 @@ def _render_tool_activity(trace: object) -> str:
         cfg_summary = "cfg=" + "→".join(i.task_type for i in trace.iterations)
         if trace.safety_net_fired:
             cfg_summary += " [safety_net_fired]"
-        return f"{prefix}{tool_summary} | {token_summary} | {cost_summary} | {cfg_summary}"
+        cache_summary = _format_cache(trace.iterations)
+        return (
+            f"{prefix}{tool_summary} | {token_summary} | {cost_summary} "
+            f"| {cache_summary} | {cfg_summary}"
+        )
 
     # Legacy TurnTrace path (preserves existing behaviour for tests)
     tool_summary = _format_tools(trace.tool_calls)
@@ -81,7 +98,8 @@ def _render_tool_activity(trace: object) -> str:
     cfg_summary = "cfg=" + "→".join(i.task_type for i in trace.iterations)
     if trace.context_summarised:
         cfg_summary += " *"
-    return f"{tool_summary} | {token_summary} | {cfg_summary}"
+    cache_summary = _format_cache(trace.iterations)
+    return f"{tool_summary} | {token_summary} | {cache_summary} | {cfg_summary}"
 
 
 def _handle(user_message: str, conversation: Conversation) -> None:
