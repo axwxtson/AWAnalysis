@@ -328,6 +328,32 @@ looks right and the docstring overclaims. Block 4 pins the code.
 **Resolution.** Correct the docstring. Not urgent, no behavioural
 consequence.
 
+### The context-budget guard has never run
+
+`_enforce_context_budget` in `aw_analysis/agent/conversation.py` calls
+`count_tokens` at line 340 with `tools=self.tools.to_anthropic_params()`.
+That list includes `web_search_20250305`, and the endpoint rejects server
+tools outright: HTTP 400, `invalid_request_error`, "Server tools are not
+supported in the count_tokens endpoint". The bare `except Exception` on
+the following line swallows it.
+
+The guard therefore raises before computing anything, on every turn, and
+has done since the server tool was registered. It is not mis-tuned or too
+permissive. It has never executed, and nothing reports this because the
+except is bare and the method returns normally.
+
+Found on 31 August 2026 while measuring prompt caching, not by a test.
+The same shape as the Stage 9 forced-tool path: a severed branch under a
+green suite, where the suite stays green because the behaviour it asserts
+is produced by something else.
+
+**Resolution.** Filter server tools out of the `count_tokens` argument
+only, never the request, and narrow the except so a 400 is not
+indistinguishable from a network failure. The count will then still
+understate the real prefix by whatever the server tool injects, measured
+at 6,814 tokens on 31 August, so the budget threshold itself needs
+revisiting rather than the call merely being re-enabled.
+
 ### Data-source retries are recorded nowhere
 
 `AnthropicClient._with_retry` takes an `on_retry` callback and feeds
