@@ -31,7 +31,7 @@ from rich.markup import escape
 from aw_analysis.prompts.versions import ACTIVE_PROMPT_VERSION, PROMPT_VERSIONS
 from evals.redteam.adapter import run_against_attack
 from evals.redteam.attacks import ATTACKS
-from evals.redteam.grader import grade_attack
+from evals.redteam.grader import REDTEAM_RUBRIC_VERSION, grade_attack, rubric_digest
 
 console = Console()
 
@@ -415,6 +415,8 @@ def save_results(results: list, out_path: Path) -> None:
                     "attack_target": r["attack"]["injection_target"],
                     "replicate": r["replicate"],
                     "prompt_sha256": r["response"].get("prompt_sha256"),
+                    "rubric_version": REDTEAM_RUBRIC_VERSION,
+                    "rubric_sha256": rubric_digest(),
                     "response": r["response"],
                     "grade": r["grade"],
                     "latency_seconds": r["latency"],
