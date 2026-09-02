@@ -1,0 +1,1633 @@
+{
+  "run_id": "20260902T174304",
+  "prompt_version": "v2.7.0",
+  "prompt_sha256": "2be3bd509abc028b3325fe351361c6609ae73f3775986ac67b88969561e79458",
+  "asset_class": "equities",
+  "judge_rubric_version": "judge-v1.1",
+  "langfuse_project_url": null,
+  "summary": {
+    "total": 16,
+    "passed": 15,
+    "pass_rate": 0.938,
+    "by_class": {
+      "price": {
+        "total": 4,
+        "passed": 4,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 5.0
+      },
+      "profile_curated": {
+        "total": 3,
+        "passed": 3,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 5.0
+      },
+      "profile_fallback": {
+        "total": 2,
+        "passed": 2,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 2.0
+      },
+      "news": {
+        "total": 2,
+        "passed": 1,
+        "mean_faithfulness": 3.5,
+        "mean_relevance": 5.0
+      },
+      "refusal": {
+        "total": 3,
+        "passed": 3,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 5.0
+      },
+      "combined_tools": {
+        "total": 2,
+        "passed": 2,
+        "mean_faithfulness": 5.0,
+        "mean_relevance": 4.5
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "price_msft",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_equity_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price']"
+        },
+        {
+          "kind": "output_prefix",
+          "target": "^[^\\n]*\\$?[\\d,]+",
+          "severity": "p0",
+          "passed": true,
+          "detail": "prefix matched on 'MSFT is at $494.78 (-1.25% today).\n\nVolume: 219,637 shares....'"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All claims (price $494.78, -1.25% change, volume 219,637) are directly supported by the tool result, with the percentage rounded from -1.24546%.",
+        "relevance_reason": "Directly provides the requested MSFT price in the first sentence with relevant context.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 934,
+        "output_tokens": 95,
+        "iterations": 3,
+        "duration_ms": 8546.6,
+        "total_cost_usd": 0.002683
+      },
+      "decomposition": {
+        "original_query": "What's the price of MSFT?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "What's the price of MSFT?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "MSFT is at $494.78 (-1.25% today).\n\nVolume: 219,637 shares.",
+          "tool_calls": [
+            "get_equity_price"
+          ],
+          "tool_details": [
+            {
+              "name": "get_equity_price",
+              "arguments": {
+                "ticker": "MSFT"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 605.2076669875532,
+              "result": "{\n  \"ticker\": \"MSFT\",\n  \"name\": \"Microsoft Corporation Common Stock\",\n  \"exchange\": \"NASDAQ\",\n  \"price\": 494.78,\n  \"currency\": \"USD\",\n  \"change_pct\": -1.24546,\n  \"volume\": 219637,\n  \"datetime\": \"2026-09-02\"\n}",
+              "result_bytes": 208,
+              "result_sha256": "c5f6e23807ee354622edd22313b1245233cef7147b8f3214e20fa34276f6b496",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 918,
+          "total_output_tokens": 65,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-haiku-4-5-20251001",
+              "input_tokens": 431,
+              "output_tokens": 35,
+              "cost_usd": 0.000606,
+              "duration_ms": 855
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 487,
+              "output_tokens": 30,
+              "cost_usd": 0.001911,
+              "duration_ms": 1518
+            }
+          ]
+        }
+      ],
+      "final_text": "MSFT is at $494.78 (-1.25% today).\n\nVolume: 219,637 shares.",
+      "langfuse_trace_id": "0f5e0505dcff428ebbd0638fb1d2bb31",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "price_tsla",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_equity_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price']"
+        },
+        {
+          "kind": "output_prefix",
+          "target": "^[^\\n]*\\$?[\\d,]+",
+          "severity": "p0",
+          "passed": true,
+          "detail": "prefix matched on 'TSLA is at $352.31 (-1.06% today).\n\nVolume: 365K shares....'"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All claims (ticker, price $352.31, change -1.06%, volume 365K) are directly supported by the tool result.",
+        "relevance_reason": "Directly provides the requested Tesla stock price in the first sentence with relevant trading details.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 924,
+        "output_tokens": 93,
+        "iterations": 3,
+        "duration_ms": 8334.2,
+        "total_cost_usd": 0.002635
+      },
+      "decomposition": {
+        "original_query": "What is Tesla trading at?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "What is Tesla trading at?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "TSLA is at $352.31 (-1.06% today).\n\nVolume: 365K shares.",
+          "tool_calls": [
+            "get_equity_price"
+          ],
+          "tool_details": [
+            {
+              "name": "get_equity_price",
+              "arguments": {
+                "ticker": "TSLA"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 372.2599159809761,
+              "result": "{\n  \"ticker\": \"TSLA\",\n  \"name\": \"Tesla, Inc.\",\n  \"exchange\": \"NASDAQ\",\n  \"price\": 352.305,\n  \"currency\": \"USD\",\n  \"change_pct\": -1.062933,\n  \"volume\": 365198,\n  \"datetime\": \"2026-09-02\"\n}",
+              "result_bytes": 187,
+              "result_sha256": "540249ed87d61253055ebb9ad2aa50fa405eaaf3c7b7045f268d57863bf31068",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 911,
+          "total_output_tokens": 63,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-haiku-4-5-20251001",
+              "input_tokens": 428,
+              "output_tokens": 35,
+              "cost_usd": 0.000603,
+              "duration_ms": 1052
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 483,
+              "output_tokens": 28,
+              "cost_usd": 0.001869,
+              "duration_ms": 1461
+            }
+          ]
+        }
+      ],
+      "final_text": "TSLA is at $352.31 (-1.06% today).\n\nVolume: 365K shares.",
+      "langfuse_trace_id": "d886352af06629b7f9c8c242d887ae7f",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "price_equity_long_tail",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_equity_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price']"
+        },
+        {
+          "kind": "output_prefix",
+          "target": "^[^\\n]*\\$?[\\d,]+",
+          "severity": "p0",
+          "passed": true,
+          "detail": "prefix matched on 'ORCL is at $144.53 (+2.27% today).\n\nVolume: 332.9K shares....'"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All claims (price $144.53, change +2.27%, volume 332.9K) are directly supported by the tool result.",
+        "relevance_reason": "Directly provides the requested stock price in the first sentence with relevant additional context.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 930,
+        "output_tokens": 99,
+        "iterations": 3,
+        "duration_ms": 8500.5,
+        "total_cost_usd": 0.002705
+      },
+      "decomposition": {
+        "original_query": "What's the price of Oracle stock?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "What's the price of Oracle stock?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "ORCL is at $144.53 (+2.27% today).\n\nVolume: 332.9K shares.",
+          "tool_calls": [
+            "get_equity_price"
+          ],
+          "tool_details": [
+            {
+              "name": "get_equity_price",
+              "arguments": {
+                "ticker": "ORCL"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 352.0274590118788,
+              "result": "{\n  \"ticker\": \"ORCL\",\n  \"name\": \"Oracle Corporation\",\n  \"exchange\": \"NYSE\",\n  \"price\": 144.525,\n  \"currency\": \"USD\",\n  \"change_pct\": 2.2679,\n  \"volume\": 332879,\n  \"datetime\": \"2026-09-02\"\n}",
+              "result_bytes": 189,
+              "result_sha256": "c85330a70b3faabab7228b3aaa44ba75b14d0ad833f6f3a952c7a9db187c3e4a",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 915,
+          "total_output_tokens": 67,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-haiku-4-5-20251001",
+              "input_tokens": 430,
+              "output_tokens": 36,
+              "cost_usd": 0.00061,
+              "duration_ms": 691
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 485,
+              "output_tokens": 31,
+              "cost_usd": 0.0019199999999999998,
+              "duration_ms": 1763
+            }
+          ]
+        }
+      ],
+      "final_text": "ORCL is at $144.53 (+2.27% today).\n\nVolume: 332.9K shares.",
+      "langfuse_trace_id": "d0056402da91aacb930342fa1f857ec9",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "price_compare_apple_btc",
+      "class": "price",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_equity_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price', 'get_crypto_price']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "get_crypto_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price', 'get_crypto_price']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer (prices, percentages, volume, market cap) is directly supported by the tool results.",
+        "relevance_reason": "Directly provides the requested price comparison with relevant metrics for both assets, no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 1016,
+        "output_tokens": 247,
+        "iterations": 3,
+        "duration_ms": 12025.3,
+        "total_cost_usd": 0.004673
+      },
+      "decomposition": {
+        "original_query": "Compare Apple and Bitcoin prices",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "Compare Apple and Bitcoin prices"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "**AAPL**: $325.47 (+0.10% today, volume: 731.8K shares)  \n**BTC**: $77,332 (-0.21% in 24h, $1.55T market cap, $29.9B volume)\n\nBitcoin is down slightly while Apple is up marginally today. In absolute dollar terms, BTC trades at ~237x Apple's share price, though they're different asset classes with different unit economics.",
+          "tool_calls": [
+            "get_equity_price",
+            "get_crypto_price"
+          ],
+          "tool_details": [
+            {
+              "name": "get_equity_price",
+              "arguments": {
+                "ticker": "AAPL"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 1456.238915969152,
+              "result": "{\n  \"ticker\": \"AAPL\",\n  \"name\": \"Apple Inc.\",\n  \"exchange\": \"NASDAQ\",\n  \"price\": 325.465,\n  \"currency\": \"USD\",\n  \"change_pct\": 0.10303421,\n  \"volume\": 731805,\n  \"datetime\": \"2026-09-02\"\n}",
+              "result_bytes": 187,
+              "result_sha256": "2181546841839d9e9d68a72ee6d9126d795986889c87a5295329269ea42b4e58",
+              "result_truncated": false
+            },
+            {
+              "name": "get_crypto_price",
+              "arguments": {
+                "ticker": "BTC"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 196.24687504256144,
+              "result": "{\n  \"ticker\": \"BTC\",\n  \"id\": \"bitcoin\",\n  \"price\": 77332,\n  \"currency\": \"usd\",\n  \"change_24h_pct\": -0.20740546898305393,\n  \"market_cap\": 1552723394990.2927,\n  \"volume_24h\": 29932756903.516495\n}",
+              "result_bytes": 193,
+              "result_sha256": "09432091fe7b599481a16105df9f0bfaa3866d0dd96c5f1b1f775098367e20df",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1004,
+          "total_output_tokens": 213,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-haiku-4-5-20251001",
+              "input_tokens": 328,
+              "output_tokens": 106,
+              "cost_usd": 0.000858,
+              "duration_ms": 1535
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 676,
+              "output_tokens": 107,
+              "cost_usd": 0.003633,
+              "duration_ms": 3858
+            }
+          ]
+        }
+      ],
+      "final_text": "**AAPL**: $325.47 (+0.10% today, volume: 731.8K shares)  \n**BTC**: $77,332 (-0.21% in 24h, $1.55T market cap, $29.9B volume)\n\nBitcoin is down slightly while Apple is up marginally today. In absolute dollar terms, BTC trades at ~237x Apple's share price, though they're different asset classes with different unit economics.",
+      "langfuse_trace_id": "bf30cad84ad8450c9fbf8bd04d62ac06",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "profile_aapl_curated",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "output_contains",
+          "target": "Apple",
+          "severity": "p1",
+          "passed": true,
+          "detail": "found 'Apple' in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including founding year, products, services, founders, IPO date, ticker, exchange, and market cap milestones.",
+        "relevance_reason": "Directly answers what Apple is in the first sentence, then provides relevant supporting detail without digression.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 1335,
+        "output_tokens": 287,
+        "iterations": 3,
+        "duration_ms": 11873.9,
+        "total_cost_usd": 0.008008
+      },
+      "decomposition": {
+        "original_query": "What is Apple?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is Apple?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "Apple is a multinational technology company founded in 1976, best known for the iPhone, Mac, and a tightly integrated ecosystem of hardware, software, and services.\n\nThe company designs, manufactures, and markets consumer electronics including the iPhone, iPad, Mac, Apple Watch, and AirPods, alongside a services segment spanning the App Store, iCloud, Apple Music, and Apple Pay. Apple is vertically integrated, designing its own silicon (M-series and A-series chips) and operating systems.\n\nIt was founded in Cupertino, California by Steve Jobs, Steve Wozniak, and Ronald Wayne, and went public in December 1980. Apple trades on NASDAQ under the ticker AAPL and is one of the largest publicly traded companies in the world by market capitalisation \u2014 it was the first US company to reach $1 trillion (2018), later crossing $2tn and $3tn milestones.",
+          "tool_calls": [
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "Apple"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 446.0085830069147,
+              "result": "{\n  \"source\": \"curated\",\n  \"query\": \"Apple\",\n  \"top_score\": 0.762,\n  \"results\": [\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"What it is\",\n      \"score\": 0.762,\n      \"text\": \"## What it is\\n\\nApple designs, manufactures, and markets consumer electronics, software,\\nand online services. Its core products include the iPhone, iPad, Mac,\\nApple Watch, and AirPods, alongside a services segment spanning the App\\nStore, iCloud, Apple Music, and Apple Pay. The company is vertically\\nintegrated, designing its own silicon (the M-series and A-series chips)\\nand operating systems.\"\n    },\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"Notable context\",\n      \"score\": 0.736,\n      \"text\": \"## Notable context\\n\\nApple was the first US company to reach a $1 trillion market\\ncapitalisation (2018), later crossing $2tn and $3tn milestones. Revenue\\nis historically concentrated in the iPhone, with services increasingly\\ncentral to the growth story. It is one of the most heavily weighted\\nconstituents of the S&P 500 and NASDAQ-100, so its moves carry\\nindex-level influence.\"\n    },\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"headline\",\n      \"score\": 0.736,\n      \"text\": \"# Apple Inc. (AAPL)\\n\\nApple is a multinational technology company founded in 1976, best known\\nfor the iPhone, Mac, and a tightly integrated ecosystem of hardware,\\nsoftware, and services. It is one of the largest publicly traded\\ncompanies in the world by market capitalisation and trades on the NASDAQ\\nunder the ticker AAPL.\"\n    },\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"Key facts\",\n      \"score\": 0.728,\n      \"text\": \"## Key facts\\n\\n- **Sector**: Technology (Consumer Electronics)\\n- **Exchange**: NASDAQ\\n- **Ticker**: AAPL\\n- **Founded**: 1976, Cupertino, California\\n- **Founders**: Steve Jobs, Steve Wozniak, Ronald Wayne\\n- **IPO**: December 1980\"\n    }\n  ]\n}",
+              "result_bytes": 1910,
+              "result_sha256": "07bc5355178c745540871aeab29a19bc1b9daa599b882a537f422894dedde76a",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1324,
+          "total_output_tokens": 259,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 327,
+              "output_tokens": 55,
+              "cost_usd": 0.001806,
+              "duration_ms": 1600
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 997,
+              "output_tokens": 204,
+              "cost_usd": 0.006051,
+              "duration_ms": 4167
+            }
+          ]
+        }
+      ],
+      "final_text": "Apple is a multinational technology company founded in 1976, best known for the iPhone, Mac, and a tightly integrated ecosystem of hardware, software, and services.\n\nThe company designs, manufactures, and markets consumer electronics including the iPhone, iPad, Mac, Apple Watch, and AirPods, alongside a services segment spanning the App Store, iCloud, Apple Music, and Apple Pay. Apple is vertically integrated, designing its own silicon (M-series and A-series chips) and operating systems.\n\nIt was founded in Cupertino, California by Steve Jobs, Steve Wozniak, and Ronald Wayne, and went public in December 1980. Apple trades on NASDAQ under the ticker AAPL and is one of the largest publicly traded companies in the world by market capitalisation \u2014 it was the first US company to reach $1 trillion (2018), later crossing $2tn and $3tn milestones.",
+      "langfuse_trace_id": "3952e64df6100bcae557b0930430dc41",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "profile_nvda_curated",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        },
+        {
+          "kind": "output_contains",
+          "target": "GPU",
+          "severity": "p1",
+          "passed": true,
+          "detail": "found 'GPU' in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, with appropriate paraphrasing and synthesis of the provided information.",
+        "relevance_reason": "Directly addresses what NVIDIA is and what it does with clear, focused information and no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 1322,
+        "output_tokens": 296,
+        "iterations": 3,
+        "duration_ms": 11408.7,
+        "total_cost_usd": 0.008044
+      },
+      "decomposition": {
+        "original_query": "Tell me about NVIDIA and what it does",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is NVIDIA and what does it do?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "NVIDIA is a semiconductor company founded in 1993, best known for designing graphics processing units (GPUs) that power gaming, professional visualisation, and artificial intelligence. It trades on the NASDAQ under the ticker NVDA.\n\n**What it does:**  \nNVIDIA designs GPUs and the surrounding software ecosystem. Its chips accelerate workloads from real-time graphics to large-scale machine learning, and its CUDA software platform has become the de facto standard for general-purpose GPU computing. The company sells into gaming, data centres, professional visualisation, and automotive markets.\n\nThe long-term bet was that parallel computation on GPUs would matter far beyond graphics \u2014 and that bet paid off as machine learning came to rely on the massive parallelism GPUs provide. NVIDIA became one of the most valuable companies in the world on the back of demand for AI accelerators, with its data-centre business now rivaling or exceeding its historical gaming roots.",
+          "tool_calls": [
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "what does NVIDIA do"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 220.65116703743115,
+              "result": "{\n  \"source\": \"curated\",\n  \"query\": \"what does NVIDIA do\",\n  \"top_score\": 0.786,\n  \"results\": [\n    {\n      \"title\": \"NVIDIA Corporation (NVDA)\",\n      \"section\": \"What it is\",\n      \"score\": 0.786,\n      \"text\": \"## What it is\\n\\nNVIDIA designs GPUs and the surrounding software ecosystem. Its chips\\naccelerate workloads from real-time graphics to large-scale machine\\nlearning, and its CUDA software platform has become a de facto standard\\nfor general-purpose GPU computing. The company sells into gaming, data\\ncentres, professional visualisation, and automotive markets.\"\n    },\n    {\n      \"title\": \"NVIDIA Corporation (NVDA)\",\n      \"section\": \"Why it exists\",\n      \"score\": 0.781,\n      \"text\": \"## Why it exists\\n\\nNVIDIA's long bet was that parallel computation on GPUs would matter far\\nbeyond graphics. That bet paid off as machine learning came to rely on\\nthe massive parallelism GPUs provide, making NVIDIA a central supplier of\\nthe hardware behind modern AI. Its combination of chips and the CUDA\\nsoftware moat is core to its position.\"\n    },\n    {\n      \"title\": \"NVIDIA Corporation (NVDA)\",\n      \"section\": \"Notable context\",\n      \"score\": 0.746,\n      \"text\": \"## Notable context\\n\\nNVIDIA became one of the most valuable companies in the world on the back\\nof demand for AI accelerators, joining the small group of US firms to\\ncross multi-trillion-dollar valuations. Its data-centre business now\\nrivals or exceeds its historical gaming roots, and its results are widely\\nwatched as a barometer for AI infrastructure spending.\"\n    },\n    {\n      \"title\": \"NVIDIA Corporation (NVDA)\",\n      \"section\": \"headline\",\n      \"score\": 0.734,\n      \"text\": \"# NVIDIA Corporation (NVDA)\\n\\nNVIDIA is a semiconductor company founded in 1993, best known for the\\ngraphics processing units (GPUs) that power gaming, professional\\nvisualisation, and \\u2014 increasingly \\u2014 artificial intelligence. It trades on\\nthe NASDAQ under the ticker NVDA.\"\n    }\n  ]\n}",
+              "result_bytes": 1978,
+              "result_sha256": "7d2fd3200f128e76b8298bf90e902096f9a8ff9b9c9fc44bef0193c038013ede",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1306,
+          "total_output_tokens": 263,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 333,
+              "output_tokens": 59,
+              "cost_usd": 0.0018840000000000003,
+              "duration_ms": 1662
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 973,
+              "output_tokens": 204,
+              "cost_usd": 0.005979,
+              "duration_ms": 3722
+            }
+          ]
+        }
+      ],
+      "final_text": "NVIDIA is a semiconductor company founded in 1993, best known for designing graphics processing units (GPUs) that power gaming, professional visualisation, and artificial intelligence. It trades on the NASDAQ under the ticker NVDA.\n\n**What it does:**  \nNVIDIA designs GPUs and the surrounding software ecosystem. Its chips accelerate workloads from real-time graphics to large-scale machine learning, and its CUDA software platform has become the de facto standard for general-purpose GPU computing. The company sells into gaming, data centres, professional visualisation, and automotive markets.\n\nThe long-term bet was that parallel computation on GPUs would matter far beyond graphics \u2014 and that bet paid off as machine learning came to rely on the massive parallelism GPUs provide. NVIDIA became one of the most valuable companies in the world on the back of demand for AI accelerators, with its data-centre business now rivaling or exceeding its historical gaming roots.",
+      "langfuse_trace_id": "387180bb1139375b9f1d05f601a27c8b",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "profile_jpm_curated",
+      "class": "profile_curated",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including the bank's size, merger history, ticker symbol, business segments, and post-2008 crisis context.",
+        "relevance_reason": "Directly answers what JPMorgan is with comprehensive, on-topic information including its status, structure, history, and significance without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 1307,
+        "output_tokens": 320,
+        "iterations": 3,
+        "duration_ms": 11153.7,
+        "total_cost_usd": 0.008403
+      },
+      "decomposition": {
+        "original_query": "What is JPMorgan?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is JPMorgan?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "JPMorgan Chase is the largest bank in the United States by assets, formed in its modern shape by a 2000 merger but with roots stretching back over two centuries. It trades on the NYSE under the ticker JPM.\n\nJPMorgan Chase is a diversified financial-services firm operating across consumer and community banking, corporate and investment banking, commercial banking, and asset and wealth management. It serves retail customers, corporations, governments, and institutions, and is designated a globally systemically important bank.\n\nThe company was formed in 2000 via the merger of J.P. Morgan & Co. and Chase Manhattan. J.P. Morgan & Co. was founded by John Pierpont Morgan, with predecessor banks dating to 1799. The firm is headquartered in New York City.\n\nJPMorgan emerged from the 2008 financial crisis comparatively strong, acquiring distressed institutions, and is widely watched as a barometer of the US economy through its lending and consumer-spending data. Its annual shareholder letters are closely followed for commentary on markets and the economy.",
+          "tool_calls": [
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "JPMorgan"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 221.79487498942763,
+              "result": "{\n  \"source\": \"curated\",\n  \"query\": \"JPMorgan\",\n  \"top_score\": 0.79,\n  \"results\": [\n    {\n      \"title\": \"JPMorgan Chase & Co. (JPM)\",\n      \"section\": \"What it is\",\n      \"score\": 0.79,\n      \"text\": \"## What it is\\n\\nJPMorgan Chase is a diversified financial-services firm operating across\\nconsumer and community banking, corporate and investment banking,\\ncommercial banking, and asset and wealth management. It serves retail\\ncustomers, corporations, governments, and institutions, and is designated\\na globally systemically important bank.\"\n    },\n    {\n      \"title\": \"JPMorgan Chase & Co. (JPM)\",\n      \"section\": \"Notable context\",\n      \"score\": 0.782,\n      \"text\": \"## Notable context\\n\\nJPMorgan emerged from the 2008 financial crisis comparatively strong,\\nacquiring distressed institutions, and is widely watched as a barometer of\\nthe US economy through its lending and consumer-spending data. Its annual\\nshareholder letters are closely followed for commentary on markets and the\\neconomy.\"\n    },\n    {\n      \"title\": \"JPMorgan Chase & Co. (JPM)\",\n      \"section\": \"Key facts\",\n      \"score\": 0.781,\n      \"text\": \"## Key facts\\n\\n- **Sector**: Financials (Banking)\\n- **Exchange**: NYSE\\n- **Ticker**: JPM\\n- **Formed**: 2000, via the merger of J.P. Morgan & Co. and Chase Manhattan\\n- **Heritage**: J.P. Morgan & Co. founded by John Pierpont Morgan;\\n  predecessor banks date to 1799\\n- **Headquarters**: New York City\"\n    },\n    {\n      \"title\": \"JPMorgan Chase & Co. (JPM)\",\n      \"section\": \"headline\",\n      \"score\": 0.766,\n      \"text\": \"# JPMorgan Chase & Co. (JPM)\\n\\nJPMorgan Chase is the largest bank in the United States by assets, formed\\nin its modern shape by a 2000 merger but with roots stretching back over\\ntwo centuries. It trades on the NYSE under the ticker JPM.\"\n    }\n  ]\n}",
+              "result_bytes": 1816,
+              "result_sha256": "53a059e555a8399314e92f8fdbf959201c247bd2f0894c362ba089422df825db",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1293,
+          "total_output_tokens": 291,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 330,
+              "output_tokens": 58,
+              "cost_usd": 0.00186,
+              "duration_ms": 1789
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 963,
+              "output_tokens": 233,
+              "cost_usd": 0.006384,
+              "duration_ms": 3319
+            }
+          ]
+        }
+      ],
+      "final_text": "JPMorgan Chase is the largest bank in the United States by assets, formed in its modern shape by a 2000 merger but with roots stretching back over two centuries. It trades on the NYSE under the ticker JPM.\n\nJPMorgan Chase is a diversified financial-services firm operating across consumer and community banking, corporate and investment banking, commercial banking, and asset and wealth management. It serves retail customers, corporations, governments, and institutions, and is designated a globally systemically important bank.\n\nThe company was formed in 2000 via the merger of J.P. Morgan & Co. and Chase Manhattan. J.P. Morgan & Co. was founded by John Pierpont Morgan, with predecessor banks dating to 1799. The firm is headquartered in New York City.\n\nJPMorgan emerged from the 2008 financial crisis comparatively strong, acquiring distressed institutions, and is widely watched as a barometer of the US economy through its lending and consumer-spending data. Its annual shareholder letters are closely followed for commentary on markets and the economy.",
+      "langfuse_trace_id": "2dc0605cc342c7b51bea3689747db8b7",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "profile_oracle_fallback",
+      "class": "profile_fallback",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "output_contains",
+          "target": "Oracle",
+          "severity": "p1",
+          "passed": true,
+          "detail": "found 'Oracle' in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 2,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every claim in the answer is directly supported by tool result [2], which provides the exact information stated (name, ticker, exchange, instrument type, currency), and the answer correctly notes that a detailed profile isn't available as instructed by the tool note.",
+        "relevance_reason": "The answer provides minimal information (stock ticker and exchange) but fails to address the company's business, products, history, or operations that would constitute a meaningful company overview.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 1532,
+        "output_tokens": 227,
+        "iterations": 4,
+        "duration_ms": 15791.3,
+        "total_cost_usd": 0.007665
+      },
+      "decomposition": {
+        "original_query": "Tell me about Oracle the company",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is Oracle the company?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "According to Twelve Data's reference data, Oracle Corporation (ORCL) is a common stock traded on the NYSE in US dollars.\n\nA detailed profile isn't available for this asset through our sources. If you'd like to know Oracle's current stock price or have other questions about it, I'm happy to help with that.",
+          "tool_calls": [
+            "lookup_asset_profile",
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "Oracle company"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 1132.4876669677906,
+              "result": "{\"source\": \"none\", \"query\": \"Oracle company\", \"error\": \"Twelve Data: no match for 'Oracle company'\", \"note\": \"No curated profile or Twelve Data match for this equity. It may not exist or be too obscure to list.\"}",
+              "result_bytes": 212,
+              "result_sha256": "8524ff6f1e782da4c603f2088e5e87d9ce0e364e4b47815155639b36ca27f6f3",
+              "result_truncated": false
+            },
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "ORCL"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 1260.1767500163987,
+              "result": "{\n  \"source\": \"twelvedata\",\n  \"query\": \"ORCL\",\n  \"result\": {\n    \"name\": \"Oracle Corporation\",\n    \"symbol\": \"ORCL\",\n    \"exchange\": \"NYSE\",\n    \"instrument_type\": \"Common Stock\",\n    \"currency\": \"USD\",\n    \"country\": \"United States\"\n  },\n  \"note\": \"GROUNDING: this is the ONLY information available for this equity \\u2014 name, ticker, exchange, type, currency, country. No description, business summary, founding history, products, or financials are available. State only the fields above and attribute them to Twelve Data reference data. Do NOT add any business description, history, founders, or other details from memory \\u2014 if asked for more than these fields, say a detailed profile isn't available for this asset.\"\n}",
+              "result_bytes": 727,
+              "result_sha256": "635499d54f2997068968d6b8a173860e644640bf85e362d3d1948ab0cce97d1c",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1519,
+          "total_output_tokens": 196,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 56,
+              "cost_usd": 0.001827,
+              "duration_ms": 1690
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 457,
+              "output_tokens": 68,
+              "cost_usd": 0.002391,
+              "duration_ms": 1776
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 733,
+              "output_tokens": 72,
+              "cost_usd": 0.003279,
+              "duration_ms": 2705
+            }
+          ]
+        }
+      ],
+      "final_text": "According to Twelve Data's reference data, Oracle Corporation (ORCL) is a common stock traded on the NYSE in US dollars.\n\nA detailed profile isn't available for this asset through our sources. If you'd like to know Oracle's current stock price or have other questions about it, I'm happy to help with that.",
+      "langfuse_trace_id": "29a69ace121c1d1e1154011c5cba24cb",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "profile_shopify_fallback",
+      "class": "profile_fallback",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 2,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool result, and the answer correctly states that a detailed profile isn't available.",
+        "relevance_reason": "The answer provides stock market information about Shopify but fails to explain what Shopify actually is as a company or business, which is what the question asks.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 937,
+        "output_tokens": 167,
+        "iterations": 3,
+        "duration_ms": 12264.4,
+        "total_cost_usd": 0.005
+      },
+      "decomposition": {
+        "original_query": "What is Shopify?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is Shopify?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "According to Twelve Data's reference data, Shopify Inc. (SHOP) is a common stock listed on NASDAQ, trading in USD, and registered in the United States.\n\nA detailed profile isn't available for this asset in my current data sources. If you'd like to know about Shopify's current stock price or recent news, I can help with that.",
+          "tool_calls": [
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "Shopify"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 1449.4981250027195,
+              "result": "{\n  \"source\": \"twelvedata\",\n  \"query\": \"Shopify\",\n  \"result\": {\n    \"name\": \"Shopify Inc.\",\n    \"symbol\": \"SHOP\",\n    \"exchange\": \"NASDAQ\",\n    \"instrument_type\": \"Common Stock\",\n    \"currency\": \"USD\",\n    \"country\": \"United States\"\n  },\n  \"note\": \"GROUNDING: this is the ONLY information available for this equity \\u2014 name, ticker, exchange, type, currency, country. No description, business summary, founding history, products, or financials are available. State only the fields above and attribute them to Twelve Data reference data. Do NOT add any business description, history, founders, or other details from memory \\u2014 if asked for more than these fields, say a detailed profile isn't available for this asset.\"\n}",
+              "result_bytes": 726,
+              "result_sha256": "f63c94f2f177436538ad9e2d10991c58a384200a287f8cc08cba424a3fb2bfb1",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 924,
+          "total_output_tokens": 138,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 57,
+              "cost_usd": 0.0018419999999999999,
+              "duration_ms": 1824
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 595,
+              "output_tokens": 81,
+              "cost_usd": 0.003,
+              "duration_ms": 2976
+            }
+          ]
+        }
+      ],
+      "final_text": "According to Twelve Data's reference data, Shopify Inc. (SHOP) is a common stock listed on NASDAQ, trading in USD, and registered in the United States.\n\nA detailed profile isn't available for this asset in my current data sources. If you'd like to know about Shopify's current stock price or recent news, I can help with that.",
+      "langfuse_trace_id": "045fcf5ca174e104c6419955ead3861c",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "news_tesla",
+      "class": "news",
+      "passed": false,
+      "summary": "faithfulness=2 below threshold (3); reason='Multiple claims are unsupported or contradicted: the Cybercab event is stated as 'September 3 (tomorrow)' but tool results only say 'next week'; the May 2026 crash date and August 2026 recall date are future dates that contradict the current timeframe; no tool results mention these specific incidents or the 3 million vehicle recall figure.'",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['web_search']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 2,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Multiple claims are unsupported or contradicted: the Cybercab event is stated as 'September 3 (tomorrow)' but tool results only say 'next week'; the May 2026 crash date and August 2026 recall date are future dates that contradict the current timeframe; no tool results mention these specific incidents or the 3 million vehicle recall figure.",
+        "relevance_reason": "Directly addresses the question with current Tesla news across multiple relevant topics without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 448,
+        "output_tokens": 443,
+        "iterations": 2,
+        "duration_ms": 18189.1,
+        "total_cost_usd": 0.007649
+      },
+      "decomposition": {
+        "original_query": "What's the latest news on Tesla?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "news",
+            "text": "What's the latest news on Tesla?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "I'll search for the latest news on Tesla.Based on recent reports, here's the latest on Tesla:\n\n**Cybercab Launch Event** \u2014 Tesla has expanded its driverless Robotaxi service geofence in Austin, Texas, and has a Cybercab launch event scheduled for September 3 (tomorrow).\n\n**Regulatory Scrutiny** \u2014 Tesla is facing regulatory scrutiny over its Full Self-Driving (FSD) system while grappling with declining operating margins. Tesla reported to federal regulators that its driver-assist system was engaged when a Model 3 crashed at 104 mph in Clute, Texas in May 2026, highlighting ongoing transparency concerns around Autopilot and FSD crashes.\n\n**China Recall** \u2014 Tesla recalled 3 million vehicles in China over door handle safety and driver monitoring issues in August 2026.\n\n**Business Updates** \u2014 Tesla received its largest Semi order from Swedish transport service Einride for 500 units. Recent record deliveries highlight growth potential, though investor sentiment remains cautious.\n\nThe company continues to face a complex landscape balancing product launches with operational and regulatory challenges.",
+          "tool_calls": [
+            "web_search"
+          ],
+          "tool_details": [
+            {
+              "name": "web_search",
+              "arguments": {
+                "query": "Tesla news latest"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 0.0,
+              "result": "Get Updates | Tesla (https://www.tesla.com/updates): EvQGCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDJvjM6DcKdsW9chGjRoMT6gzYLI4QL2DgbgeIjAQ+Zg0Mz5E3wO4vKRhS08UgG7+8BHCR7zhINOtjIFDCIC8U/i/lg3XRMlVOW2ZIpcq9wUCusV6vGmm1RCpW0cowM+MwLj6gEEDiTQxrCNEgmrCV2BG1tHG23rVWU1M1HqBK/YARw6QjtL5Ik3r3XfXFCKWlUbY5DqCTVytNCNgnBVX9oRhMgaUW9Ls7EQzNcFMOfH8IOHfzvdzdV29Du01K/7XaNEaTw9/fg25CRdfh3GO82EpQayf2daYfvSaMk9LDF342FHnuWEMuSlRm7RQ5bMfPq4+86t56Imi3lpiZbKbMyBSSWakNYeAS63tYHshHlUTeO+/+3a3+7gznH3j5tqUPhFp5mRFL9HgS3PmwCJE8HhT1ZpBqeKHZbZ1Fbu+oDWd/zGd3YUjBYj+L1nFnNwXh1g0eG/CNx1MhUX8y8LSxlINRCVlLCGhZXhrUjT8GLRpiIooIn8F/6dLDwIXaMxwaWIlTpZ9CGk7vInWv3ajuy54Bk1JCzvmFZnHhKnsikukvS9FcMS6mXOiKNL65JADG/EzHlYpZv1CfZc84V523PZc7xA6jx58PoEBcFRkM00Q8ketkL/7mIKXfy4b14JQMnhGfnmFJxbcsFq+jxh+b+qFXTLiuQyfF7NsYia53HL5g1VDoGm8X73ZjA6sE+5LG7FFQXIcNFbGj0/l3HO3KHs6Tff7B5cM3GtRXIso6fVrtDodsXaasItH1RYDnHy9pQ5kpoCAphQxsGssRiv76rSL2q7AYT+Z80ucacmtXL9lKlzLHJXeHjFCNGTQmgCODseDLFaG+6zQ4rK8WP/35qIPxMpC/gClgS9+yw4sSl9HbIELP493sMfLKVUcA+VYxKYf2JB8rnBL6id+P4NKvWN1RVZ50bmGKJOgcx3ugjn3IaYDuZW9kXv4ANeKEr9MaAdP58VyziZatBZryAGOiogpaqLRx5qJ+9zup2IIibpNkha+h1Z4SENGPdMI7E49ORVqThXZk8xWCRDSuNb5mtuxn67ppuwz6ZIb+udqMpaHME70ChDuogKJc3GNyLPQVvJBwrXE+Q75xv7sCDo64naMeKeynhoYAw==\nTesla, Inc. (TSLA) Latest Stock News & Headlines - Yahoo Finance (https://finance.yahoo.com/quote/TSLA/news/): EpoJCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDOPVebtm5v6LScHL+BoMu33jzsBzU1l6mbvKIjBZPeOkf+QPrnBgQVMGk6wo+7NIU7FI3w5F87fA1da8H+bjX9KsxKOZx2/Hxddd6koqnQgyE5PqRnSc9JVMI5+c6bgIG0on8YaCnxQo7zaz0yzPm5Jq0hey4PFNhmEs1F2JmeawESGZ+PnY1uLILV6tk5/ACaFcJRWjTKRZVUVM3PtgwI2Qla6uXTlQ2VjmIGfPJQ/4ZyNVMBezTcXT99biI/hG7NsvUhft43NXzRPxFBESG1PaEfdIGXTEMass9kxxc2lvDjmJwwXRUdDtW6afSWvdSJNGa1U1crVgM2guBS6IJxw1wRlEkWxat7uuzqcVw8jlyVPyHHLq7HJZWW8hO2OgJcfaUOUqiA6RsKVQQFSoPvv1vUhgXL3HOiKyxD+C+XFdSvFLTA/i6xuZn5o6smPgdJre8edxHtRYZPSf8RXeVsABb8/1sfQp2eiGrTPtk6IE+zxqjw6BVLpfWvCO9+rSiPm/7BLAuvYNc4CziF9svlzQs9S3m2RMQgXgMy5ZsML0+GsM3oE4ZvDw+L8Gbb8D6BIAi1SDlbU3blJ8T9WfrD3cKndPqnB7eeRq8NlEgH63Y815KJwnZ3x3E4/CmPmY9+gh+tmbxPJN1uS1p9LZ94wGuvEZOmU6snHBbNC8aAMyKHi1wdaXAxkctHDR/rODaaW3L7XyvDL1mNhixMNNgKJg9TBmVd8tKcf+2hLplWbMTzCQnv7ONXBeL+oA4NoIbiprR/n51hV+GCqfGbntGVcDGeVT1MOEqkKzRbcHBIThueDEg0y678h7nziUxcPcKAKXswDxSaCd56izzmbhUG/iFwiPbxqrfb0k49ScSk3KvfaSDinBwmCVwuw+4gfaamoGSXOiY+BGN0RetHZBTPStKkJyuFha6QyzSr1pZY0wvcJHo2XI6Mju2GKpt8fSmgaZ63TIIyyW13Yn3yX4Uk5ZmEBL7kqf9BThLYKV3jMl/1kT3ns5LIE72GAKlwq6kt0xlPx7JAiWf1CuHpWIEjPezXo7moi0o1IJc0aVsnp2Z/WC1s1n//nEZyJdmrAGl8JvFKrR1oCGaywxnqAkX5Tj6b/4DvjMsjSigFmVrR5qpWO9yNWW1+e0sUyHjcCwiffmcl123JE/MIZzvpOw2PPt0fgry48ULp7Tv3xbHH2ILlt272ta5BNUv3oHncz6XN4XnvBgFNM5SNGajewqcYb3gYN2//eFdcwwklLBusci7TnBIEBH4YjOYxbXFas1Azs7iMksKk48mHoAtgkI6cQYKQr0eCk709h4GiFdyY32r3ONwewDH001MHkGRh4hG+xG6vLSBYjGgy2zLji6DnCw9Y0/pL3a3l/fYtvXVmjteTmQhJLZAAsiRxX4xUsmkjgQvXtRDKdU0FYgtf+uAdu/dGiU7a9qpXVIBbojvB4b51bDPGMv4zzqJ5uB4e9s4YIWmpjns+YQW232SBvMNBEpFB0iN45HFus5uKIYAw==\nTesla news - Today\u2019s latest updates - CBS News (https://www.cbsnews.com/tag/tesla/): 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\nTSLA: Tesla Inc - Stock Price, Quote and News - CNBC (https://www.cnbc.com/quotes/TSLA): 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\nTesla: Current and upcoming models, prices, specs, and more | Electrek (https://electrek.co/guides/tesla/): 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\nTesla News, Tips, Rumors, and Reviews (https://www.teslarati.com/): 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\nTesla News and Reviews | InsideEVs (https://insideevs.com/tesla/): EqAICioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDHlikUrXmhzW2YR0fBoMhqz0B+CxaOIJh2+yIjAmvFKYSBCyziVq63+AOSFk4Hx/5UFnf4m5FSIJAgy4m/gDO5gsXMEcCwl4h5Ph3ssqoweXBsYZied3iSECRheieaJZmq3A4Zifi9M5AVA5AwEEgRRxfryNMheuBHPGKkQJCHHCc+KQ+cP1l6DptCsgnjTzYMd/mXRhC+A9jScIXIXSnjk5CTg+tLA2jZLcPZay1vAQdsbeW6FcV9OfOtkuODiADg7CL0Bl3VRJApjPSgrDe7Tt/HdddXBMJfVqR4dQ9O/spwmbxXCJygZKg+cbddAhmH0Q3YDV5arm5ISU9TWElzpbvR2Ul1ALjOtpX++OKSe2cuqnryX+BlmmkxoV9/VUB2A2Ez+p9uz32+do5A3Tbnk7bXqUYaD2GcJiILP2SOprQ0hWIKn0QkEqYVlKaUme5jdYirV0jOMtxYRWXxYes53Y/HEf1VhbzIeQJnr/pHRbsanfXZU2lx7c146bjRRKLqtkBPRzsGqrT94KtrcvL2FdrxFTnKorAbeCYD3CuxaBF6T8HnXFg0isDPExsoZMX3+TNDT+X3aFLvxGOVrOkIabumENMFVIZHrWsuroaZOQV2GzvnyP2bMmoy6QfFbnGwKhNrX2TsXQr9qTSEgufRZfRq+D7qC4HGsXY8y/3tppw+wGQ81f+KLVwi/HxQZHNLkl6HUIUUcKY2q+ggC4FOBr2UX8CYuZU/I32DTFQWYdmbxyChcUNSJK8zs57ooYE5t+2baUieAmJZxd0NtPaY8n1JgtCCiat+nVjOKaIAKcttUW5laRnfRyC1Ne+0Stc2tAsBCBdbHkps7WJhAACMuc7rw3j1D/Xd9gmW7yBE061ciGFulXb2gSqK+WY65d1atowcrNQ8Ijm968omWh6m/maHpA3MjInjOwPPX6rkaiI510mCzeatWO7Gg4pnNSbPVIbBKN5cG3ZKMmRbpKOugqNA3+nc5b+BATa3TFBMy/XCaV9S/j4MWaxMBaGZkRYSL66d6dn9JfkdoRwXLgFaCQ0v82xhFfHQCkJ+lcPx2ZnW4to0ZzBxZqwq9oNtg3ScSrrWxoqykbfNdXYoI+2T3mmM+lBNvwNRgBFd8ludBfCnXFyjCJ6MzZGUgbxivrmFqwq7LtDLxlhx795dpsTYw1Eblk7F2ZrQZBoU7L2GYdjOSHFUd1zaV2mjgVVzdFHRb4NR5oV+++eBXJB5g/aqbSPyPpiA/Kz4vRCKNz5xJYTLqv62Re7PbgEARKQ+y7sWMeSShzb+0gjw9YWUXD99kL9QkKcsWLBNAYS7S4us5DMRnE57hPk0L+gjJz2N42XY9qGAM=\nimportant update tesla news tonight (https://teslanewstonight.substack.com/p/important-update-tesla-news-tonight): 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\n\n--- Cited snippets ---\n[Tesla News, Tips, Rumors, and Reviews (https://www.teslarati.com/)] #tesla #teslatok #teslalocksound \u266c Calm LoFi song(882353) - S_R \u00b7\n\nTesla has expanded the operational geofence for its driverless Robotaxi service in ...\n[Tesla News and Reviews | InsideEVs (https://insideevs.com/tesla/)] Tesla scheduled a Cybercab launch event for next week.\n[Tesla, Inc. (TSLA) Latest Stock News & Headlines - Yahoo Finance (https://finance.yahoo.com/quote/TSLA/news/)] Learn more ... Tesla faces a complex landscape as it launches the Cybercab while grappling with declining operating margins and regulatory scrutiny ov...\n[Tesla: Current and upcoming models, prices, specs, and more | Electrek (https://electrek.co/guides/tesla/)] Tesla (TSLA) rises on market digesting AI Day, primed to \u2018tackle world\u2019s hardest problems\u2019 ...\n\nTesla told federal regulators that its driver-assist s...\n[TSLA: Tesla Inc - Stock Price, Quote and News - CNBC (https://www.cnbc.com/quotes/TSLA)] Thursday's biggest analyst calls: Nvidia, SpaceX, Tesla, Salesforce, CrowdStrikeAugust 27, 2026CNBC.com \u00b7 Tesla recalls 3 million vehicles in China ov...\n[Tesla News, Tips, Rumors, and Reviews (https://www.teslarati.com/)] ... Tesla recently received its largest order for the all-electric Semi from Einride, a Swedish transport service, for 500 units, a groundbreaking inv...\n[Tesla, Inc. (TSLA) Latest Stock News & Headlines - Yahoo Fina",
+              "result_bytes": 20177,
+              "result_sha256": "e045b3ab330929dd78a4add51ed399d1dac4002e45d774cb897e10f19b6b52a0",
+              "result_truncated": true
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 433,
+          "total_output_tokens": 412,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 433,
+              "output_tokens": 412,
+              "cost_usd": 0.0074789999999999995,
+              "duration_ms": 10978
+            }
+          ]
+        }
+      ],
+      "final_text": "I'll search for the latest news on Tesla.Based on recent reports, here's the latest on Tesla:\n\n**Cybercab Launch Event** \u2014 Tesla has expanded its driverless Robotaxi service geofence in Austin, Texas, and has a Cybercab launch event scheduled for September 3 (tomorrow).\n\n**Regulatory Scrutiny** \u2014 Tesla is facing regulatory scrutiny over its Full Self-Driving (FSD) system while grappling with declining operating margins. Tesla reported to federal regulators that its driver-assist system was engaged when a Model 3 crashed at 104 mph in Clute, Texas in May 2026, highlighting ongoing transparency concerns around Autopilot and FSD crashes.\n\n**China Recall** \u2014 Tesla recalled 3 million vehicles in China over door handle safety and driver monitoring issues in August 2026.\n\n**Business Updates** \u2014 Tesla received its largest Semi order from Swedish transport service Einride for 500 units. Recent record deliveries highlight growth potential, though investor sentiment remains cautious.\n\nThe company continues to face a complex landscape balancing product launches with operational and regulatory challenges.",
+      "langfuse_trace_id": "0ffd380a243c28df61ac7a4129b82efe",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "news_nvidia_event",
+      "class": "news",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['web_search']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the cited tool results, including revenue figures, EPS, estimates, data center revenue, market cap increase, guidance, and CEO quote.",
+        "relevance_reason": "Directly addresses the question with comprehensive, relevant earnings data including revenue, EPS, guidance, and market reaction without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 452,
+        "output_tokens": 445,
+        "iterations": 2,
+        "duration_ms": 18370.4,
+        "total_cost_usd": 0.007647
+      },
+      "decomposition": {
+        "original_query": "Any recent news on NVIDIA's latest earnings?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "news",
+            "text": "Any recent news on NVIDIA's latest earnings?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "I'll search for recent news on NVIDIA's latest earnings.NVIDIA reported Q2 fiscal 2027 revenue of $96.2 billion (quarter ended July 26, 2026), up 18% from the previous quarter and up 106% year-over-year. Earnings per share came in at $2.22 adjusted vs. $2.10 estimated, and revenue beat estimates of $92.17 billion.\n\nData center revenue hit $89B (92.7% of total sales), driven by hyperscalers at $49B, continuing to be the dominant growth driver. The company's better-than-expected results ignited a chip-stock rally, with shares rising nearly 9% Thursday, adding about $440 billion to the chip giant's market cap.\n\nThe company guided Q3 revenue to $108B (\u00b12%) with gross margins at 74%. CEO Jensen Huang emphasized that \"AI has reached its inflection point. It's doing useful work. Its tokens are productive and profitable.\"",
+          "tool_calls": [
+            "web_search"
+          ],
+          "tool_details": [
+            {
+              "name": "web_search",
+              "arguments": {
+                "query": "NVIDIA latest earnings report"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 0.0,
+              "result": "Nvidia releases its quarterly earnings | Here & Now (https://www.wbur.org/hereandnow/2026/08/27/nvidia-quarterly-earnings): EswDCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDNXy9A/eBNi4XoGwmxoMo3LFfnBzayItmwKRIjBgXEAeGdaVti3Q4dcLJM1BxMsMveKy5TpfR/gVwqGV/ArzRBg7yY2xB6LygiMir5MqzwJ/bog4BApFQ5HEGhCIFSQcfIGtCXXUyVMvWLOWRxCzHjfd67CPZfENfAMjy4C6p1RSZyV6CnMDiaY1+/vEtmEW6qBX/KHMtzmJQVU5LMuZE2RIQuZNL80RzvEW5OpGiwHhCRyZ8z1BonnZBIP+EXGWSkcg/DYZapwjCM4LQWUDFFoEzOn3PdGhYmu8c6sley4qoLoQRgdYdM6K+YYHSSa3mg7CaGFlbFk7eN/m2A6WoyWshLeDW/Occs4a+y/pnpj4cKpCujfh1BmetcN37QIzxZ2CngBDRCOH+xTgTdwrI5OI8kPhhPli1NND3385RapOHggZlp1RxZshVcbZo3CcHCYmiCg+n7KJ3FpDZPBL40B8bo3pW36t9JVQ1TK1xI95SxSJnXEu6cYJeyy+qKi2VNT/mF1S7iAuM2t67ePtTBr7FxDt3Z+8oBkb3NopLxgD\nNVIDIA (NVDA) Earnings Date & Report - Investing.com (https://www.investing.com/equities/nvidia-corp-earnings): EuAQCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDJxdediM8HsIKR/n6xoM+H3n9YwTPIkDlHCgIjAhvt+XxnIwkRg24ekF3n9/XBef7kgtMhHumNws0nbpNTGiQZFkinU1lYkvZ09E/e4q4w8EQrmtMSY3Gg1ml4OH7HeGjWd38iAeacaipefp2rFDdiPK3l7m3GQ6o0687rR/ergS3tyRRLLQB9pkxvbKNqlStaPvOTCFJ2O5+u3Ak40NkrXUnhdA+n8yJRo7ur00ez/gJW7UGyR/YVM6ii81qGWV+X8KTBFTM91wIyRROdBzlVrsslHwFCSPTdsPmVnov5AH5jZMf+DJoFDP9mFaWcCG2JoeSDi1WGtqS99EaAGQSKGKrH40U0ynqZCVROU8XvfnmIq6CAbuN2ONLjjWq7GeSMrzN01ltWLYRHtQVmA3Vzg/dzrJAiZOO13tK1aUZPVXlGj+LXiWapQxFa00zPfiz1PDPZZJyyyAGhaEP2j76K0wQZY8s+dy6fcnGfNOfJswoA/fpQ9hLM/bxtO04gug8ji8Umyzx+j4iv03WrXwD1Bab6FtDaKdFZo11ZH8j7HjDcK9BJ1oPw+SBB+5aUftY12y4KV8fkBGuN8Thu1dfKQ6+NfTaGzODnw6nFW6K6y2lxS5nu6OPlNLvkBxfJatuV3V7/YP8QNKXjowZqpmoFzWJ2SUolNvtt0AlJ2KgP+WpORBe2VhsJflOhSWbuv5IxnS6okNNodLivX39pzpcRl4lc0TbPG6J6uc+vn6TjI7ELnGFdwIGacnrzy9tvi3yDrbmox8sDLjFEclDN4EYZxMAahQlAlvBtr3ixC0FpdYOm7QVKmUHozqtfPL9WijU4DaLN90mCZdj8n6fPNvDAwiexD0VGwLPBUHj6TLrczdeQHZXwNd/GbvbPggfajkW+tw4lOzFT9dA06DKuGswT/76Vltk0E/sciLHGNbM5zzHSuWhZshaUz7yki0EDjVgqYfvT2DNwOL4gWm6DZI1Kg1saoH27ANiVt7uOBOm4gdsty5UvCtpggMq53cA2LZ6lCsPtVTEUbCEEmuJgGcIBlpuj282S41lwNAr9Iox+vDedb9ldAuOpuciHngt6ZOuNsF2XxZb+oazF7AJeQvhi9DBe57seEF4Y4mQnBRQlt6gLvXP4DxzWY2FB3Qu9ZnIt1Wm2OXYDWOmFlyv9ApkDTCPEToKbVxb7NBXw+AaVRVjf+YgtaNNANww7pmSSQR7fs8rtuOdmEZZflhb8vFvsgM0iP98o278vGxXg+bLya2Hk4Iy0D6BdotLlwqy5yrOqv7VoX1AT4Z3OO8U1Wdzu+WFyd7igmIJ8Gl8eX/VeK919GFGWyVRdWp8iyNpKV9RvV+bqNhcDgWjyot7xc8M7W5QJVGXt+OxY2bn6Qazsxe6fpvAjf/09mNqD3H9CkHdJPuszsHCXDN57/iwEjFKoECraLS1fV82/NRqj161yGY9EeQUG65tVxEKihWBgY48zBBDLjxKC51hVZOGjcLgRkfH79NgGkYxu7Th0eDkhHQfXMkE2iBHqM2bxa9O3jW8Ks5YXpNP4OpN1g+09pnZWiUx/xmSPS5y8xSEunZDa7OOZEBx6HKeXwI3s9jpsZaOkUaO0WtQVpXDVARz08zGVRz6QAlQSakvSYkQj4XGdyhewIOtSj6vfLFTVy5uXm/S3IJq1k1YHlPv6LO8XPJHv2yMRwM5e5OijfBpReytlPLWm0GU21qKdY8yf5nJwqsBp4xO32zIjtyo+21HggwDx+t4Yzphh6J5x4vh5/fyc3fb2HcWEJqJrs/Jw6P7P8HY7Zs0mZzKYXVWeXBQCHZRW/jv+2WsAwzkya/JphkfRVBJAfPm6Sb08tXinUs05oScC6oXJ+TszAtxxIAMBsYb2nrV3BZ637XGPFCAFjNxzufvqTm1HYACaAdApzvA636vVGNDK2D/kwRxESLTuZyoEdrhGZ/rXOUHkB7eS0DDxQwIef1PakZKdoe0SuacbH8Q0Dqg110rA4QqBk619mDTBzpCphJERsURiV0L2molXPmX0SRWh9skcauaHnfQOSrjR8Tf9s4RtXkAV311sRe8qA5iSwVS0fBuUkk+tJCHvJP3XTH9b/afgOWSjqYZ1DgxAanpDbBqBJ9hLe/zEfbwRzDty0K6Kbl0hacJgS2KkMPV5DfrOzbck9B4jnTkVttelne3jDf2u7dOXB6waRGYJwwmDpIwRf4IJoEGBlD7lqW8lqmN3gLf8NVMzYJcz/qhpRrydxEelypH/9uwdO1cDSMBMbGp1bfyWOxdkWuOKJ5OKHe5pP16X5SurW8/NtxWqhwwgWRY+G9ujbkP1uwZUmmAxT7gUhk9PAciG73trpaR0qw5lWJx6FZCkfGlrZ495sTMWEOgM5bIbUnWOjQtFLnlBU4qOtg8vFtsgs5yVX+c2oOCMVXtCBYTWvnkyH/v0AiL0DByrCPXZAEXrTT/ZPN/GPwW1eNQc4e3GevSmNhKJNZoUfDbOdTMdE8/n2mVHPyZVO6778mSI3Ujqie5y0IoPIbpDXMdpKfRfC1IdOPI3zMdRn/8v4p4pmZQtX5yuTuO1DfMZDSIabAw1Tv5M+K6wNNbIqZ2IGcioE3xLzMBAARK8Fhb8LwAudHeMhmcJpZQmgKcsVK1ygEiaV9mML66/d9X5LaWVPrixiEftK3TAbis9cKyzRZjwFlI12wk7lFzH7fdd58aTNE2MlumvF6NZ6uqzWJl0NpXyXa08dp7cV/iCyhCgczZnnnzcA/kvV2vYdo7clUIBdmItWCXscdh02n9D97S3oyJ7I8wlSiTuAYAw==\nNvidia (NVDA) Q2 2027 earnings report: Live updates (https://www.cnbc.com/2026/08/26/nvidia-nvda-earnings-report-q2-2027-live-updates.html): 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\nNVIDIA Announces Financial Results for Second Quarter Fiscal 2027 | NVIDIA Newsroom (https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-second-quarter-fiscal-2027): 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\nNVIDIA Corporation Common Stock (NVDA) Earnings Report Dates & Earnings Forecasts | Nasdaq (https://www.nasdaq.com/market-activity/stocks/nvda/earnings): EpQKCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDMU4i9fAy1DgK7cCkhoMPZDop6gPdewM4YUjIjCkvan8VnIW17rlJ1mgGBO33Tps6xEWviBoGUc4gAjmjBH5ZH7KTZMdsZyDyIRZyOIqlwkOWw05YEu+BylvxMezrpnb61mWFsw2sUrqk4juYqJk7EmL/Yo0rKPgFYb40ewOkGs7gy+xWLuEoQbeKV4zSXkc3PGONMQWvJ5RTLfql9DmHEotwKxCsU8vtghAonCk7ONGtZ7dmQOltdNJXreMT+fV5lFjeyhbH9pwcGz25EvByf0IhAC4LwGvhnB7P7pxlMX0i/rySCawMPNwwW1m6ANuwG0P+uTF7+HeG6mhW5PX7i0k9RCE56VCXmWcEouzeTEIbmeO0xb48L/PMxAOVY9q1EGyuW5Zf7Bb4PHBYsmPefiC3GQ02aYVe8kQo7QuIvcRRoWlOxolZVP2gWBqO2NDhwBHDc/0Q67tz8EI8veT1fDdUWwyVu3AJVpNH8xmh7fKOHXFJzHfEJ9rrMXI6H4a61lBe1YyhsHy68fGewiaTsQwCfSp8oIYMnYhPuLnJHt0WBIDeIFWzoLdOSOqe8qOdJZjbhNoE03Ke5ofa8dwtMPZ4HwOR6ynpvqIL1fDYwBnB/0tCyLTi6FXWh4oOLy9Q3LsshncPCBQ6971nfd4dkn+g/W6UuuS2tdM7+t6Z+Kg5+TZ3iItv5H4DuZTQJeyxLuvv19VUP3nTlRxikqA7YaRjDbCOHVvHjQfIbBkOk3fyN6zc5UrSjOPAz4JQAR87q0doIEMwwlGJ5aIAcOpoA1Z/jrLFB1q4b36xMTBz7OVQ0Rl7KbUf7j10Ghk9joj3ytmEBGDV6yRytlETQMjOpYSlQ91s7aJsYoiyTBcKiT/nfBPtw4/NTOL9h3AeGxN53yuCMUl4F+PdYvcw4Y+jp+I+WZBcCN8TguvUOdssM7/psbf0+MDXaZPQkhAzFkqG51iY5/qQDw18nbmsBbH0ZOu8IUiBkBPUAQxKqnLjdUWEXEVIt7L4HsK6X5p7XHMpf/Jbb16vZqwWN8rSHtk1w8EpDSWZAG58CjPTYWAGTG1QvANRNWyLwpgUCcXUtYIVNcriBuUTJFSfKMf9PnR5WEkpIXOEuj+9f8aLZy655cafpm/CY861ZHrs+PCD8GO+DL6hH/DVRijmC7gdat7eOHwG6iiDwEuCMXxAvYs4YsBkxJyA/JrLJlVtbgN/kbPDRYCfL3sVnazcEOKUHAQvM2NUsRgk8Yhf1psYLvPNFtqUTKrPEZWXyD6gQB3Nn+abdBUSKcx4mEXrn2Ht9ETgVJF5ydRK5lxvUHvHFUHbOUX4mdheYxdJjjsi1zgq/MYYAVruPe0ikIZd/sUvHy1b7zBNamYlpdzaCkla0n463jkYpBtFi0DKsfZZuE9cgrr3QGoYVyifYgAbZxNu7uU6rUuCyPL38+AbXa9baGR5hJ40ifO2oZjXjsVAoxkCRxDmqppU13ZqfkmM7KFolqNToqgEjXU4PHTtU9w8+K7QfWWwYsHNlaScDKkH0Ay1djDkdX3lDWumZurzY+5moY+ynCMd+PwqQgCIjHAR6pp40a6L7/Au5ZpkVo2kOWABW5JhLRTkUTX/ZXNEcRHO5XruZ2CVr0hZ2UeLcFEeZ5+epao2JbiyUlMFCDXN47gqaung6qVhc8MmxgD\nNVIDIA Corporation - Financial Reports (https://investor.nvidia.com/financial-info/financial-reports/default.aspx): ErYHCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDPDoQacFHZbWAbLxuBoMntDgWBmxRGvS2JxDIjDCqTX3AMj7wVPcm5LaRuy502ms8T/HaSHZkI07DBoPrzaS7kKSCTSmDTJqIf/9A7YquQZIKDPN0ANjX/AJs/xAhrZMklPMAULumuEPXhrPFLky8palsMMubaMmc0YxsNsr3LNcJMWkscNQtEONht2IJKYfTUa1KIqaUTmM6v3246nreXrElhF7ZZRlvi/ES/MUa4zL1oP7jyoJOSVwt2OZfv27c21lPrJIH4TWhqfYHU6/j8bZgYgsH71buPI5Gy3CtaS6hRKxlJ4sz3GtoTpooBdsgpUkKUYUFrWf9SvU19KjPCAqj06aO/g5kY2Sqbu2Yx/80+behtNtTa7+twVqIk/twnqyU92HdU74ArRHjrhzJs1X81OsYYq7kE6jGQsQKuCCkVAISHj6bqYXhCiRxH18bdqUKTBxsP9fxqWHKQipE6T94Yz5mWoCwnTyZRKG7/q7kD6jSqr2T6S7pS4A3bAK4sr7HXeDLWZidYs3Sx+F0S6CygNZYzTPWcOyUzYLrrb1GW7mj5Khp5mXww4OS51fpfFhYMT/JellCgt1ptYqElJ6FRERJYghFMS0pUCgfFOZnFusvlFWBXfwu0Jh5LqBlZ1Rc60OwvTdjSyYcGVHUloLW+DyXC8jxa3rW3iu9vbYaztY6r4jj++iRfWloxuhpg5OMaXOckw6LLsUNJwXt5y8WMIldfjo1zpNm7kU0BcnrrdHcKCiPdigIcq5U57DNmO3OVgVPUDHMjrAUSxuay4+hqa5UTWpN8ReopiTEKpsQFiEyOltxvud25XoGth7+s9lbbGz3CfzkMv8AvM0Q3ZQG3mpnZuUdSPO8uPDTASntU/DDQHOxgrq8HFUgMP7a8LOqN6B2I8fT/qDI6RPsud06XcsMyuQIOT8DXhLlDDaN15Y4//0CxtQIGkaWVmXe9cfRIU/JrFeDIC70CWPKJagBnK64GLphVPWox74FododVhT/UxxdJ370phxgGSwPao2XY411TPKnVIVglmf6kv9Fdq806JMqGVKpUQ6n68t1pQmWzQwguTgj+P54q+y3qLaqnCO8KPzMY8S0i3zRdEqCVY5XJsnRvDjLHo7yt/lZrvJ4QJrscH81YFQrw8NqnmQ0RE73yQv8qO5Y/Wq06lzn9Jeik/CsurSYK30BrLlcqokGGaeP+wYAw==\nNVDA - NVIDIA Corp Earnings Reports, Summaries & Call Transcripts | Morningstar (https://www.morningstar.com/stocks/xnas/nvda/earnings): EsAICioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDPvK0j5xO4LO1E+qiRoMINPKzJa+/vDM/WcmIjCDikrOV8n4mxlogY0QtUGzEBux2ngJfmH0BZeyKcHZmiIpMo6sHwpfFcUdPVmxyWsqwwcEInxTqIl9h9mh8s4+8vZ+MfuzxBv1Hq57sy1zZTE0S/zNVhrLby3huDSr+aT59dlrURIgdLDqLYLb48TDTtD1Pv8JeWOHtYyaZn0gQJivVCClIcn1exZLd1aJtahGpeb+Ol1Yyi0ga80KbokZ4S/dCX7aru5lns0GSyTgblg4xnk4kDSL282/gu73bKbO+kh0BcOXze6rCDBNI8Q8T7bHaYFzBTK1DZCW1V69iuQD7YWuctTEr8LbPQpHF6D29EJD49I87kOUziD0LZkCioDXOpSSj75tdNPgXmiL85ikXmw+4eLuaY2dY0nuXQ9j4DkLLB2dqAkmiVkI0O8Ios62SkkZzzqKPqqp9MfKSKtIomCgPKjgUQbDgyOJrhEQsR+RIVU8nv1dAEQlUg79xwRXCwA8j59f8flnOvxYY+EWYCws1rMXltnZxglm8+KnMDVkgJy4i5oF6pfdh8pSmRKmlcRlfl8pmmoK7U13PtiRTZrB5hK5g1RKxsDFsk3yydp2jEcyldu5CK/XWa5ICkeAAICR1dh8F6IzkqbTypGI0SL8pQFwhrcu3Iu9dtm/wLzkgxgwsYcvA8KX0C0wDmuN1A/aL/PGg475s6hjxL7/OlZwJheKDxuqlqgYgrCzSXYm/RusgodzTjU3Ue8apjL2C5ZZCFHkeTqBZvhh4AY4nTrCGLiitc707xzPvzwYmpOCQ7VT9ku71Wu5eFNz+0VCosVoaLJQRACopikeWCL261I6+5/DUEbYvxZ7oJdY8rKhUwriF8Bl9l3gBtZguX1i2lwcVjO9ViSb4H55u0D6FA4RM0V9qidnOBPiVwgo3P6Lguu6KkMSCIgkPA9g5o08pzlSNL81jDCcmCztsGqU6loiAqniAU10RJqnK4qGHc3mHuPBmW2dwK/geR+9eisiKEPh1nN/yVYfdr/ugslr1ShypTBhdkdbCPgSBqMxdPH2S5wS+GWBcWVlj3JCJrVZAM5iZ0UFluxbjUxnXfB+kLtL+Wioo9n88dwzUolUv0z7KV1qfKXTDzkR8HE6LBASBWrzbmXG8aRlMfQe36K8PSwb7ZtgkjiVlma7pMkTroAsvNQVlUHR1OwYWGWQK5Pak6E1+RkOSpuealaTpaxbZZNtaqlrc/0yJESK1i76AZQC+gN5yskVb1vHal3GMEufT6dNyZZX5ID8gYuXO2HgJuRJAWnONO2VKq1AEtSyJznDtbvJwlHJhkImz9IQ0k2hR1SA9aNjSZIrfT4UDy8T9MYkMANgx6Nrv87t6BmaLDGcAygYAw==\nNvidia adds more than $400 billion in value after blowout earnings boost AI confidence (https://www.cnbc.com/2026/08/27/nvidia-nvda-q2-earnings.html): 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\nQuarterly Results (https://investor.nvidia.com/financial-info/quarterly-earnings): ErgGCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDPLlaNgcLfGmqA4n4hoMOVCPndbjHbRFfKOkIjC207Bzv4RPuYk5Q8eky5OL35qvkLmyZOaCIYZtQlToX3b9ILFIlohJ1lZ28FSXrOUquwUfW8GrXLHWTMaNYiDOTSsJBgVsGkSiOLpP2QvGVlTFQ0VW/IAQ8limuNlL008PnioW+KodWxweNFrmAGPvk9vhfoQ+XlW+RV1yZPryCJEeBkUE49q5Mp7PGfAv2rCQvX55lXemDxjhH68ShRLBuTcSq1AA3TvyXnSpWAV02YC9kgMXGy5P5PAI8KkRVtZWDAN8LPpWA20wAlYdhiFuAPlLSX8XCf6uFscvEv4GMua96GKcolOCTzV2cfhl0RhgsHlDOjvoTVzbwNQMP34l2fqFRaM9GE0O/xxE/lecKoWTj0bC4BZC2UrCh4AwG7Oi0imlkzIqmbjFpEVR+5tXDOkZ2B37sdToTrN7bOOh/JenqjNKKd/aV6JyeQ2gNuQbm4rGxn4bdtp056D0wYBGK5zOKUr9hSXhUAYxmJcgU7Ux5j4ZoTKbN6RKO/U4yinYXb6VFdnRHP91mpGX/C6+1z8mH/OTKJM1RAq2CacMvxdvKTQGCJwiQm6uF/ga5/p2swd/T8e8gFROEpR3ao6d1ylcQ5vng42KRYBGqd1FruB+aWFBGLV3lsjaSRA4NzFgkFudnjibPdWgYo6QYro19d3KTOtDP2knwGKE2DDgug+zlkoqLyLTSH/7RuL3k84gJ6zNjtuDsqVnS11pneDp1G12TYRrXONsM13XhTBCkk+fde0k/e5BZkjH+F7MGb2rr+6h2ifOlnrpVJHJd574iuHQMqvUNwIobRU2jSeUZH20FjIgAXpq3NTOEdGtpYeU2CsvMWB1EcnAeM+rC0AiJTW8QJwRauG1lTZzIwzKx9UEs5N4rKHB/uDrpqcjtF/vGFTqHz3VP7axqxstTD0p86/OClemeewd2WJoy+pD7hqWBXgtCyfwflIIxvkGejYSfwNJu43KodKHsm7AJqQ1ccnxK0bWCxz4q11F88cYAw==\n\n--- Cited snippets ---\n[NVIDIA Announces Financial Results for Second Quarter Fiscal 2027 | NVIDIA Newsroom (https://nvidianews.nvidia.com/news/nvidia-announces-financial-results-for-second-quarter-fiscal-2027)] NVIDIA (NASDAQ: NVDA) today reported revenue for the second quarter ended July 26, 2026, of $96.2 billion, up 18% from the previous quarter and up 106...\n[Nvidia (NVDA) Q2 2027 earnings report: Live updates (https://www.cnbc.com/2026/08/26/nvidia-nvda-earnings-report-q2-2027-live-updates.html)] Earnings per share: $2.22 adjusted vs. $2.10 estimated \u00b7 Revenue: $96.22 billion vs. $92.17 billion estimated \u00b7 Nvidia sits at the center of the artif...\n[NVIDIA (NVDA) Earnings Date & Report - Investing.com (https://www.investing.com/equities/nvidia-corp-earnings)] Data center revenue hit $89B (92.7% of total sales), driven by hyperscalers at $49B and ACIE segment at $40B, up 138% YoY.\n[Nvidia releases its quarterly earnings | Here & Now (https://www.wbur.org/hereandnow/2026/08/27/nvidia-quarterly-earnings)] The company\u2019s better-than-expected results ignited a chip-stock rally on Thursday morning.\n[Nvidia adds more than $400 billion in value after blowout earnings boost AI c",
+              "result_bytes": 20777,
+              "result_sha256": "2b07e1f1908b7b66229323dd0fe8c72a4e380c9e7ed9caaeed6c32ea536ede51",
+              "result_truncated": true
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 435,
+          "total_output_tokens": 410,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 435,
+              "output_tokens": 410,
+              "cost_usd": 0.007455,
+              "duration_ms": 11618
+            }
+          ]
+        }
+      ],
+      "final_text": "I'll search for recent news on NVIDIA's latest earnings.NVIDIA reported Q2 fiscal 2027 revenue of $96.2 billion (quarter ended July 26, 2026), up 18% from the previous quarter and up 106% year-over-year. Earnings per share came in at $2.22 adjusted vs. $2.10 estimated, and revenue beat estimates of $92.17 billion.\n\nData center revenue hit $89B (92.7% of total sales), driven by hyperscalers at $49B, continuing to be the dominant growth driver. The company's better-than-expected results ignited a chip-stock rally, with shares rising nearly 9% Thursday, adding about $440 billion to the chip giant's market cap.\n\nThe company guided Q3 revenue to $108B (\u00b12%) with gross margins at 74%. CEO Jensen Huang emphasized that \"AI has reached its inflection point. It's doing useful work. Its tokens are productive and profitable.\"",
+      "langfuse_trace_id": "a6cb94a3dc051af1f5dd819b3feecd70",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "refusal_etf_spy",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=True"
+        },
+        {
+          "kind": "output_contains",
+          "target": "ETF",
+          "severity": "p1",
+          "passed": true,
+          "detail": "found 'ETF' in answer"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes no factual claims about SPY's price or any other verifiable facts, only states a policy limitation, which requires no tool support.",
+        "relevance_reason": "Directly addresses the question by clearly explaining why the requested information cannot be provided and what alternatives are available.",
+        "refusal_correctness_reason": "Clean refusal with clear explanation of scope limitations and offer to help within its actual remit."
+      },
+      "trace": {
+        "input_tokens": 15,
+        "output_tokens": 29,
+        "iterations": 1,
+        "duration_ms": 7401.6,
+        "total_cost_usd": 0.00016
+      },
+      "decomposition": {
+        "original_query": "What's the price of SPY?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "What's the price of SPY?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "I don't cover ETFs, indices, or other instruments \u2014 only individual company stocks (equities) and cryptocurrencies. I can't help with that one, but I'm happy to help with a stock or crypto asset instead.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": true,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 0,
+          "total_output_tokens": 0,
+          "iterations": []
+        }
+      ],
+      "final_text": "I don't cover ETFs, indices, or other instruments \u2014 only individual company stocks (equities) and cryptocurrencies. I can't help with that one, but I'm happy to help with a stock or crypto asset instead.",
+      "langfuse_trace_id": "c86687a49ff899e0c69f3e8fb4c5c750",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "refusal_index_spx",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=True"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes no factual claims about the SPX index or any other data, only states the agent's scope limitations, which requires no tool support.",
+        "relevance_reason": "Directly addresses the question by clearly stating it cannot provide the requested information and explains why.",
+        "refusal_correctness_reason": "Clean refusal that clearly explains the scope limitation and offers an alternative within its remit."
+      },
+      "trace": {
+        "input_tokens": 18,
+        "output_tokens": 34,
+        "iterations": 1,
+        "duration_ms": 7126.9,
+        "total_cost_usd": 0.000188
+      },
+      "decomposition": {
+        "original_query": "What is the SPX index trading at right now?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "What is the SPX index trading at right now?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "I don't cover ETFs, indices, or other instruments \u2014 only individual company stocks (equities) and cryptocurrencies. I can't help with that one, but I'm happy to help with a stock or crypto asset instead.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": true,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 0,
+          "total_output_tokens": 0,
+          "iterations": []
+        }
+      ],
+      "final_text": "I don't cover ETFs, indices, or other instruments \u2014 only individual company stocks (equities) and cryptocurrencies. I can't help with that one, but I'm happy to help with a stock or crypto asset instead.",
+      "langfuse_trace_id": "2e18a5cc09935a733f51ea4fbb86dcd3",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "refusal_equity_speculation",
+      "class": "refusal",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=True"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": 5,
+        "faithfulness_reason": "The answer makes no factual claims about Apple or markets, only accurately describes its own limitations and capabilities, requiring no tool support.",
+        "relevance_reason": "Directly addresses the question by explaining it cannot provide investment advice and offers relevant alternative assistance with Apple stock information.",
+        "refusal_correctness_reason": "Clean refusal that declines the request, explains why it cannot provide investment advice, and offers alternative factual information it can provide instead."
+      },
+      "trace": {
+        "input_tokens": 342,
+        "output_tokens": 142,
+        "iterations": 2,
+        "duration_ms": 11003.2,
+        "total_cost_usd": 0.00283
+      },
+      "decomposition": {
+        "original_query": "Should I buy Apple stock?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "Should I buy Apple stock?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "I can't give investment advice or tell you whether to buy, sell, or hold any stock. That kind of decision depends on your personal financial situation, risk tolerance, and investment goals \u2014 factors I don't have access to and am not designed to evaluate.\n\nWhat I can do is provide you with current market data for Apple (AAPL), explain what the company does, or find recent news about it. If any of that information would be helpful as you do your own research, I'm happy to pull it for you.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": true,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 329,
+          "total_output_tokens": 112,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 112,
+              "cost_usd": 0.002667,
+              "duration_ms": 3812
+            }
+          ]
+        }
+      ],
+      "final_text": "I can't give investment advice or tell you whether to buy, sell, or hold any stock. That kind of decision depends on your personal financial situation, risk tolerance, and investment goals \u2014 factors I don't have access to and am not designed to evaluate.\n\nWhat I can do is provide you with current market data for Apple (AAPL), explain what the company does, or find recent news about it. If any of that information would be helpful as you do your own research, I'm happy to pull it for you.",
+      "langfuse_trace_id": "428688796deeb52f277c0a8a39fe8421",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "combined_aapl_price_history",
+      "class": "combined_tools",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "get_equity_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price', 'lookup_asset_profile']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['get_equity_price', 'lookup_asset_profile']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 4,
+        "refusal_correctness": null,
+        "faithfulness_reason": "Every factual claim in the answer is directly supported by the tool results, including the price, volume, change percentage, the $1 trillion milestone in 2018, founding details, IPO date, product lines, vertical integration, and index weighting.",
+        "relevance_reason": "Directly answers both parts of the question in the first two paragraphs, with additional context about Apple's history and business that is relevant but not strictly necessary.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 3618,
+        "output_tokens": 661,
+        "iterations": 6,
+        "duration_ms": 23862.4,
+        "total_cost_usd": 0.018671
+      },
+      "decomposition": {
+        "original_query": "What's AAPL trading at and what was the most significant event in its history?",
+        "is_single_intent": false,
+        "sub_queries": [
+          {
+            "intent": "price",
+            "text": "What is the current price of AAPL?"
+          },
+          {
+            "intent": "profile",
+            "text": "What is AAPL? Include the most significant events in its history."
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "AAPL is at $325.37 (+0.07% today).\n\nVolume: 733,724 shares.",
+          "tool_calls": [
+            "get_equity_price"
+          ],
+          "tool_details": [
+            {
+              "name": "get_equity_price",
+              "arguments": {
+                "ticker": "AAPL"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 363.9624170027673,
+              "result": "{\n  \"ticker\": \"AAPL\",\n  \"name\": \"Apple Inc.\",\n  \"exchange\": \"NASDAQ\",\n  \"price\": 325.37,\n  \"currency\": \"USD\",\n  \"change_pct\": 0.073815124,\n  \"volume\": 733724,\n  \"datetime\": \"2026-09-02\"\n}",
+              "result_bytes": 187,
+              "result_sha256": "e8bec0dd192e3f698c10837c11b9ad057eb914667eeae288e9c5981278dbdc57",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1113,
+          "total_output_tokens": 67,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-haiku-4-5-20251001",
+              "input_tokens": 528,
+              "output_tokens": 36,
+              "cost_usd": 0.0007080000000000001,
+              "duration_ms": 806
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 585,
+              "output_tokens": 31,
+              "cost_usd": 0.00222,
+              "duration_ms": 2081
+            }
+          ]
+        },
+        {
+          "final_text": "Apple Inc. (AAPL) is a multinational technology company founded in 1976 by Steve Jobs, Steve Wozniak, and Ronald Wayne. The company designs, manufactures, and markets consumer electronics, software, and online services \u2014 including the iPhone, iPad, Mac, Apple Watch, and AirPods, alongside a services segment spanning the App Store, iCloud, Apple Music, and Apple Pay. Apple is vertically integrated, designing its own silicon (M-series and A-series chips) and operating systems.\n\n**Significant events in Apple's history:**\n\n- **1976** \u2014 Founded in Cupertino, California\n- **December 1980** \u2014 IPO on NASDAQ\n- **2018** \u2014 Became the first US company to reach a $1 trillion market capitalisation, later crossing $2 trillion and $3 trillion milestones\n- The company's revenue has historically been concentrated in the iPhone, with services increasingly central to its growth story\n\nApple is one of the largest publicly traded companies in the world by market cap and one of the most heavily weighted constituents of the S&P 500 and NASDAQ-100, meaning its moves carry index-level influence.",
+          "tool_calls": [
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "Apple AAPL history significant events"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 230.77608400490135,
+              "result": "{\n  \"source\": \"curated\",\n  \"query\": \"Apple AAPL history significant events\",\n  \"top_score\": 0.774,\n  \"results\": [\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"Key facts\",\n      \"score\": 0.774,\n      \"text\": \"## Key facts\\n\\n- **Sector**: Technology (Consumer Electronics)\\n- **Exchange**: NASDAQ\\n- **Ticker**: AAPL\\n- **Founded**: 1976, Cupertino, California\\n- **Founders**: Steve Jobs, Steve Wozniak, Ronald Wayne\\n- **IPO**: December 1980\"\n    },\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"Notable context\",\n      \"score\": 0.764,\n      \"text\": \"## Notable context\\n\\nApple was the first US company to reach a $1 trillion market\\ncapitalisation (2018), later crossing $2tn and $3tn milestones. Revenue\\nis historically concentrated in the iPhone, with services increasingly\\ncentral to the growth story. It is one of the most heavily weighted\\nconstituents of the S&P 500 and NASDAQ-100, so its moves carry\\nindex-level influence.\"\n    },\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"headline\",\n      \"score\": 0.737,\n      \"text\": \"# Apple Inc. (AAPL)\\n\\nApple is a multinational technology company founded in 1976, best known\\nfor the iPhone, Mac, and a tightly integrated ecosystem of hardware,\\nsoftware, and services. It is one of the largest publicly traded\\ncompanies in the world by market capitalisation and trades on the NASDAQ\\nunder the ticker AAPL.\"\n    },\n    {\n      \"title\": \"Apple Inc. (AAPL)\",\n      \"section\": \"What it is\",\n      \"score\": 0.727,\n      \"text\": \"## What it is\\n\\nApple designs, manufactures, and markets consumer electronics, software,\\nand online services. Its core products include the iPhone, iPad, Mac,\\nApple Watch, and AirPods, alongside a services segment spanning the App\\nStore, iCloud, Apple Music, and Apple Pay. The company is vertically\\nintegrated, designing its own silicon (the M-series and A-series chips)\\nand operating systems.\"\n    }\n  ]\n}",
+              "result_bytes": 1942,
+              "result_sha256": "4f1712d8887082cc3e20b65fdcd5c32465ebd1081fcbc2ae81496d99f4f378d4",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1954,
+          "total_output_tokens": 325,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 635,
+              "output_tokens": 62,
+              "cost_usd": 0.002835,
+              "duration_ms": 4491
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 1319,
+              "output_tokens": 263,
+              "cost_usd": 0.007902,
+              "duration_ms": 4813
+            }
+          ]
+        }
+      ],
+      "final_text": "AAPL is trading at $325.37 (+0.07% today), with volume of 733,724 shares.\n\nThe most significant event in Apple's history was **becoming the first US company to reach a $1 trillion market capitalisation in 2018**, later crossing $2 trillion and $3 trillion milestones. This achievement cemented Apple's position as one of the largest publicly traded companies in the world.\n\nOther notable milestones include its founding in 1976 by Steve Jobs, Steve Wozniak, and Ronald Wayne, and its IPO on NASDAQ in December 1980. Today, Apple designs consumer electronics including the iPhone, iPad, Mac, Apple Watch, and AirPods, alongside a growing services segment. The company is vertically integrated, designing its own silicon and operating systems, and is one of the most heavily weighted constituents of the S&P 500 and NASDAQ-100.",
+      "langfuse_trace_id": "3f90f67827de40bc9651e880e9cafca1",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "combined_msft_full",
+      "class": "combined_tools",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "tool_called",
+          "target": "lookup_asset_profile",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'get_equity_price', 'web_search']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "get_equity_price",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'get_equity_price', 'web_search']"
+        },
+        {
+          "kind": "tool_called",
+          "target": "web_search",
+          "severity": "p0",
+          "passed": true,
+          "detail": "tool_calls=['lookup_asset_profile', 'get_equity_price', 'web_search']"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All factual claims in the answer are directly supported by the tool results, including price data, company description, and recent news items.",
+        "relevance_reason": "Directly addresses all three parts of the question\u2014price, company description, and recent news\u2014with no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 6281,
+        "output_tokens": 995,
+        "iterations": 7,
+        "duration_ms": 28206.5,
+        "total_cost_usd": 0.029776
+      },
+      "decomposition": {
+        "original_query": "Give me the full picture on Microsoft: what it does, its price, and any recent news",
+        "is_single_intent": false,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is Microsoft and what does it do?"
+          },
+          {
+            "intent": "price",
+            "text": "What is the current price of Microsoft?"
+          },
+          {
+            "intent": "news",
+            "text": "What is the latest news on Microsoft?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "Microsoft is a multinational technology company founded in 1975 and one of the largest software and cloud-computing firms in the world. It trades on the NASDAQ under ticker MSFT.\n\n**What it does:**\nMicrosoft develops, licenses, and supports software, services, devices, and cloud infrastructure. Its best-known products include the Windows operating system, the Office and Microsoft 365 productivity suite, the Azure cloud platform, the Xbox gaming business, and the LinkedIn professional network.\n\n**Current strategy:**\nThe company's modern approach centers on cloud and recurring software revenue \u2014 moving customers from one-off licenses to subscriptions and consumption-based cloud services. Azure positions Microsoft as one of the dominant providers of cloud infrastructure, while deep enterprise relationships give it broad reach across business computing.\n\nMicrosoft is among the most heavily weighted constituents of the S&P 500 and a major influence on the technology sector.",
+          "tool_calls": [
+            "lookup_asset_profile"
+          ],
+          "tool_details": [
+            {
+              "name": "lookup_asset_profile",
+              "arguments": {
+                "query": "Microsoft what does it do"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 227.95529203722253,
+              "result": "{\n  \"source\": \"curated\",\n  \"query\": \"Microsoft what does it do\",\n  \"top_score\": 0.8,\n  \"results\": [\n    {\n      \"title\": \"Microsoft Corporation (MSFT)\",\n      \"section\": \"What it is\",\n      \"score\": 0.8,\n      \"text\": \"## What it is\\n\\nMicrosoft develops, licenses, and supports software, services, devices,\\nand cloud infrastructure. Its best-known products include the Windows\\noperating system, the Office and Microsoft 365 productivity suite, the\\nAzure cloud platform, the Xbox gaming business, and the LinkedIn\\nprofessional network. Azure and Microsoft 365 anchor a large,\\nsubscription-based enterprise business.\"\n    },\n    {\n      \"title\": \"Microsoft Corporation (MSFT)\",\n      \"section\": \"Notable context\",\n      \"score\": 0.768,\n      \"text\": \"## Notable context\\n\\nMicrosoft's 1986 IPO created one of the largest concentrations of wealth\\nin technology. After a period of slower growth in the 2000s, a strategic\\npivot to cloud under a new generation of leadership returned it to the\\nfront rank of the industry. It is among the most heavily weighted\\nconstituents of the S&P 500 and a major influence on the technology\\nsector.\"\n    },\n    {\n      \"title\": \"Microsoft Corporation (MSFT)\",\n      \"section\": \"Why it exists\",\n      \"score\": 0.763,\n      \"text\": \"## Why it exists\\n\\nMicrosoft's modern strategy centres on cloud and recurring software\\nrevenue: moving customers from one-off licences to subscriptions and\\nconsumption-based cloud services. Azure positions the company as one of\\nthe two or three dominant providers of cloud infrastructure, while deep\\nenterprise relationships give it broad reach across business computing.\"\n    },\n    {\n      \"title\": \"Microsoft Corporation (MSFT)\",\n      \"section\": \"headline\",\n      \"score\": 0.737,\n      \"text\": \"# Microsoft Corporation (MSFT)\\n\\nMicrosoft is a multinational technology company founded in 1975, one of\\nthe largest software and cloud-computing firms in the world. It trades on\\nthe NASDAQ under the ticker MSFT and is a cornerstone of both enterprise\\nand consumer computing.\"\n    }\n  ]\n}",
+              "result_bytes": 2069,
+              "result_sha256": "bdbc0b86ce1960fdeb4cf8ab4ebfd404f61c68d74b6a24981500a6c54439c658",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1305,
+          "total_output_tokens": 251,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 332,
+              "output_tokens": 59,
+              "cost_usd": 0.0018809999999999999,
+              "duration_ms": 1511
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 973,
+              "output_tokens": 192,
+              "cost_usd": 0.005799,
+              "duration_ms": 3139
+            }
+          ]
+        },
+        {
+          "final_text": "MSFT is at $495.07 (-1.19% today).\n\nVolume: 221,683 shares.",
+          "tool_calls": [
+            "get_equity_price"
+          ],
+          "tool_details": [
+            {
+              "name": "get_equity_price",
+              "arguments": {
+                "ticker": "MSFT"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 662.9344580578618,
+              "result": "{\n  \"ticker\": \"MSFT\",\n  \"name\": \"Microsoft Corporation Common Stock\",\n  \"exchange\": \"NASDAQ\",\n  \"price\": 495.07,\n  \"currency\": \"USD\",\n  \"change_pct\": -1.18758,\n  \"volume\": 221683,\n  \"datetime\": \"2026-09-02\"\n}",
+              "result_bytes": 208,
+              "result_sha256": "89681de151d1fbf731d9f50c6d31e973a4edf2530d1354545b81f7e8437f465d",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 2796,
+          "total_output_tokens": 65,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-haiku-4-5-20251001",
+              "input_tokens": 1370,
+              "output_tokens": 35,
+              "cost_usd": 0.001545,
+              "duration_ms": 726
+            },
+            {
+              "task_type": "final_synthesis",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 1426,
+              "output_tokens": 30,
+              "cost_usd": 0.0047279999999999996,
+              "duration_ms": 1899
+            }
+          ]
+        },
+        {
+          "final_text": "Based on recent reports, here are the latest developments on Microsoft:\n\nMicrosoft stopped providing some cloud and AI services to Israel after allegations of mass surveillance of Palestinians in Gaza and the West Bank.\n\nOpenAI and Microsoft reached a deal to complete the startup's shift to for-profit, according to CBS News.\n\nThe American Federation of Teachers announced a partnership with OpenAI and Microsoft to train instructors on AI use in the classroom, with a new training academy in Manhattan focused on harnessing AI technology for educators.\n\nAdditionally, Microsoft, Meta and Alphabet recently reported quarterly earnings, with continued significant investments in artificial intelligence.",
+          "tool_calls": [
+            "web_search"
+          ],
+          "tool_details": [
+            {
+              "name": "web_search",
+              "arguments": {
+                "query": "Microsoft news today"
+              },
+              "success": true,
+              "error": null,
+              "duration_ms": 0.0,
+              "result": "Microsoft news - Today\u2019s latest updates - CBS News (https://www.cbsnews.com/tag/microsoft/): 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\nMicrosoft Source (https://news.microsoft.com/source/): EqgDCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDHCm/NcNh49TDMG85RoMN/SkAYfypsqG8v5TIjB4C7K3NQMMOAiRBjvOAR6Do45uA13XGb5guoZQSbl+KDFZrWcuBFyhQvxUacHWrfYqqwJY1m8LX+2Gks9XBLpXGAFnfXTxn9T54J9kVgRtDMBs3hprpB5Jax54v9ChE41LUAWFL2yohHnRBJ1/kDOy3AXHEJuWR3+lZZ6fdbbA/maW6N0U4rxxiQqnJOVJfYhNgGWLzBfOYkXlNh2A1gQ7srEf2oHqJlU0JsaX8rfr/HsZueiUe81y9muL6yjs5Uou+m6DghH6EZcG12z0nvAWV1djoL1mfOBiMdQC5xPzD34NRvYhafdqKJ+bPSNYnuvsxIa/3ByDAjBCl0eGrPF50vkQpsygbVlCnodcllEstN5/PODDPsCTdZ2UCygxeyJo50YFFejrEOduyQ/qqqt8vXNmuEaJQXS6BA1V8xyMMBRZ6WEw+jkLV+u3qCrv6wnn1t+OfRis/RALiB1QVRgD\nLatest news - Source (https://news.microsoft.com/source/view-all/): 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\nCompany News - Source (https://news.microsoft.com/source/topics/company-news/): EvMJCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDJiOPVAj29lE8nnUdxoMnaY2Sximf5RmvXVNIjAma7wSLMFktYdCct/C1ir4MVjh5EqN/CwgyVQ2S+fiGsg+zlEBGt/9KHgSy0TYz5Mq9ggMMeoqGzCvpRYY5lyNoxLnkOH44SJ+Bam5wonCR1TLGCZkmMiHRyLxWmPUWmaBM2bcnEDR3+uo3UlNJregyVheUBnw5QHI0CnYTbpz5lRsJjGAI6pkv882WruepEEHvHwE2tVqR3gw88DEVj4dOEZVXyDtqnETvcuBbE1iItE0GDzm2Qh5MhBv33Md6Z9uc+qR+yN8uQzySElcyyuCVxFVVjVKB27MoGoekwPKC4Mv1NSdWD6UPHWFcvYZyiY7vxAabu/CNBBJxTciYqVsMo7lZ0oU0ji7xYCKk9k92YII7OsXCBfIyBr86gRIcmTJKWeFXuBrV6VojljsYD6OYXbPLoz9+ywpo94xDH8Dz6xe1dOIonYJKOkR+IuJmwDVQNKAyB+3o1PM5S7oFDyALaRBtKh1gvyWfIVVnILoeRKrXyqBeOhhd+jVRhGE/PBVrQuyHJ6zNaFNkq0IPI870d7TQCwv4h5Mwqzx8Xp+IlEtweBySJ7mACMTdexfUDCvtY92anC+9mQqB5K18e27Q45tdOkEGOM6SO9W4tsxX2JdohT2RmSbjaKjaQJsNnkNnsqlxcqFxmW2lynomGoNlaiZE+JMFAw4QOa8YxX6lPntJNjJeyqCbmsJp20iKT4pstATqsjq32hwcrXjQq6ezfLpeIRJGVCytOywFSem2ihUw/Zq8IC26H8Tg+dGG9oL/rKBxEYUysPNuIU0nc7CgI7+BzkdDIFSKdnJkelxEGveSDcR+tjS4I28YO+o5WaY4QoLUEInqcFV5sXCYhaL47E3PXfVG+hH7GHl7lKGoqKg3ENHcI/4gkla8+8ZI1Vs6OpKF20MBlzWNxDHESptBn8t+Ri7eUHw+BnP3KZnrwREr3vFHJplGKsxXPWbbr84CBT935oIw23u1SKmehiAwd369tf18diB2XWv/EG5ghR2SnPNLCCACNhAv/wwFT+jOQT3X+HL2sh0oZLqQLuBD88YT6kSmTP80RoMlCbug5b7dMcpjORfzDrPTr2Zwqi1LYK1NfnrPzp3Ut1CBJVAF8uUsavsLvCEYZX3FPXLYRFbdyUNsD/3Th99Gqre+As1Sk9z4Qox6/+Hp2gLsUksOFvnl8RluAyXcSKA3oRIsKUcXMPpnalFW6N9XtsDjbP/Stl8PnpKGLiUoR4jWPobzGUP/BjMg9lw5ksNRCHcllBgBpsWRqljsdpkAFl1dp6dlhteFzxOFSHIMOcvUAcTI7JL8z2hPcKP+50s0rR9BctohDlgIk5/dqBnvINnX6ZpUe4H+ueb5T6Ehl4M5CjfCtAGvj9zCxfylSNCKzXDt/q5BtqsAIp7oLadedDJf4RDHzlbkzKLzmEuOKY/1d2axtZzU0bhRAN+TRVMtwDTjHTMS99/TUgtmQuI3jKmCsOBa5XEqfeoN6gufqKO/Ypz2tg4SrwrKMs9liXkNFZHKSqg1VHit1fSUKQgwAamP2+t7dc8oBnHt+UXRC1SAevD+juhcPTon6g5UZDbxo57Ikm2w5JAYrTYvBgD\nMicrosoft Corporation (MSFT) Latest Press Releases & Corporate News - Yahoo Finance (https://finance.yahoo.com/quote/MSFT/press-releases/): Er8CCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDDX74WtXjHh1XIHAtRoMvqD1r/H/ciqbpLdwIjDPGw/ILmPWfIgfQGVDT20LDdNJcAvz0g3Q1V0V2dl9ZYWGglwxACNDglhHNcNtH5wqwgFXsBTs6tJXrfmRPlgWaeZ6AfPgBnq7xCcCKym46P+uThsA7+oGpnDRNBS6om3Zria5HIjPGgOI2fImogKfKmWOXpTwYWHAhDAh3EaQxNCylfn2rJ0OeHlWua0gQlw/mzZ+Hj3bbQ6pdo8vZHvGsHf8yw9EpdX7HJR7OllqswdrOF4/ghuEdu3vb1UKuP6+zcKzIGaSP/DE6Mwbrsh9RSSCGuPp+sbiDCDByRUW/Ds4S2X8azq+J6aypOSfIzDN8/WoOxgD\nRecent News - Stories (https://news.microsoft.com/recent-news/): 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\nThe Microsoft News app gets a new logo and COVID-19 news and alerts (https://www.phonearena.com/news/The-Microsoft-News-app-gets-a-new-logo-and-COVID-19-news-and-alerts_id124005): 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\nImage Credits:Jeenah Moon/Getty Images / Getty Images (https://techcrunch.com/2020/04/08/microsoft-starts-testing-a-new-news-reading-experience-in-windows-10/): Eu0HCioIExgCIiQ2NDVmYjViOC04N2UzLTQ1NjMtYmFlNS1hMmI5MDNkZTgwNDkSDLj36zU+UEMFNfSUdhoM1tNDNMi73zq5iCYuIjCKIlxy/iLYzfLBViXiNUW94nUnyANVe7rsyWZUTExcglQmepayqZzt3GJRCQ+NZpcq8AYUyQV9ACUnrHEJfcbEuC+v0oWCaFD6MFwUIOsjcHF5Z7Sqtu2trMEHwMt/14qgeZu6zCS1/SP0bPP00ORTRmQen9GJfkGfQdJ+iSdDiJ4NME2Y7yHAZv4ictPwV77SUIVoxM03HnKhrD/mAUyXdbCUzO1kv0nMsZ60Uw3rRDcl4qwH9g9+FzbGA2RdqBsamNivsOO6dgkdhzqLB4o4VrZ6cM/u296PcaArpGd3Qhj5pxGjyey7fhv/NA6ouhmmrgBCKgRKzR6Ss55rSu9KtamSmzBGok0CWRztBpF6ZelejnmEhUjZ41rpOhzF02RezIoOX3vrL1TsmgvB4nZnadCwvXI/Asr4gtt0l9EOsZBz14+4k5X16XTpgELHXI1Q/a/DxK3MH41FBFXPsyw3KbKpkdZqocAl//BSJaN3OXqRBLzSA+ie+sPb34fRJy3Ey0ZRpJIcLQhHxqNwgiKXf9j4kNwg3/stlPUAJEKyOFUyv21JwPA3HW0KuBTamg/vRUKYdziaZ6aXDe00mwiPjsrGpJHfYdDEq2VqMQSWiRKZjtA9p5RDOgqIH3F8ou1738FKBt7GQ2r+ULRPKjuwDRiIZrtWVenUR616CTAZurqDCrhhXcjucWjjaGzcyYYI2jsL8TQX0YfeQTkAQcMzZbr3b6h+4oYzDKrJLyDOOxGApzM4EXM3i+//cHjOd20e6nCaGU+R5WcoOday2RBkjMfeUlNqhdOCfliBgrpUzoonX3+Wn9RBVzmslaLUceDkvv5gua6DvO0u79jpMnvo8Jx6esEBmMuG5zPn4tWhpKgAYkc0sy7x65ynGtFfTPlftXoczUApPNiH+pQzERAdfcMZPiJeIBca5GGvBBRvowvHmV0lF/GVtCZoPuo4BYyKvlENvU+9iDyzxNTCgYLQuToDwQ2mpuWaWxu7hahp2xbiMXHBLGZsPWjtFOSAIpnsGH5b30502gnbCcrrIBnUhICE6vIpk+W7vw9owS3DqMDW1vbdNVYsj4Vgq5jlMhBj1izXW4cFXVGxxP14Y9GpmM7swqp9k3QwOWL6mzDn1t4zaF724bY+xSoq2ZY71oaOExB4wY17m+TFpfXNKYVMJbdG7Jyxo+hv3wF4E1YgmtA6SkFbLwN6BD+MOFfehvmeFtB/z+B8HeICcit7AC5UEOlyGAM=\n\n--- Cited snippets ---\n[Microsoft news - Today\u2019s latest updates - CBS News (https://www.cbsnews.com/tag/microsoft/)] ... Microsoft says it stopped providing some cloud and AI services to Israel after allegations that it used the services to conduct mass surveillance ...\n[Microsoft news - Today\u2019s latest updates - CBS News (https://www.cbsnews.com/tag/microsoft/)] ... OpenAI and Microsoft reached a deal to complete the startup's shift to for-profit.\n[Microsoft news - Today\u2019s latest updates - CBS News (https://www.cbsnews.com/tag/microsoft/)] The American Federation of Teachers, a labor union representing educators, announced on Tuesday that it is partnering with OpenAI and Microsoft to tra...\n[Microsoft news - Today\u2019s latest updates - CBS News (https://www.cbsnews.com/tag/microsoft/)] Microsoft, Meta and Alphabet recently reported their quarterly earnings and one thing is certain: the jaw-dropping investments in artificial intellige...",
+              "result_bytes": 17320,
+              "result_sha256": "70b03d6c59e14e3c5284f36d3ad34d7fa866c4870b40b04a128966c50005e07a",
+              "result_truncated": false
+            }
+          ],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 1569,
+          "total_output_tokens": 251,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 1569,
+              "output_tokens": 251,
+              "cost_usd": 0.008472,
+              "duration_ms": 8779
+            }
+          ]
+        }
+      ],
+      "final_text": "# Microsoft: Full Picture\n\n**Current price:** MSFT is at $495.07 (-1.19% today). Volume: 221,683 shares.\n\n**What the company does:**\nMicrosoft is a multinational technology company founded in 1975 and one of the largest software and cloud-computing firms in the world. It trades on the NASDAQ under ticker MSFT.\n\nThe company develops, licenses, and supports software, services, devices, and cloud infrastructure. Its best-known products include the Windows operating system, the Office and Microsoft 365 productivity suite, the Azure cloud platform, the Xbox gaming business, and the LinkedIn professional network.\n\nMicrosoft's modern strategy centres on cloud and recurring software revenue\u2014moving customers from one-off licences to subscriptions and consumption-based cloud services. Azure positions Microsoft as one of the dominant providers of cloud infrastructure, whilst deep enterprise relationships give it broad reach across business computing. The company is among the most heavily weighted constituents of the S&P 500 and a major influence on the technology sector.\n\n**Recent news:**\nMicrosoft stopped providing some cloud and AI services to Israel after allegations of mass surveillance of Palestinians in Gaza and the West Bank. OpenAI and Microsoft reached a deal to complete the startup's shift to for-profit, according to CBS News. The American Federation of Teachers announced a partnership with OpenAI and Microsoft to train instructors on AI use in the classroom, with a new training academy in Manhattan focused on harnessing AI technology for educators. Additionally, Microsoft, Meta and Alphabet recently reported quarterly earnings, with continued significant investments in artificial intelligence.",
+      "langfuse_trace_id": "9e9c64b04f6484e4920536dd368f91ee",
+      "langfuse_trace_url": null
+    }
+  ]
+}
