@@ -263,6 +263,27 @@ case across two runs where it contributed something the judge did not.
 
 Read judge reasoning as an assertion to verify, not as a finding.
 
+**Second instance, 2 September 2026.** On `news_tesla` the judge scored
+faithfulness 2 and justified it partly by calling the May 2026 crash
+date and the August 2026 recall date "future dates that contradict the
+current timeframe". The run was on 2 September 2026. Both are past.
+
+The verdict is still defensible on its other grounds: the answer asserts
+the Cybercab event is "September 3 (tomorrow)" where the tool results say
+only "next week", which is genuinely unsupported. But part of the stated
+reason is false, and on a case that fails on the judge score alone the
+reason is the entire audit trail.
+
+Two instances make this a property rather than a curiosity. The judge has
+no current date in its context and reasons about recency from something
+else, most likely its own training cut-off. That is invisible on any case
+whose content is not time-bearing, and news-class cases are exactly the
+ones where it bites.
+
+**Resolution:** pass the run date into the faithfulness rubric, or stop
+letting a news-class case fail on a judge score without a deterministic
+assertion beneath it. Until then, read a date-based justification as
+unverified.
 ---
 
 ## Code
