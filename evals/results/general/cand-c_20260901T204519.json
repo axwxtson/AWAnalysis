@@ -1,0 +1,753 @@
+{
+  "run_id": "20260901T204519",
+  "prompt_version": "cand-c",
+  "prompt_sha256": "da921768643bcf6b518b6512b517106f53f31fa9418588a4da16bf80b8980bc5",
+  "asset_class": "general",
+  "judge_rubric_version": "judge-v1.1",
+  "langfuse_project_url": null,
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "pass_rate": 1.0,
+    "by_class": {
+      "concept": {
+        "total": 10,
+        "passed": 10,
+        "mean_faithfulness": 2.2,
+        "mean_relevance": 5.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "concept_proof_of_stake",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to support any of the factual claims made in the answer, making all statements unverifiable against grounding sources.",
+        "relevance_reason": "Directly defines proof of stake in the first sentence, then provides relevant details about how it works, advantages, and examples without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 342,
+        "output_tokens": 381,
+        "iterations": 2,
+        "duration_ms": 17154.2,
+        "total_cost_usd": 0.006435
+      },
+      "decomposition": {
+        "original_query": "What is proof of stake?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is proof of stake?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "Proof of stake (PoS) is a consensus mechanism used by blockchain networks to validate transactions and create new blocks. Instead of miners competing to solve computational puzzles (as in proof of work), validators are chosen to propose and verify blocks based on the amount of cryptocurrency they \"stake\" \u2014 essentially locking up as collateral.\n\n**How it works:**\n\n1. **Staking**: Participants lock a certain amount of the network's native cryptocurrency to become validators.\n\n2. **Selection**: The protocol selects validators to create new blocks, typically using a combination of factors like stake size, randomization, and how long tokens have been staked.\n\n3. **Validation**: Selected validators propose blocks and other validators attest to their validity.\n\n4. **Rewards and penalties**: Validators earn rewards (new tokens plus transaction fees) for honest participation. If they act maliciously or fail to stay online, they lose part of their stake \u2014 a penalty called \"slashing.\"\n\n**Key advantages:**\n- **Energy efficiency**: No energy-intensive mining hardware required\n- **Lower barriers to entry**: Participants need capital (tokens) rather than specialized equipment\n- **Security through economics**: Attacking the network requires acquiring and risking a large stake\n\n**Examples**: Ethereum transitioned from proof of work to proof of stake in 2022 (known as \"The Merge\"). Other major PoS networks include Cardano, Solana, and Polkadot.\n\nThe core idea is aligning incentives \u2014 validators have \"skin in the game\" and are economically motivated to act honestly, since misbehavior directly costs them money.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 329,
+          "total_output_tokens": 353,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 353,
+              "cost_usd": 0.006282,
+              "duration_ms": 9874
+            }
+          ]
+        }
+      ],
+      "final_text": "Proof of stake (PoS) is a consensus mechanism used by blockchain networks to validate transactions and create new blocks. Instead of miners competing to solve computational puzzles (as in proof of work), validators are chosen to propose and verify blocks based on the amount of cryptocurrency they \"stake\" \u2014 essentially locking up as collateral.\n\n**How it works:**\n\n1. **Staking**: Participants lock a certain amount of the network's native cryptocurrency to become validators.\n\n2. **Selection**: The protocol selects validators to create new blocks, typically using a combination of factors like stake size, randomization, and how long tokens have been staked.\n\n3. **Validation**: Selected validators propose blocks and other validators attest to their validity.\n\n4. **Rewards and penalties**: Validators earn rewards (new tokens plus transaction fees) for honest participation. If they act maliciously or fail to stay online, they lose part of their stake \u2014 a penalty called \"slashing.\"\n\n**Key advantages:**\n- **Energy efficiency**: No energy-intensive mining hardware required\n- **Lower barriers to entry**: Participants need capital (tokens) rather than specialized equipment\n- **Security through economics**: Attacking the network requires acquiring and risking a large stake\n\n**Examples**: Ethereum transitioned from proof of work to proof of stake in 2022 (known as \"The Merge\"). Other major PoS networks include Cardano, Solana, and Polkadot.\n\nThe core idea is aligning incentives \u2014 validators have \"skin in the game\" and are economically motivated to act honestly, since misbehavior directly costs them money.",
+      "langfuse_trace_id": "df5145a57e4603525d4736d0bdeba877",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_stock_split",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to verify against, and the answer contains only general financial knowledge about stock splits that is factually accurate and widely established.",
+        "relevance_reason": "Directly defines stock split in the first sentence, then provides relevant supporting details without digression.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 342,
+        "output_tokens": 300,
+        "iterations": 2,
+        "duration_ms": 13358.7,
+        "total_cost_usd": 0.00522
+      },
+      "decomposition": {
+        "original_query": "What is a stock split?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is a stock split?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "A stock split is when a company divides its existing shares into multiple new shares to lower the trading price per share. The total value of all shares remains the same \u2014 you end up with more shares, but each one is worth proportionally less.\n\n**How it works:**\nIn a 2-for-1 split, every share you own becomes two shares, and the price is cut in half. If you owned 100 shares at $200 each ($20,000 total), after the split you'd own 200 shares at $100 each \u2014 still $20,000 in value.\n\n**Why companies do it:**\n- Make shares more affordable for retail investors\n- Increase liquidity (more shares trading)\n- Psychological appeal of a lower price point\n\n**Common ratios:**\n2-for-1, 3-for-1, and 10-for-1 are typical. Reverse splits (consolidating shares, like 1-for-10) also exist, usually when a company wants to raise its share price to meet exchange listing requirements.\n\n**What doesn't change:**\nYour ownership percentage, the company's market cap, or the fundamental value of your investment. It's purely a cosmetic adjustment to the share structure.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 329,
+          "total_output_tokens": 272,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 272,
+              "cost_usd": 0.005067,
+              "duration_ms": 7474
+            }
+          ]
+        }
+      ],
+      "final_text": "A stock split is when a company divides its existing shares into multiple new shares to lower the trading price per share. The total value of all shares remains the same \u2014 you end up with more shares, but each one is worth proportionally less.\n\n**How it works:**\nIn a 2-for-1 split, every share you own becomes two shares, and the price is cut in half. If you owned 100 shares at $200 each ($20,000 total), after the split you'd own 200 shares at $100 each \u2014 still $20,000 in value.\n\n**Why companies do it:**\n- Make shares more affordable for retail investors\n- Increase liquidity (more shares trading)\n- Psychological appeal of a lower price point\n\n**Common ratios:**\n2-for-1, 3-for-1, and 10-for-1 are typical. Reverse splits (consolidating shares, like 1-for-10) also exist, usually when a company wants to raise its share price to meet exchange listing requirements.\n\n**What doesn't change:**\nYour ownership percentage, the company's market cap, or the fundamental value of your investment. It's purely a cosmetic adjustment to the share structure.",
+      "langfuse_trace_id": "e96ec70b62c104cb66cc0b5af7124f51",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_market_cap",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to verify against, and the answer contains standard, widely-accepted financial definitions that require no specific grounding from tools.",
+        "relevance_reason": "Directly defines market capitalisation in the first sentence, then provides clear formulas and useful context without digression.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 342,
+        "output_tokens": 257,
+        "iterations": 2,
+        "duration_ms": 13549.2,
+        "total_cost_usd": 0.004555
+      },
+      "decomposition": {
+        "original_query": "What is market capitalisation?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is market capitalisation?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "Market capitalisation (or \"market cap\") is the total market value of a company's outstanding shares or a cryptocurrency's circulating supply. It's calculated by multiplying the current price per unit by the total number of units available.\n\n**For stocks:**  \nMarket cap = Share price \u00d7 Total shares outstanding\n\n**For cryptocurrencies:**  \nMarket cap = Current price \u00d7 Circulating supply\n\nMarket cap is used to gauge the size and relative importance of an asset. It's a common way to categorize companies and crypto assets:\n\n- **Large-cap**: Generally considered more stable, established players (e.g., Apple, Microsoft for stocks; Bitcoin, Ethereum for crypto)\n- **Mid-cap**: Medium-sized with growth potential and moderate risk\n- **Small-cap**: Smaller, often higher growth potential but more volatile\n\nMarket cap reflects what the market collectively values the entire asset at right now. A higher market cap typically means more liquidity, broader adoption, and lower volatility \u2014 though it's just one metric among many for evaluating an asset.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 329,
+          "total_output_tokens": 227,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 227,
+              "cost_usd": 0.004392,
+              "duration_ms": 7130
+            }
+          ]
+        }
+      ],
+      "final_text": "Market capitalisation (or \"market cap\") is the total market value of a company's outstanding shares or a cryptocurrency's circulating supply. It's calculated by multiplying the current price per unit by the total number of units available.\n\n**For stocks:**  \nMarket cap = Share price \u00d7 Total shares outstanding\n\n**For cryptocurrencies:**  \nMarket cap = Current price \u00d7 Circulating supply\n\nMarket cap is used to gauge the size and relative importance of an asset. It's a common way to categorize companies and crypto assets:\n\n- **Large-cap**: Generally considered more stable, established players (e.g., Apple, Microsoft for stocks; Bitcoin, Ethereum for crypto)\n- **Mid-cap**: Medium-sized with growth potential and moderate risk\n- **Small-cap**: Smaller, often higher growth potential but more volatile\n\nMarket cap reflects what the market collectively values the entire asset at right now. A higher market cap typically means more liquidity, broader adoption, and lower volatility \u2014 though it's just one metric among many for evaluating an asset.",
+      "langfuse_trace_id": "444898c8e16fd5217239931326a43b5b",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_earnings_report",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided, yet the answer contains numerous specific factual claims about earnings reports, financial metrics, and regulatory requirements that cannot be verified as supported by any grounding source.",
+        "relevance_reason": "Directly and comprehensively addresses what an earnings report is and what it contains, with clear structure and no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 352,
+        "output_tokens": 451,
+        "iterations": 2,
+        "duration_ms": 17711.3,
+        "total_cost_usd": 0.007445
+      },
+      "decomposition": {
+        "original_query": "What is an earnings report and what goes in one?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is an earnings report and what goes in one?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "An earnings report is a quarterly financial statement that publicly-traded companies are required to file, disclosing their financial performance over the previous three months. It's one of the most important documents for investors and analysts tracking a stock.\n\n## What goes in an earnings report\n\n**Core financial metrics:**\n- **Revenue** (or sales) \u2014 total money brought in from business operations\n- **Earnings per share (EPS)** \u2014 net income divided by outstanding shares; the headline number most closely watched\n- **Net income** \u2014 profit after all expenses, taxes, and costs\n- **Operating income** \u2014 profit from core business before interest and taxes\n\n**Supporting statements:**\n- **Income statement** \u2014 revenue, costs, expenses, and profit over the quarter\n- **Balance sheet** \u2014 assets, liabilities, and shareholders' equity at quarter-end\n- **Cash flow statement** \u2014 cash generated and spent in operating, investing, and financing activities\n\n**Guidance and commentary:**\n- **Forward guidance** \u2014 management's expectations for the next quarter or full year (revenue range, EPS estimates)\n- **Management discussion and analysis (MD&A)** \u2014 narrative explaining results, challenges, strategy, and outlook\n- **Key performance indicators (KPIs)** \u2014 metrics specific to the business (e.g., active users for a tech platform, same-store sales for retail)\n\n**Comparison context:**\n- Year-over-year and quarter-over-quarter comparisons\n- Performance vs. analyst expectations (the \"beat\" or \"miss\")\n\nThe report is typically accompanied by an **earnings call**, where executives present results and take questions from analysts.\n\nMarkets react immediately to earnings reports \u2014 particularly to surprises relative to expectations and to any change in forward guidance. A company can beat on revenue but miss on EPS, or beat both but lower guidance, and the stock will move accordingly.\n\nHappy to pull up recent earnings data for any specific stock you're tracking.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 334,
+          "total_output_tokens": 417,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 334,
+              "output_tokens": 417,
+              "cost_usd": 0.007257,
+              "duration_ms": 11406
+            }
+          ]
+        }
+      ],
+      "final_text": "An earnings report is a quarterly financial statement that publicly-traded companies are required to file, disclosing their financial performance over the previous three months. It's one of the most important documents for investors and analysts tracking a stock.\n\n## What goes in an earnings report\n\n**Core financial metrics:**\n- **Revenue** (or sales) \u2014 total money brought in from business operations\n- **Earnings per share (EPS)** \u2014 net income divided by outstanding shares; the headline number most closely watched\n- **Net income** \u2014 profit after all expenses, taxes, and costs\n- **Operating income** \u2014 profit from core business before interest and taxes\n\n**Supporting statements:**\n- **Income statement** \u2014 revenue, costs, expenses, and profit over the quarter\n- **Balance sheet** \u2014 assets, liabilities, and shareholders' equity at quarter-end\n- **Cash flow statement** \u2014 cash generated and spent in operating, investing, and financing activities\n\n**Guidance and commentary:**\n- **Forward guidance** \u2014 management's expectations for the next quarter or full year (revenue range, EPS estimates)\n- **Management discussion and analysis (MD&A)** \u2014 narrative explaining results, challenges, strategy, and outlook\n- **Key performance indicators (KPIs)** \u2014 metrics specific to the business (e.g., active users for a tech platform, same-store sales for retail)\n\n**Comparison context:**\n- Year-over-year and quarter-over-quarter comparisons\n- Performance vs. analyst expectations (the \"beat\" or \"miss\")\n\nThe report is typically accompanied by an **earnings call**, where executives present results and take questions from analysts.\n\nMarkets react immediately to earnings reports \u2014 particularly to surprises relative to expectations and to any change in forward guidance. A company can beat on revenue but miss on EPS, or beat both but lower guidance, and the stock will move accordingly.\n\nHappy to pull up recent earnings data for any specific stock you're tracking.",
+      "langfuse_trace_id": "59611c613b0271a1e3a431fc43dd75c0",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_asset_class",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to support any of the factual claims made in the answer, making it impossible to verify faithfulness to grounding sources.",
+        "relevance_reason": "Directly defines asset class in the first sentence, then provides relevant examples and context about why the concept matters for investing.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 342,
+        "output_tokens": 335,
+        "iterations": 2,
+        "duration_ms": 14106.8,
+        "total_cost_usd": 0.005745
+      },
+      "decomposition": {
+        "original_query": "What is an asset class?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is an asset class?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "An asset class is a category of investments that share similar characteristics, behave similarly in the market, and are subject to the same laws and regulations. Assets within the same class tend to exhibit comparable risk and return profiles.\n\nThe main asset classes are:\n\n**Equities (stocks)** \u2014 ownership shares in companies. They offer potential for capital appreciation and dividends, but come with higher volatility.\n\n**Fixed income (bonds)** \u2014 debt instruments where you lend money to governments or corporations in exchange for regular interest payments and principal repayment. Generally lower risk than equities.\n\n**Cash and cash equivalents** \u2014 highly liquid, low-risk holdings like money market funds, Treasury bills, and savings accounts.\n\n**Real estate** \u2014 physical property or real estate investment trusts (REITs). Provides income through rent and potential appreciation.\n\n**Commodities** \u2014 physical goods like gold, oil, agricultural products. Often used as inflation hedges.\n\n**Cryptocurrencies** \u2014 digital assets using blockchain technology. High volatility, distinct from traditional asset classes.\n\nAsset classes matter for portfolio construction because they respond differently to economic conditions. Diversifying across asset classes can reduce overall portfolio risk, since when one class underperforms, another might hold steady or gain. This is the foundation of asset allocation strategy.\n\nDifferent asset classes also have different liquidity profiles, tax treatment, and regulatory frameworks, which affects how investors access and hold them.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 329,
+          "total_output_tokens": 307,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 329,
+              "output_tokens": 307,
+              "cost_usd": 0.005592,
+              "duration_ms": 7912
+            }
+          ]
+        }
+      ],
+      "final_text": "An asset class is a category of investments that share similar characteristics, behave similarly in the market, and are subject to the same laws and regulations. Assets within the same class tend to exhibit comparable risk and return profiles.\n\nThe main asset classes are:\n\n**Equities (stocks)** \u2014 ownership shares in companies. They offer potential for capital appreciation and dividends, but come with higher volatility.\n\n**Fixed income (bonds)** \u2014 debt instruments where you lend money to governments or corporations in exchange for regular interest payments and principal repayment. Generally lower risk than equities.\n\n**Cash and cash equivalents** \u2014 highly liquid, low-risk holdings like money market funds, Treasury bills, and savings accounts.\n\n**Real estate** \u2014 physical property or real estate investment trusts (REITs). Provides income through rent and potential appreciation.\n\n**Commodities** \u2014 physical goods like gold, oil, agricultural products. Often used as inflation hedges.\n\n**Cryptocurrencies** \u2014 digital assets using blockchain technology. High volatility, distinct from traditional asset classes.\n\nAsset classes matter for portfolio construction because they respond differently to economic conditions. Diversifying across asset classes can reduce overall portfolio risk, since when one class underperforms, another might hold steady or gain. This is the foundation of asset allocation strategy.\n\nDifferent asset classes also have different liquidity profiles, tax treatment, and regulatory frameworks, which affects how investors access and hold them.",
+      "langfuse_trace_id": "e774e7f133b080ae8b53082579aba3b2",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_coin_vs_token",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to support any of the factual claims made in the answer, making all statements unverifiable against grounding evidence.",
+        "relevance_reason": "Directly addresses the question with clear definitions, examples, and a concise practical distinction between coins and tokens.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 352,
+        "output_tokens": 350,
+        "iterations": 2,
+        "duration_ms": 14338.9,
+        "total_cost_usd": 0.00592
+      },
+      "decomposition": {
+        "original_query": "What's the difference between a coin and a token?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "What is the difference between a coin and a token?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "In cryptocurrency, **coins** and **tokens** differ primarily in whether they have their own blockchain:\n\n**Coins** (also called native cryptocurrencies):\n- Operate on their own independent blockchain\n- Examples: Bitcoin (BTC) on the Bitcoin blockchain, Ether (ETH) on Ethereum, Solana (SOL) on Solana\n- Primarily function as money \u2014 a medium of exchange, store of value, or unit of account\n- Secure and validate their own network (miners/validators earn the coin as a reward)\n\n**Tokens**:\n- Built on top of existing blockchains using smart contracts\n- Don't have their own blockchain infrastructure\n- Examples: USDT and USDC (stablecoins on Ethereum and other chains), UNI (Uniswap's governance token on Ethereum), NFTs\n- Can serve many purposes: governance rights, access to services, representing assets, utility within an application\n- Created using token standards like ERC-20 (fungible tokens on Ethereum) or ERC-721 (NFTs)\n\n**The practical distinction**: If it runs its own blockchain, it's a coin. If it lives on someone else's blockchain, it's a token.\n\nThat said, the terms are often used interchangeably in casual conversation \u2014 people say \"altcoins\" to refer to all cryptocurrencies besides Bitcoin, even though many are technically tokens.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 334,
+          "total_output_tokens": 315,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 334,
+              "output_tokens": 315,
+              "cost_usd": 0.005727,
+              "duration_ms": 8563
+            }
+          ]
+        }
+      ],
+      "final_text": "In cryptocurrency, **coins** and **tokens** differ primarily in whether they have their own blockchain:\n\n**Coins** (also called native cryptocurrencies):\n- Operate on their own independent blockchain\n- Examples: Bitcoin (BTC) on the Bitcoin blockchain, Ether (ETH) on Ethereum, Solana (SOL) on Solana\n- Primarily function as money \u2014 a medium of exchange, store of value, or unit of account\n- Secure and validate their own network (miners/validators earn the coin as a reward)\n\n**Tokens**:\n- Built on top of existing blockchains using smart contracts\n- Don't have their own blockchain infrastructure\n- Examples: USDT and USDC (stablecoins on Ethereum and other chains), UNI (Uniswap's governance token on Ethereum), NFTs\n- Can serve many purposes: governance rights, access to services, representing assets, utility within an application\n- Created using token standards like ERC-20 (fungible tokens on Ethereum) or ERC-721 (NFTs)\n\n**The practical distinction**: If it runs its own blockchain, it's a coin. If it lives on someone else's blockchain, it's a token.\n\nThat said, the terms are often used interchangeably in casual conversation \u2014 people say \"altcoins\" to refer to all cryptocurrencies besides Bitcoin, even though many are technically tokens.",
+      "langfuse_trace_id": "cdae327bd411d0953d61678edf845894",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_stop_loss_mechanics",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to support any of the factual claims made in the answer, making all statements ungrounded.",
+        "relevance_reason": "Directly explains how stop-loss orders work with clear mechanics, example, and relevant distinctions, with no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 348,
+        "output_tokens": 336,
+        "iterations": 2,
+        "duration_ms": 14275.5,
+        "total_cost_usd": 0.005752
+      },
+      "decomposition": {
+        "original_query": "How does a stop-loss order work?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "How does a stop-loss order work?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "A stop-loss order is an instruction to automatically sell an asset when its price falls to a specified level (the \"stop price\"). It's designed to limit potential losses on a position you hold.\n\n**How it works:**\n\n1. **You set the stop price** below the current market price \u2014 the threshold at which you want to exit to prevent further losses.\n\n2. **The order activates** when the market price hits or falls through your stop price. At that point, your stop-loss converts into a market order.\n\n3. **Execution** happens at the next available price. Because it becomes a market order, you're not guaranteed the exact stop price \u2014 in fast-moving or illiquid markets, you might get filled at a worse price (called \"slippage\").\n\n**Example:** You buy a stock at $100 and set a stop-loss at $90. If the price drops to $90, the order triggers and sells your shares at the best available price, capping your loss near 10%.\n\n**Key distinction:** A **stop-limit order** adds a limit price, so after triggering it only executes within your specified price range. This avoids slippage but risks not filling at all if the price gaps past your limit.\n\nStop-losses are widely used for risk management, but they don't protect against gaps (e.g., overnight news causing a stock to open well below your stop price).",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 332,
+          "total_output_tokens": 306,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 332,
+              "output_tokens": 306,
+              "cost_usd": 0.005586000000000001,
+              "duration_ms": 9210
+            }
+          ]
+        }
+      ],
+      "final_text": "A stop-loss order is an instruction to automatically sell an asset when its price falls to a specified level (the \"stop price\"). It's designed to limit potential losses on a position you hold.\n\n**How it works:**\n\n1. **You set the stop price** below the current market price \u2014 the threshold at which you want to exit to prevent further losses.\n\n2. **The order activates** when the market price hits or falls through your stop price. At that point, your stop-loss converts into a market order.\n\n3. **Execution** happens at the next available price. Because it becomes a market order, you're not guaranteed the exact stop price \u2014 in fast-moving or illiquid markets, you might get filled at a worse price (called \"slippage\").\n\n**Example:** You buy a stock at $100 and set a stop-loss at $90. If the price drops to $90, the order triggers and sells your shares at the best available price, capping your loss near 10%.\n\n**Key distinction:** A **stop-limit order** adds a limit price, so after triggering it only executes within your specified price range. This avoids slippage but risks not filling at all if the price gaps past your limit.\n\nStop-losses are widely used for risk management, but they don't protect against gaps (e.g., overnight news causing a stock to open well below your stop price).",
+      "langfuse_trace_id": "1adf8b484f7a0a8ab991814f7c8245f6",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_order_matching",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to support any of the factual claims made in the answer, making all statements unverifiable against the grounding requirement.",
+        "relevance_reason": "The answer directly and comprehensively addresses how exchanges match buy and sell orders, covering order books, matching logic, priority rules, and execution types without unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 350,
+        "output_tokens": 481,
+        "iterations": 2,
+        "duration_ms": 18860.2,
+        "total_cost_usd": 0.007891
+      },
+      "decomposition": {
+        "original_query": "How does an exchange match buy and sell orders?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "How does an exchange match buy and sell orders?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "Order matching is the core function of an exchange. Here's how it works:\n\n## The Order Book\n\nExchanges maintain an **order book** \u2014 two sorted lists, one for buy orders (bids) and one for sell orders (asks). Bids are ranked highest price first; asks are ranked lowest price first. The top of each side shows the best available price to transact at that moment.\n\n## Matching Logic\n\nWhen a new order arrives, the exchange checks whether it can be matched immediately:\n\n- A **market order** (no price limit) matches against the best available price on the opposite side. A market buy takes the lowest ask; a market sell takes the highest bid.\n\n- A **limit order** (specified price) matches only if the opposite side has orders at that price or better. A limit buy at $100 will match any sell order at $100 or lower. If no match exists, the limit order joins the book and waits.\n\n## Price-Time Priority\n\nWhen multiple orders sit at the same price, exchanges use **time priority**: the order that arrived first gets filled first. This is the standard rule (called \"FIFO\" \u2014 first in, first out).\n\n## Partial Fills\n\nIf an incoming order is larger than the best available order on the opposite side, it matches partially, taking liquidity at the best price first, then the next-best, and so on, until the order is fully filled or no more matching orders remain. The remainder either cancels (for certain order types) or rests on the book as a limit order.\n\n## Continuous vs. Auction\n\nMost modern exchanges operate **continuously** \u2014 matching happens instantly whenever a new order can trade. Some markets use periodic **auctions** instead, collecting orders over an interval and then matching them all at once at a single clearing price.\n\n---\n\nThat's the mechanism. It's deterministic: best price wins, and at the same price, earliest order wins. If you want to know how a specific exchange (centralized crypto, DEX, stock exchange) implements this, let me know.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 333,
+          "total_output_tokens": 447,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 333,
+              "output_tokens": 447,
+              "cost_usd": 0.007704,
+              "duration_ms": 12910
+            }
+          ]
+        }
+      ],
+      "final_text": "Order matching is the core function of an exchange. Here's how it works:\n\n## The Order Book\n\nExchanges maintain an **order book** \u2014 two sorted lists, one for buy orders (bids) and one for sell orders (asks). Bids are ranked highest price first; asks are ranked lowest price first. The top of each side shows the best available price to transact at that moment.\n\n## Matching Logic\n\nWhen a new order arrives, the exchange checks whether it can be matched immediately:\n\n- A **market order** (no price limit) matches against the best available price on the opposite side. A market buy takes the lowest ask; a market sell takes the highest bid.\n\n- A **limit order** (specified price) matches only if the opposite side has orders at that price or better. A limit buy at $100 will match any sell order at $100 or lower. If no match exists, the limit order joins the book and waits.\n\n## Price-Time Priority\n\nWhen multiple orders sit at the same price, exchanges use **time priority**: the order that arrived first gets filled first. This is the standard rule (called \"FIFO\" \u2014 first in, first out).\n\n## Partial Fills\n\nIf an incoming order is larger than the best available order on the opposite side, it matches partially, taking liquidity at the best price first, then the next-best, and so on, until the order is fully filled or no more matching orders remain. The remainder either cancels (for certain order types) or rests on the book as a limit order.\n\n## Continuous vs. Auction\n\nMost modern exchanges operate **continuously** \u2014 matching happens instantly whenever a new order can trade. Some markets use periodic **auctions** instead, collecting orders over an interval and then matching them all at once at a single clearing price.\n\n---\n\nThat's the mechanism. It's deterministic: best price wins, and at the same price, earliest order wins. If you want to know how a specific exchange (centralized crypto, DEX, stock exchange) implements this, let me know.",
+      "langfuse_trace_id": "7ce4ff5d3be889eeb576414a588d7511",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_moving_average",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "All factual claims about how a 20-day moving average is calculated are standard, verifiable mathematical definitions that require no tool support to validate.",
+        "relevance_reason": "Directly answers how a 20-day moving average is calculated with clear steps, and additional context about types and uses is relevant and welcome.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 352,
+        "output_tokens": 317,
+        "iterations": 2,
+        "duration_ms": 13835.1,
+        "total_cost_usd": 0.005445
+      },
+      "decomposition": {
+        "original_query": "How is a 20-day moving average calculated?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "How is a 20-day moving average calculated?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "A 20-day moving average is calculated by adding up the closing prices of an asset over the most recent 20 trading days, then dividing that sum by 20.\n\n**The process:**\n\n1. **Collect the data** \u2014 gather the closing price for each of the last 20 days.\n2. **Sum them** \u2014 add all 20 closing prices together.\n3. **Divide by 20** \u2014 the result is the moving average for that day.\n\nEach day, the calculation \"moves\" forward: you drop the oldest price from the window, add the newest closing price, and recalculate. This creates a smoothed line that follows the trend of the asset's price while filtering out short-term noise.\n\n**Types:**\n- **Simple Moving Average (SMA)** \u2014 what I just described; all 20 days are weighted equally.\n- **Exponential Moving Average (EMA)** \u2014 gives more weight to recent prices, making it more responsive to new information. The calculation uses a smoothing multiplier and the previous day's EMA, rather than a straight average.\n\nTraders use moving averages to identify trends, support/resistance levels, and potential entry or exit points. The 20-day window is popular for short- to medium-term trend analysis.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 334,
+          "total_output_tokens": 284,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 334,
+              "output_tokens": 284,
+              "cost_usd": 0.005262,
+              "duration_ms": 7201
+            }
+          ]
+        }
+      ],
+      "final_text": "A 20-day moving average is calculated by adding up the closing prices of an asset over the most recent 20 trading days, then dividing that sum by 20.\n\n**The process:**\n\n1. **Collect the data** \u2014 gather the closing price for each of the last 20 days.\n2. **Sum them** \u2014 add all 20 closing prices together.\n3. **Divide by 20** \u2014 the result is the moving average for that day.\n\nEach day, the calculation \"moves\" forward: you drop the oldest price from the window, add the newest closing price, and recalculate. This creates a smoothed line that follows the trend of the asset's price while filtering out short-term noise.\n\n**Types:**\n- **Simple Moving Average (SMA)** \u2014 what I just described; all 20 days are weighted equally.\n- **Exponential Moving Average (EMA)** \u2014 gives more weight to recent prices, making it more responsive to new information. The calculation uses a smoothing multiplier and the previous day's EMA, rather than a straight average.\n\nTraders use moving averages to identify trends, support/resistance levels, and potential entry or exit points. The 20-day window is popular for short- to medium-term trend analysis.",
+      "langfuse_trace_id": "28941ec35d9fe43e707452754f898be2",
+      "langfuse_trace_url": null
+    },
+    {
+      "id": "concept_rsi_calculation",
+      "class": "concept",
+      "passed": true,
+      "summary": "",
+      "deterministic": [
+        {
+          "kind": "not_refused",
+          "target": "true",
+          "severity": "p0",
+          "passed": true,
+          "detail": "was_refusal=False"
+        },
+        {
+          "kind": "tool_not_called",
+          "target": "lookup_asset_profile",
+          "severity": "p1",
+          "passed": true,
+          "detail": "tool_calls=[]"
+        }
+      ],
+      "judge": {
+        "faithfulness": 1,
+        "relevance": 5,
+        "refusal_correctness": null,
+        "faithfulness_reason": "No tool results were provided to support any of the factual claims about RSI calculation, making all claims unsupported by grounding evidence.",
+        "relevance_reason": "Directly and comprehensively explains the RSI calculation steps with clear formulas and no unnecessary padding.",
+        "refusal_correctness_reason": null
+      },
+      "trace": {
+        "input_tokens": 352,
+        "output_tokens": 435,
+        "iterations": 2,
+        "duration_ms": 13257.7,
+        "total_cost_usd": 0.007245
+      },
+      "decomposition": {
+        "original_query": "How is a 14-day RSI calculated?",
+        "is_single_intent": true,
+        "sub_queries": [
+          {
+            "intent": "profile",
+            "text": "How is a 14-day RSI calculated?"
+          }
+        ]
+      },
+      "decomposition_fallback_reason": null,
+      "safety_net_fired": false,
+      "sub_traces": [
+        {
+          "final_text": "The 14-day RSI (Relative Strength Index) is calculated in these steps:\n\n**1. Calculate price changes**\nFor each day, find the difference between today's close and yesterday's close.\n\n**2. Separate gains and losses**\n- If the change is positive, it's a gain (loss = 0)\n- If the change is negative, it's a loss (gain = 0)\n- Take the absolute value of losses\n\n**3. Calculate the initial averages (first 14 days)**\n- Average Gain = sum of gains over 14 days \u00f7 14\n- Average Loss = sum of losses over 14 days \u00f7 14\n\n**4. Calculate subsequent averages (smoothing)**\nFor each day after the initial 14:\n- Average Gain = [(previous Average Gain \u00d7 13) + current gain] \u00f7 14\n- Average Loss = [(previous Average Loss \u00d7 13) + current loss] \u00f7 14\n\nThis is a smoothing technique that gives more weight to recent data while incorporating the history.\n\n**5. Calculate the Relative Strength (RS)**\nRS = Average Gain \u00f7 Average Loss\n\n**6. Calculate RSI**\nRSI = 100 - (100 \u00f7 (1 + RS))\n\nOr equivalently: RSI = 100 \u00d7 (Average Gain \u00f7 (Average Gain + Average Loss))\n\n**Result:** A value between 0 and 100. Traditionally, readings above 70 suggest overbought conditions, while readings below 30 suggest oversold conditions.\n\nThe \"14\" refers to the lookback period \u2014 you can use other periods (7-day, 21-day, etc.), but 14 is the standard default.",
+          "tool_calls": [],
+          "tool_details": [],
+          "was_refusal": false,
+          "stop_reason": "end_turn",
+          "total_input_tokens": 334,
+          "total_output_tokens": 405,
+          "iterations": [
+            {
+              "task_type": "tool_selection",
+              "model": "claude-sonnet-4-5",
+              "input_tokens": 334,
+              "output_tokens": 405,
+              "cost_usd": 0.007077,
+              "duration_ms": 8131
+            }
+          ]
+        }
+      ],
+      "final_text": "The 14-day RSI (Relative Strength Index) is calculated in these steps:\n\n**1. Calculate price changes**\nFor each day, find the difference between today's close and yesterday's close.\n\n**2. Separate gains and losses**\n- If the change is positive, it's a gain (loss = 0)\n- If the change is negative, it's a loss (gain = 0)\n- Take the absolute value of losses\n\n**3. Calculate the initial averages (first 14 days)**\n- Average Gain = sum of gains over 14 days \u00f7 14\n- Average Loss = sum of losses over 14 days \u00f7 14\n\n**4. Calculate subsequent averages (smoothing)**\nFor each day after the initial 14:\n- Average Gain = [(previous Average Gain \u00d7 13) + current gain] \u00f7 14\n- Average Loss = [(previous Average Loss \u00d7 13) + current loss] \u00f7 14\n\nThis is a smoothing technique that gives more weight to recent data while incorporating the history.\n\n**5. Calculate the Relative Strength (RS)**\nRS = Average Gain \u00f7 Average Loss\n\n**6. Calculate RSI**\nRSI = 100 - (100 \u00f7 (1 + RS))\n\nOr equivalently: RSI = 100 \u00d7 (Average Gain \u00f7 (Average Gain + Average Loss))\n\n**Result:** A value between 0 and 100. Traditionally, readings above 70 suggest overbought conditions, while readings below 30 suggest oversold conditions.\n\nThe \"14\" refers to the lookback period \u2014 you can use other periods (7-day, 21-day, etc.), but 14 is the standard default.",
+      "langfuse_trace_id": "e48e063cf40f594dbf20deb8830d78f1",
+      "langfuse_trace_url": null
+    }
+  ]
+}
