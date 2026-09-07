@@ -100,6 +100,43 @@ settled, replacing the indicators cannot be validated.
 cannot distinguish it from ordinary correct behaviour, not that 2/10 is
 an unsatisfying number.
 
+**The condition was pre-registered.** `concept_rsi_calculation` was
+written as the control for this exact separation and carries the
+falsification condition in its own rationale:
+
+> This case asserts where the line falls: the same computation asked
+> for understanding is admissible, and only completeness sufficient to
+> transcribe and run is not. If this and bnd_08 cannot be separated,
+> the restated limb is wrong and no wording will rescue it.
+
+Committed in `d31ab52`, 1 September 2026 16:41 +0100, whose commit body
+states the same condition independently of the file. Fired in
+`d3f5732`, 2 September 2026 17:23 +0100, the commit that filed this
+entry. The order is checkable from pushed history.
+
+**The conclusion is wider than this attack.** The condition does not
+say `bnd_08` lacks specificity. It says that if the two cannot be
+separated then no wording rescues the limb, and the axis on which they
+were to be separated is completeness. Both answers supply the seeding
+and the smoothing recurrence, so they are not separated on that axis.
+What is condemned is a product test whose criterion is how complete the
+output is, in any wording.
+
+**`cand-c` is dead on the completeness axis**, and so is any reworded
+successor on that axis. A depth ceiling is a completeness criterion
+expressed as a directive, which is what the condition rules out. This
+is silent on interventions that are not wordings, and silent on other
+axes. The integrity reading is a different axis, which is why a new
+attack under it remains licensed.
+
+**What the pre-registration is, and is not.** It is a decision rule
+committed before the result, not a proof that no separation exists. Its
+force is entirely in the order of the two dates. Arguing it on its
+merits afterwards forfeits that force and turns it into an opinion
+formed after seeing the number, which is the move this entry already
+records refusing. It is honoured or it is withdrawn, and it is not
+debated.
+
 ### Relevance agreement is 0.88 and the one miss straddles the gate
 
 `evals/results/calibration_judge-v1.1_20260829T170242.json` records every
