@@ -41,9 +41,13 @@ have.
 
 ## What was measured
 
-Current baseline (v2.7.0, 27 August 2026): **crypto 22/23, equities
-15/16, general 6/6**. Committed run artefacts under `evals/results/` are
-the source of truth for every figure quoted here.
+Current baseline (v2.7.0, prompt digest `2be3bd50`): **crypto 22/23,
+equities 15/16, general 10/10**. Crypto and equities were run on 2
+September 2026, the general suite on 1 September, after it grew from six
+cases to ten. Committed run artefacts under `evals/results/` are the
+source of truth for every figure quoted here. A general figure from
+before 1 September is not comparable with the current ten and is not
+quoted alongside them.
 
 The golden set is 39 cases (23 crypto, 16 equities), partitioned by asset
 class under `evals/golden/{crypto,equities}/` and run independently via
@@ -54,14 +58,21 @@ combined-tools) are shared across both. The cross-asset comparison case
 (`price_compare_apple_btc`) is a permanent guard that a single mixed-class
 query fires both class price tools in one turn.
 
-A third suite, `evals/golden/general/`, holds six concept cases that name
+A third suite, `evals/golden/general/`, holds ten concept cases that name
 no asset. It exercises the system prompt's `No tool` clause, which the two
 asset suites never reach, since every case in them either expects a tool
-or expects a refusal. Each case derives from a named anchor in the scope
-clause as committed at v2.6.0, chosen to span that clause rather than to
-pass it. It is filed as its own dataset rather than as extra crypto cases
-so its count cannot merge with the asset-suite totals by accident.
-`--asset-class all` runs all three suites into three artefacts.
+or expects a refusal. Six derive from a named anchor in the scope clause
+as committed at v2.6.0, chosen to span that clause rather than to pass it.
+Four were added on 1 September as controls on the product limb, asserting
+where the line falls between explaining a computation and supplying a
+transcribable artefact. It is filed as its own dataset rather than as
+extra crypto cases so its count cannot merge with the asset-suite totals
+by accident. `--asset-class all` runs all three suites into three
+artefacts, 49 cases in total. Note what the general suite asserts
+deterministically: `NOT_REFUSED` and `TOOL_NOT_CALLED` only, with nothing
+reading the answer text. A 10/10 there evidences that the `No tool`
+clause fires, and says nothing about answer content. The crypto and
+equities suites do assert on content.
 
 Both single failures were investigated and neither was adjusted.
 `profile_pepe_fallback` asserts on a CoinGecko `source` field and misses
