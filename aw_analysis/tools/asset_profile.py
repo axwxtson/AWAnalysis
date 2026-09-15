@@ -1,6 +1,6 @@
 """Tool: lookup factual asset profile via tiered retrieval.
 
-Tier 1: curated RAG corpus (10 hand-written profiles in data/asset_profiles/).
+Tier 1: curated RAG corpus (20 hand-written profiles in data/asset_profiles/).
 Tier 2: CoinGecko's /coins/{id} description for any asset they track.
 
 The tool tries Tier 1 first. If the top retrieval score exceeds

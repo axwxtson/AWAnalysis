@@ -95,7 +95,7 @@ def ask_aw_analysis(query: str) -> str:
 # A resource is app/user-controlled reference data, not a model-controlled
 # action. The host lists these and decides what to surface into context; the
 # model does not invoke them. Scanned from disk at startup, so the set tracks
-# the directory (10 crypto profiles now, more as equities land) with no code
+# the directory (20 profiles now, 10 crypto and 10 equities) with no code
 # change.
 
 PROFILES_DIR = REPO_ROOT / "data" / "asset_profiles"
