@@ -580,6 +580,30 @@ of Block 3 deliberately: it is a separate decision from retry policy and
 wants its own reasoning about what a reasonable ceiling is per entry
 point.
 
+### `mcp_server.py` is covered by no test and no type check
+
+159 lines, and no file under `tests/` mentions `mcp_server` or
+`ask_aw_analysis`. mypy's `files=` lists `aw_analysis/tools/`,
+`aw_analysis/client/` and `aw_analysis/data_sources/`, which excludes it.
+So both green figures the project quotes, 256 tests passing and 13 source
+files with no issues, are true and neither covers Stage 10.
+
+What is uncovered is not incidental. `_register_profile_resources` scans
+a directory at import time and silently registers nothing if the
+directory is absent, `_profile_title` swallows `OSError` and `IndexError`
+and falls back to the slug, and the tool docstring is the text a host
+model reads when deciding whether to call the agent at all. A change to
+any of the three fails quietly rather than loudly.
+
+The stale comment corrected in `9842a6f` sat in this file for exactly
+this reason: nothing reads it and nothing checks it.
+
+**Resolution.** Two separate decisions. Add `aw_analysis/` entries to the
+mypy `files=` ratchet, which the ratchet exists to absorb. And decide what
+a test of a FastMCP server is worth here, given that the transport is
+stdio under a third-party host, which is the part hardest to exercise and
+the part most likely to break. Neither taken yet.
+
 ---
 
 ## Resolved
