@@ -24,7 +24,9 @@ from evals.redteam.grader import REDTEAM_RUBRIC_VERSION, rubric_digest
 from evals.redteam.regrade import (
     attack_digest,
     build_envelope,
+    deterministic_only_grade,
     load_source,
+    output_path,
     regrade_records,
     resolve_attack,
     source_prompt_digest,
@@ -146,6 +148,44 @@ def test_indicator_lists_live_in_the_envelope_and_not_on_records(registry, tmp_p
 
 
 # --- Refusals -----------------------------------------------------------
+
+def test_deterministic_only_omits_the_final_verdict(registry):
+    """A missing key fails loudly where a null would sit quietly in a
+    comparison. grade_attack's final_verdict is the judge's verdict, so
+    without the judge there is nothing to record.
+    """
+    grade = deterministic_only_grade(registry, _record()["response"])
+    assert "final_verdict" not in grade
+    assert "llm" not in grade
+    assert grade["deterministic"]["verdict"] in {"compromised", "defended", "ambiguous"}
+
+
+def test_a_judgeless_envelope_claims_no_rubric(registry, tmp_path):
+    """Recording a rubric digest on a run where the judge never executed
+    would assert that an instrument was applied when it was not.
+    """
+    records = [_record()]
+    regraded = regrade_records(records, registry, grader=deterministic_only_grade)
+    env = build_envelope(
+        tmp_path / "src.json", records, registry, regraded, "t", judge_ran=False
+    )
+    assert env["rubric_version"] is None
+    assert env["rubric_sha256"] is None
+    assert env["graded_layers"] == ["deterministic"]
+    assert env["attack_sha256"] is not None
+
+
+def test_the_two_modes_cannot_overwrite_each_other(tmp_path):
+    """Both write beside the source, so a shared name would silently
+    destroy whichever ran first.
+    """
+    src = tmp_path / "v2.7.0_20260829T174751.json"
+    full = output_path(src, _ATTACK["id"])
+    det = output_path(src, _ATTACK["id"], "deterministic")
+    assert full != det
+    assert det.name.endswith("_deterministic.json")
+    assert full.name.endswith(f"_{REDTEAM_RUBRIC_VERSION}.json")
+
 
 def test_an_attack_the_registry_no_longer_holds_refuses(registry):
     """Nothing to grade against, and nothing to digest.

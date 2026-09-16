@@ -38,6 +38,23 @@ whole-registry digest would move whenever any unrelated attack is
 edited, which makes the field noise rather than evidence. The
 over-signalling accepted for rubric_digest was accepted because five
 rubrics are one instrument; here the artefact is about one attack.
+
+Deterministic-only mode
+-----------------------
+--deterministic-only runs the substring layer and not the judge. It
+exists because a change that cannot reach the judge should not be
+validated by paying for judge calls: the judge is non-deterministic, so
+two judge passes cannot separate a code effect from judge variance,
+and a comparison that proves nothing either way is not worth its cost.
+
+grade_attack's final_verdict is llm_verdict verbatim, so this mode has
+no final verdict to record and omits the key rather than nulling it.
+
+rubric_version and rubric_sha256 describe the judge's instrument. On a
+run where the judge did not execute they would assert that a rubric was
+applied, so they are null, and graded_layers names what actually ran.
+Artefacts written before that field existed carry neither it nor a null;
+its absence reads as both layers, matching the replicate convention.
 """
 
 from __future__ import annotations
@@ -52,7 +69,25 @@ from pathlib import Path
 from typing import Any
 
 from evals.redteam.attacks import ATTACKS
-from evals.redteam.grader import REDTEAM_RUBRIC_VERSION, grade_attack, rubric_digest
+from evals.redteam.grader import (
+    REDTEAM_RUBRIC_VERSION,
+    deterministic_grade,
+    grade_attack,
+    rubric_digest,
+)
+
+
+def deterministic_only_grade(attack: dict, response: dict) -> dict:
+    """Grade with the substring layer alone, and say so by omission.
+
+    The key is absent rather than null. A reader who indexes
+    final_verdict gets a KeyError, which fails loudly, where a null
+    would sit quietly in a comparison against a real verdict.
+
+    Same signature as grade_attack, so it drops into regrade_records's
+    grader parameter unchanged.
+    """
+    return {"deterministic": deterministic_grade(attack, response)}
 
 
 def attack_digest(attack: dict) -> str:
@@ -147,6 +182,7 @@ def build_envelope(
     attack: dict,
     regraded: list[dict],
     regraded_at: str,
+    judge_ran: bool = True,
 ) -> dict[str, Any]:
     """Assemble everything true of the whole file, with records last.
 
@@ -168,8 +204,9 @@ def build_envelope(
         "regraded_at": regraded_at,
         "attack_id": attack["id"],
         "prompt_sha256": source_prompt_digest(records),
-        "rubric_version": REDTEAM_RUBRIC_VERSION,
-        "rubric_sha256": rubric_digest(),
+        "graded_layers": ["deterministic", "llm"] if judge_ran else ["deterministic"],
+        "rubric_version": REDTEAM_RUBRIC_VERSION if judge_ran else None,
+        "rubric_sha256": rubric_digest() if judge_ran else None,
         "attack_sha256": attack_digest(attack),
         "success_indicators": list(attack["success_indicators"]),
         "failure_indicators": list(attack["failure_indicators"]),
@@ -209,7 +246,9 @@ def regrade_records(
     ]
 
 
-def output_path(source: Path, attack_id: str) -> Path:
+def output_path(
+    source: Path, attack_id: str, label: str = REDTEAM_RUBRIC_VERSION
+) -> Path:
     """Name the re-grade after its source, its attack and its rubric.
 
     The attack id is in the name because a multi-attack source is
@@ -221,7 +260,7 @@ def output_path(source: Path, attack_id: str) -> Path:
     the directory has to see both or the contradiction is one hop away
     from being missed again.
     """
-    name = f"regrade_{source.stem}_{attack_id}_{REDTEAM_RUBRIC_VERSION}.json"
+    name = f"regrade_{source.stem}_{attack_id}_{label}.json"
     return source.with_name(name)
 
 
@@ -239,6 +278,12 @@ def main() -> None:
         "--attack",
         help="attack id; required when the source holds more than one attack",
     )
+    parser.add_argument(
+        "--deterministic-only",
+        action="store_true",
+        help="run the substring layer and not the judge; writes a separately "
+        "named artefact with no final verdict and null rubric fields",
+    )
     args = parser.parse_args()
 
     records = load_source(args.source)
@@ -248,26 +293,39 @@ def main() -> None:
             raise SystemExit(f"no records for {args.attack} in {args.source}")
     attack = resolve_attack(records)
 
-    out = output_path(args.source, attack["id"])
+    label = "deterministic" if args.deterministic_only else REDTEAM_RUBRIC_VERSION
+    out = output_path(args.source, attack["id"], label)
     if out.exists():
         raise SystemExit(f"{out} already exists; a re-grade is never overwritten")
 
-    regraded = regrade_records(records, attack)
+    grader = deterministic_only_grade if args.deterministic_only else grade_attack
+    regraded = regrade_records(records, attack, grader=grader)
     envelope = build_envelope(
-        args.source, records, attack, regraded, datetime.now(UTC).isoformat()
+        args.source,
+        records,
+        attack,
+        regraded,
+        datetime.now(UTC).isoformat(),
+        judge_ran=not args.deterministic_only,
     )
     out.write_text(json.dumps(envelope, indent=2))
 
     before = Counter(r["source_grade"]["final_verdict"] for r in regraded)
-    after = Counter(r["grade"]["final_verdict"] for r in regraded)
     det_before = Counter(r["source_grade"]["deterministic"]["verdict"] for r in regraded)
     det_after = Counter(r["grade"]["deterministic"]["verdict"] for r in regraded)
 
     print(f"source:  {args.source.name}")
     print(f"attack:  {attack['id']}  n={len(regraded)}")
-    print(f"rubric:  {REDTEAM_RUBRIC_VERSION}  {rubric_digest()[:12]}")
+    if args.deterministic_only:
+        print("rubric:  not applied, judge did not run")
+    else:
+        print(f"rubric:  {REDTEAM_RUBRIC_VERSION}  {rubric_digest()[:12]}")
     print(f"digest:  {attack_digest(attack)[:12]}")
-    print(f"final    before={dict(before)}  after={dict(after)}")
+    if args.deterministic_only:
+        print(f"final    before={dict(before)}  after=not graded")
+    else:
+        after = Counter(r["grade"]["final_verdict"] for r in regraded)
+        print(f"final    before={dict(before)}  after={dict(after)}")
     print(f"determ.  before={dict(det_before)}  after={dict(det_after)}")
     if det_before != det_after:
         print("WARNING: deterministic verdicts moved, so the indicator lists")
